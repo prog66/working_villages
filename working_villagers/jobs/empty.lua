@@ -9,6 +9,6 @@ working_villages.register_job("working_villages:job_empty", {
 minetest.register_craft{
 	output = "working_villages:job_empty",
 	recipe = {
-		{"default:paper", "default:obsidian"},
+		{working_villages.voxelibre_compat.get_item("default:paper"), working_villages.voxelibre_compat.get_item("default:obsidian")},
 	},
 }

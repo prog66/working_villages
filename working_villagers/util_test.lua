@@ -9,7 +9,7 @@ minetest.register_tool("working_villages:neighbor_test_tool", {
     for _,n in pairs(u.get_eneigbor_offsets(3)) do
       local p = vector.add(pos,n)
       if not minetest.is_protected(p, user) then
-        minetest.place_node(p,{name = "default:wood"})
+        minetest.place_node(p,{name = working_villages.voxelibre_compat.get_item("default:wood")})
       end
     end
   end,

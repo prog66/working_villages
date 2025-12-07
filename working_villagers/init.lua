@@ -23,6 +23,14 @@ function working_villages.setting_enabled(name, default)
   return b
 end
 
+-- Load VoxeLibre compatibility layer early
+working_villages.voxelibre_compat = working_villages.require("voxelibre_compat")
+if working_villages.voxelibre_compat.is_voxelibre then
+  log.action("VoxeLibre detected - enabling compatibility mode")
+else
+  log.action("minetest_game detected - using standard mode")
+end
+
 working_villages.require("groups")
 --TODO: check for which preloading is needed
 --content

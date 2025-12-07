@@ -1,5 +1,6 @@
 local func = working_villages.require("jobs/util")
-local function find_snow(p) return minetest.get_node(p).name == "default:snow" end
+local snow_name = working_villages.voxelibre_compat.get_item("default:snow")
+local function find_snow(p) return minetest.get_node(p).name == snow_name end
 local searching_range = {x = 10, y = 3, z = 10}
 
 working_villages.register_job("working_villages:job_snowclearer", {

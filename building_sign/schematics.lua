@@ -3,15 +3,17 @@
 local DEFAULT_NODE = building_sign.DEFAULT_NODE
 
 function building_sign.get_registered_nodename(name)
-	if name:find("doors:") then
+	if working_villages.voxelibre_compat.is_door(name) then
+		-- Handle both minetest_game and VoxeLibre door formats
 		name = name:gsub("_[b]_[12]", "")
+		name = name:gsub("_[t]_[12]", "")
 		name = name:gsub("_[a]", "")
 		if string.find(name, "_t") or name:find("hidden") then
 			name = "air"
 		end
 	elseif string.find(name, "stairs") then
 		name = name:gsub("upside_down", "")
-	elseif string.find(name, "farming") then
+	elseif string.find(name, "farming") or string.find(name, "mcl_farming") then
 		name = name:gsub("_%d", "")
 	end
 	return name

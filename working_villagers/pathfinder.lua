@@ -47,7 +47,7 @@ local function get_distance_to_neighbor(start_pos, end_pos)
 	end
 end
 local function walkable(node)
-		if string.find(node.name,"doors:") then
+		if working_villages.voxelibre_compat.is_door(node.name) then
 			return false
 		else
 			if minetest.registered_nodes[node.name]~= nil then
