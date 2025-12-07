@@ -25,6 +25,7 @@ end
 
 -- Load VoxeLibre compatibility layer early
 working_villages.voxelibre_compat = working_villages.require("voxelibre_compat")
+working_villages.farming_compat = working_villages.require("farming_compat")
 if working_villages.voxelibre_compat.is_voxelibre then
   log.action("VoxeLibre detected - enabling compatibility mode")
 else
