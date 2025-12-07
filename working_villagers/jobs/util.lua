@@ -242,7 +242,7 @@ function func.is_chest(pos)
   if (node==nil) then
     return false;
   end
-  if node.name=="default:chest" then
+  if working_villages.voxelibre_compat.is_chest(node) then
     return true;
   end
   local is_chest = minetest.get_item_group(node.name, "chest");

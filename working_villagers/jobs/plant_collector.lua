@@ -3,10 +3,10 @@ local func = working_villages.require("jobs/util")
 local herbs = {
   -- more priority definitions
 	names = {
-		["default:apple"]={},
-		["default:cactus"]={collect_only_top=true},
-		["default:papyrus"]={collect_only_top=true},
-		["default:dry_shrub"]={},
+		[working_villages.voxelibre_compat.get_item("default:apple")]={},
+		[working_villages.voxelibre_compat.get_item("default:cactus")]={collect_only_top=true},
+		[working_villages.voxelibre_compat.get_item("default:papyrus")]={collect_only_top=true},
+		[working_villages.voxelibre_compat.get_item("default:dry_shrub")]={},
 		["flowers:mushroom_brown"]={},
 		["flowers:mushroom_red"]={},
 	},

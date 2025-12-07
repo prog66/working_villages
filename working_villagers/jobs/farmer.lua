@@ -1,79 +1,13 @@
 
 local func = working_villages.require("jobs/util")
+local farming_compat = working_villages.require("farming_compat")
 
--- limited support to two replant definitions
-local farming_plants = {
-	names = {
-		["farming:artichoke_5"]={replant={"farming:artichoke"}},
-		["farming:barley_7"]={replant={"farming:seed_barley"}},
-		["farming:beanpole_5"]={replant={"farming:beanpole","farming:beans"}},
-		["farming:beetroot_5"]={replant={"farming:beetroot"}},
-		["farming:blackberry_4"]={replant={"farming:blackberry"}},
-		["farming:blueberry_4"]={replant={"farming:blueberries"}},
-		["farming:cabbage_6"]={replant={"farming:cabbage"}},
-		["farming:carrot_8"]={replant={"farming:carrot"}},
-		["farming:chili_8"]={replant={"farming:chili_pepper"}},
-		["farming:cocoa_4"]={replant={"farming:cocoa_beans"}},
-		["farming:coffe_5"]={replant={"farming:coffe_beans"}},
-		["farming:corn_8"]={replant={"farming:corn"}},
-		["farming:cotton_8"]={replant={"farming:seed_cotton"}},
-		["farming:cucumber_4"]={replant={"farming:cucumber"}},
-		["farming:garlic_5"]={replant={"farming:garlic_clove"}},
-		["farming:grapes_8"]={replant={"farming:trellis","farming:grapes"}},
-		["farming:hemp_8"]={replant={"farming:seed_hem["}},
-		["farming:lettuce_5"]={replant={"farming:lettuce"}},
-		["farming:melon_8"]={replant={"farming:melon_slice"}},
-		["farming:mint_4"]={replant={"farming:seed_mint"}},
-		["farming:oat_8"]={replant={"farming:seed_oat"}},
-		["farming:onion_5"]={replant={"farming:onion"}},
-		["farming:parsley_3"]={replant={"farming:parsley"}},
-		["farming:pea_5"]={replant={"farming:pea_pod"}},
-		["farming:pepper_7"]={replant={"farming:peppercorn"}},
-		["farming:pineaple_8"]={replant={"farming:pineapple_top"}},
-		["farming:potato_4"]={replant={"farming:potato"}},
-		["farming:pumpkin_8"]={replant={"farming:pumpkin_slice"}},
-		["farming:raspberry_4"]={replant={"farming:raspberries"}},
-		["farming:rhubarb_3"]={replant={"farming:rhubarb"}},
-		["farming:rice_8"]={replant={"farming:seed_rice"}},
-		["farming:rye_8"]={replant={"farming:seed_rye"}},
-		["farming:soy_7"]={replant={"farming:soy_pod"}},
-		["farming:sunflower_8"]={replant={"farming:seed_sunflower"}},
-		["farming:tomato_8"]={replant={"farming:tomato"}},
-		["farming:vanilla_8"]={replant={"farming:vanilla"}},
-		["farming:wheat_8"]={replant={"farming:seed_wheat"}},
-	},
-}
-
-local farming_demands = {
-	["farming:beanpole"] = 99,
-	["farming:trellis"] = 99,
-}
-
-function farming_plants.get_plant(item_name)
-	-- check more priority definitions
-	for key, value in pairs(farming_plants.names) do
-		if item_name==key then
-			return value
-		end
-	end
-	return nil
-end
-
-function farming_plants.is_plant(item_name)
-	local data = farming_plants.get_plant(item_name);
-	if (not data) then
-		return false;
-	end
-	return true;
-end
+-- Use the compatibility layer for plant definitions
+local farming_plants = farming_compat
+local farming_demands = farming_compat.get_demands()
 
 local function find_plant_node(pos)
-	local node = minetest.get_node(pos);
-	local data = farming_plants.get_plant(node.name);
-	if (not data) then
-		return false;
-	end
-	return true;
+	return farming_compat.is_plant_node(pos)
 end
 
 local searching_range = {x = 10, y = 3, z = 10}

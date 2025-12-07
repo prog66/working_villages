@@ -46,6 +46,39 @@ features:
 
 for developing jobs, villagers, etc. read [api.md](api.MD)
 
+## VoxeLibre Compatibility
+This mod fully supports VoxeLibre (Minecraft-like game for Minetest). The following adaptations have been made:
+
+### Automatic Detection
+The mod automatically detects whether it's running on minetest_game or VoxeLibre and adapts all functionality accordingly.
+
+### Block/Item Mapping
+- Doors: `doors:*` → `mcl_doors:*`
+- Chests: `default:chest` → `mcl_chests:chest`
+- Torches: `default:torch` → `mcl_torches:torch`
+- Basic blocks: `default:*` → `mcl_core:*`
+- Plants: `default:papyrus` → `mcl_core:reeds`, etc.
+
+### Farming System
+Both the minetest_game `farming` mod and VoxeLibre `mcl_farming` are supported:
+- Farmer job works with crops from either system
+- Plant growth stages are handled automatically
+- Replanting logic adapts to the active farming system
+
+### Villager Behavior
+All villager jobs work seamlessly in VoxeLibre:
+- Woodcutter: Uses VoxeLibre tree/sapling groups
+- Farmer: Harvests and plants VoxeLibre crops
+- Builder: Places VoxeLibre blocks and doors
+- Torcher: Places VoxeLibre torches
+- Plant collector: Collects VoxeLibre plants
+
+### Complex Porting Points
+1. **Door handling**: VoxeLibre uses different door node names and states. The compatibility layer handles both formats.
+2. **Bed colors**: VoxeLibre has 16 colored beds vs single bed type in minetest_game. All colors are supported.
+3. **Farming stages**: Different growth stage systems between farming mods are abstracted.
+4. **Optional dependencies**: Both game dependencies are marked optional to support both environments.
+
 ## screenshots
 ![Screenshot 1](screenshot.png)
 ![Screenshot 2](screenshot.2.png)
@@ -71,6 +104,19 @@ This will clone all missing submodules.
 ## Dependencies
 working_villages needs modutil to load utilities it can also use modutil portable though  
 doors can be used by the villagers that's why there is a dependency
+
+### Game Compatibility
+working_villages is compatible with both **minetest_game** and **VoxeLibre** (formerly MineClone2):
+
+#### For minetest_game:
+- Required: `default`
+- Optional: `doors`, `beds`, `farming`
+
+#### For VoxeLibre:
+- Required: `mcl_core`
+- Optional: `mcl_doors`, `mcl_beds`, `mcl_chests`, `mcl_farming`, `mcl_torches`
+
+The mod automatically detects which game is running and adapts its behavior accordingly. All features work seamlessly in both environments.
 
 ## missing modutil
 If you clone the mod you either need to **install and activate the modutil mod** or you need to **[clone it recursively](#cloning)**.  

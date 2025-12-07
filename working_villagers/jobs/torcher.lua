@@ -25,7 +25,8 @@ function torcher.place_torch_at(v,pos)
     return
   end
   --perhaps check if there are nodes to the at the sides to support the torch and place to walls
-  local sucess, ret = v:place("default:torch",pos)
+  local torch_name = working_villages.voxelibre_compat.get_item("default:torch")
+  local sucess, ret = v:place(torch_name,pos)
   if sucess == false then
     if ret == fail.too_far then
       log.error("torch placement in front of villager %s was too far away", v.inventory_name)

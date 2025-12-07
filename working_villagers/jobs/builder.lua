@@ -89,11 +89,13 @@ If I have the materials of course. Also I'll look for building markers within a 
 						return co_command.pause, "waiting for inventory space"
 					end
 				end
-				if nname=="default:torch_wall" then
-					if self:has_item_in_main(function (name) return name == "default:torch" end) then
+				local torch_wall = working_villages.voxelibre_compat.get_item("default:torch_wall")
+				local torch = working_villages.voxelibre_compat.get_item("default:torch")
+				if nname==torch_wall then
+					if self:has_item_in_main(function (name) return name == torch end) then
 					  local inv = self:get_inventory()
 					  if inv:room_for_item("main", ItemStack(nname)) then
-						  self:replace_item_from_main(ItemStack("default:torch"),ItemStack(nname))
+						  self:replace_item_from_main(ItemStack(torch),ItemStack(nname))
 					  else
               local msg = "builder at " .. minetest.pos_to_string(self.object:get_pos()) ..
                 " doesn't have enough inventory space"
