@@ -43,6 +43,8 @@ working_villages.require("storage")
 -- Blueprint learning and management system
 working_villages.blueprints = working_villages.require("blueprints")
 working_villages.require("blueprints_default")
+working_villages.blueprint_construction = working_villages.require("blueprint_construction")
+working_villages.require("blueprint_forms")
 
 --base
 working_villages.require("api")

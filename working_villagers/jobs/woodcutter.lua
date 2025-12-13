@@ -1,4 +1,5 @@
 local func = working_villages.require("jobs/util")
+local blueprints = working_villages.blueprints
 
 local function find_tree(p)
 	local adj_node = minetest.get_node(p)
@@ -46,6 +47,23 @@ local function is_sapling_spot(pos)
 	return true
 end
 
+-- Count trees in the area (for sustainable forestry)
+local function count_nearby_trees(pos, radius)
+	local count = 0
+	for x = -radius, radius do
+		for z = -radius, radius do
+			for y = -2, 2 do
+				local check_pos = vector.add(pos, {x=x, y=y, z=z})
+				local node = minetest.get_node(check_pos)
+				if minetest.get_item_group(node.name, "tree") > 0 then
+					count = count + 1
+				end
+			end
+		end
+	end
+	return count
+end
+
 local function put_func(_,stack)
   local name = stack:get_name();
   if (minetest.get_item_group(name, "axe")~=0)
@@ -64,7 +82,8 @@ working_villages.register_job("working_villages:job_woodcutter", {
 	description      = "woodcutter (working_villages)",
 	long_description = "I look for any Tree trunks around and chop them down.\
 I might also chop down a house. Don't get angry please I'm not the best at my job.\
-When I find a sappling I'll plant it on some soil near a bright place so a new tree can grow from it.",
+When I find a sapling I'll plant it on some soil near a bright place so a new tree can grow from it. "..
+"I practice sustainable forestry and gain experience from my work.",
 	inventory_image  = "default_paper.png^working_villages_woodcutter.png",
 	jobfunc = function(self)
 		self:handle_night()
@@ -73,6 +92,7 @@ When I find a sappling I'll plant it on some soil near a bright place so a new t
 
 		self:count_timer("woodcutter:search")
 		self:count_timer("woodcutter:change_dir")
+		self:count_timer("woodcutter:reforest")
 		self:handle_obstacles()
 		if self:timer_exceeded("woodcutter:search",20) then
 			self:collect_nearest_item_by_condition(is_sapling, searching_range)
@@ -92,34 +112,59 @@ When I find a sappling I'll plant it on some soil near a bright place so a new t
 						working_villages.failed_pos_record(target)
 						self:set_displayed_action("confused as to why planting failed")
 						self:delay(100)
+					else
+						-- Award experience for planting trees (reforestation)
+						local inv_name = self:get_inventory_name()
+						blueprints.add_experience(inv_name, 1)
 					end
 				end
 			end
 			local target = func.search_surrounding(self.object:get_pos(), find_tree, searching_range)
 			if target ~= nil then
-				local destination = func.find_adjacent_clear(target)
-				destination = func.find_ground_below(destination)
-				if destination==false then
-					print("failure: no adjacent walkable found")
-					destination = target
-				end
-				self:set_displayed_action("cutting a tree")
-				-- We may not be able to reach the log
-				local success, ret = self:go_to(destination)
-				if not success then
-					working_villages.failed_pos_record(target)
-					self:set_displayed_action("looking at the unreachable log")
-					self:delay(100)
+				-- Check tree density for sustainable forestry
+				local tree_count = count_nearby_trees(target, 5)
+				if tree_count < 3 then
+					-- Too few trees nearby, skip cutting and plant more
+					self:set_state_info("Preserving forest - too few trees nearby. Will plant more saplings.")
+					self:set_displayed_action("being a responsible forester")
 				else
-					success, ret = self:dig(target,true)
+					local destination = func.find_adjacent_clear(target)
+					destination = func.find_ground_below(destination)
+					if destination==false then
+						print("failure: no adjacent walkable found")
+						destination = target
+					end
+					self:set_displayed_action("cutting a tree")
+					-- We may not be able to reach the log
+					local success, ret = self:go_to(destination)
 					if not success then
 						working_villages.failed_pos_record(target)
-						self:set_displayed_action("confused as to why cutting failed")
+						self:set_displayed_action("looking at the unreachable log")
 						self:delay(100)
+					else
+						success, ret = self:dig(target,true)
+						if not success then
+							working_villages.failed_pos_record(target)
+							self:set_displayed_action("confused as to why cutting failed")
+							self:delay(100)
+						else
+							-- Award experience for cutting trees
+							local inv_name = self:get_inventory_name()
+							blueprints.add_experience(inv_name, 1)
+						end
 					end
 				end
 			end
 			self:set_displayed_action("looking for work")
+		elseif self:timer_exceeded("woodcutter:reforest", 200) then
+			-- Periodically focus on reforestation
+			if self:has_item_in_main(is_sapling) then
+				local target = func.search_surrounding(self.object:get_pos(), is_sapling_spot, searching_range)
+				if target then
+					self:set_displayed_action("reforesting the area")
+					self:set_state_info("Planting trees to maintain the forest.")
+				end
+			end
 		elseif self:timer_exceeded("woodcutter:change_dir",50) then
 			self:change_direction_randomly()
 		end
