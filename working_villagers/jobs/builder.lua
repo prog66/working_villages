@@ -1,5 +1,6 @@
 local func = working_villages.require("jobs/util")
 local co_command = working_villages.require("job_coroutines").commands
+local blueprints = working_villages.blueprints
 
 local function find_building(p)
 	if minetest.get_node(p).name ~= "working_villages:building_marker" then
@@ -53,6 +54,11 @@ If I have the materials of course. Also I'll look for building markers within a 
 					meta:set_string("house_label", "house " .. minetest.pos_to_string(marker))
 					--TODO: save beds
 					meta:set_string("formspec",working_villages.buildings.get_formspec(meta))
+					
+					-- Award experience for completing a building
+					local inv_name = self:get_inventory_name()
+					blueprints.add_experience(inv_name, 5)
+					self:set_state_info("Building completed! Gained construction experience.")
 					return
 				end
 				self:set_state_info("I am currently working on a building.")

@@ -40,6 +40,9 @@ working_villages.require("talking")
 --TODO: instead use the building sign mod when it is ready
 working_villages.require("building")
 working_villages.require("storage")
+-- Blueprint learning and management system
+working_villages.blueprints = working_villages.require("blueprints")
+working_villages.require("blueprints_default")
 
 --base
 working_villages.require("api")
@@ -58,6 +61,9 @@ working_villages.require("jobs/guard")
 working_villages.require("jobs/plant_collector")
 working_villages.require("jobs/farmer")
 working_villages.require("jobs/woodcutter")
+-- new specialized jobs
+working_villages.require("jobs/blacksmith")
+working_villages.require("jobs/miner")
 --testing jobs
 working_villages.require("jobs/torcher")
 working_villages.require("jobs/snowclearer")
