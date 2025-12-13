@@ -17,6 +17,12 @@ The plan is to make villagers build up their own villages.
 ## implemented Features
 no crafting recipes yet (you will have to use creative)
 features:
+* **Blueprint Learning System**
+  * Villagers can learn construction blueprints
+  * Progressive skill system with experience points
+  * Blueprint improvements - upgrade structures over time
+  * 8 default blueprints (houses, farms, workshops, infrastructure)
+  * See [BLUEPRINTS.md](BLUEPRINTS.md) for details
 * building markers
   * for building houses and saving the houses details
   * save the position of the door and the bed
@@ -35,16 +41,22 @@ features:
   * jobs define what the villagers should do
   * jobs can be changed in the inventory by clicking change job
   * in the job change form the jobs can be changed by replacing the current job by one of the jobs below (shift+click possible)
-* registered jobs:
+* **registered jobs:**
+  * **blacksmith** (works with metal, repairs tools, smelts ores) - NEW!
+  * **miner** (mines stone and ores, places torches underground) - NEW!
   * woodcutter/lumberjack (cutting trees and planting saplings)
+  * farmer (harvests and replants crops)
   * plant collector (collecting all sort of fauna to produce dyes etc.)
   * player follower (following any player, night active)
-  * builder (builds the nearest building defined by a building marker)
+  * builder (builds the nearest building defined by a building marker, gains experience)
+  * guard (protects the village)
 * testing jobs:
   * snowclearer (clearing snow away)
   * torcher (following player and placing torches in the dark, night active)
 
-for developing jobs, villagers, etc. read [api.md](api.MD)
+for developing jobs, villagers, etc. read [api.md](api.MD)  
+for new job details see [JOBS.md](JOBS.md)  
+for blueprint system see [BLUEPRINTS.md](BLUEPRINTS.md)
 
 ## VoxeLibre Compatibility
 This mod fully supports VoxeLibre (Minecraft-like game for Minetest). The following adaptations have been made:
@@ -69,7 +81,9 @@ Both the minetest_game `farming` mod and VoxeLibre `mcl_farming` are supported:
 All villager jobs work seamlessly in VoxeLibre:
 - Woodcutter: Uses VoxeLibre tree/sapling groups
 - Farmer: Harvests and plants VoxeLibre crops
-- Builder: Places VoxeLibre blocks and doors
+- Builder: Places VoxeLibre blocks and doors, gains experience
+- Blacksmith: Works with VoxeLibre metals and tools
+- Miner: Mines VoxeLibre stone and ores
 - Torcher: Places VoxeLibre torches
 - Plant collector: Collects VoxeLibre plants
 
