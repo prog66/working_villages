@@ -71,7 +71,7 @@ forms.register_page("working_villages:learn_blueprints", {
 			y = y + 1
 			count = count + 1
 			if count >= 4 then
-				formspec = formspec .. "label[0.5," .. y .. ;... and more]"
+				formspec = formspec .. "label[0.5," .. y .. ";... and more]"
 				break
 			end
 		end
