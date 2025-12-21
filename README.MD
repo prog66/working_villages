@@ -17,6 +17,11 @@ The plan is to make villagers build up their own villages.
 ## implemented Features
 no crafting recipes yet (you will have to use creative)
 features:
+* **Initial Villager Spawn** (NEW!)
+  * When spawning is enabled, 5 NPCs spawn at world spawn on server start
+  * Includes: woodcutter, farmer, herb collector, builder, and one unemployed villager
+  * NPCs are self-employed and can be commanded by any player with a commanding sceptre
+  * Enable with: `working_villages_enable_spawn = true` in settings
 * **Blueprint Learning System**
   * Villagers can learn construction blueprints
   * Progressive skill system with experience points

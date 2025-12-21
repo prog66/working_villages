@@ -173,4 +173,30 @@ function voxelibre_compat.is_chest(node)
 	end
 end
 
+-- Get the appropriate player model mesh for the current game
+-- Both minetest_game and VoxeLibre use character.b3d
+-- The model is provided by the base game mods (default or mcl_player)
+function voxelibre_compat.get_player_mesh()
+	-- Both games use the same character.b3d model file
+	-- minetest_game: provided by default mod
+	-- VoxeLibre: provided by mcl_player mod
+	return "character.b3d"
+end
+
+-- Get the appropriate skin texture prefix for villagers
+-- This helps identify compatible skins for each game
+function voxelibre_compat.get_skin_info()
+	if voxelibre_compat.is_voxelibre then
+		return {
+			format = "64x64", -- VoxeLibre uses 64x64 skins (Minecraft format)
+			note = "Compatible with Minecraft/VoxeLibre 64x64 skin format"
+		}
+	else
+		return {
+			format = "64x32", -- minetest_game traditionally uses 64x32
+			note = "Compatible with minetest_game character skin format"
+		}
+	end
+end
+
 return voxelibre_compat
