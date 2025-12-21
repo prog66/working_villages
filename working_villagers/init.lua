@@ -6,7 +6,28 @@ working_villages={
 }
 
 if not minetest.get_modpath("modutil") then
-    dofile(working_villages.modpath.."/modutil/portable.lua")
+    local portable_path = working_villages.modpath.."/modutil/portable.lua"
+    local file = io.open(portable_path, "r")
+    if file then
+        file:close()
+        dofile(portable_path)
+    else
+        error("\n\n" ..
+            "================================================================================\n" ..
+            "ERROR: modutil submodule not initialized!\n" ..
+            "================================================================================\n" ..
+            "The modutil submodule is required but the files are missing.\n" ..
+            "\n" ..
+            "To fix this, run the following command in your working_villages directory:\n" ..
+            "  git submodule update --init\n" ..
+            "\n" ..
+            "Or if you haven't cloned yet, use:\n" ..
+            "  git clone --recursive https://github.com/theFox6/working_villages.git\n" ..
+            "\n" ..
+            "Alternatively, you can install the 'modutil' mod separately.\n" ..
+            "See README.MD for more details.\n" ..
+            "================================================================================\n")
+    end
 end
 
 modutil.require("local_require")(working_villages)
