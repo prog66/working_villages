@@ -58,6 +58,42 @@ for developing jobs, villagers, etc. read [api.md](api.MD)
 for new job details see [JOBS.md](JOBS.md)  
 for blueprint system see [BLUEPRINTS.md](BLUEPRINTS.md)
 
+## Documentation
+
+📚 **Complete documentation is available:**
+
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed system architecture and component overview
+- **[API_REFERENCE.md](API_REFERENCE.md)** - Complete API reference for developers
+- **[ROADMAP.md](ROADMAP.md)** - Future features and development roadmap
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute and coding standards
+- **[BLUEPRINTS.md](BLUEPRINTS.md)** - Blueprint learning system documentation
+- **[JOBS.md](JOBS.md)** - Detailed job system documentation
+- **[api.MD](api.MD)** - Original API documentation
+
+## For Developers
+
+The mod now includes advanced systems for easier development:
+
+### 🤖 AI Behavior System (`ai_behavior.lua`)
+- Task priority system for intelligent decision-making
+- State machine for villager states
+- Memory system for learning and remembering locations
+- See `jobs/EXAMPLE_enhanced_plant_collector.lua` for usage
+
+### 🔧 Job Patterns (`job_patterns.lua`)
+- Reusable patterns for common job tasks
+- Chest interaction helpers
+- Search and act patterns
+- Tool management utilities
+- Reduces code duplication
+
+### 📖 Getting Started
+1. Read [ARCHITECTURE.md](ARCHITECTURE.md) to understand the system
+2. Check [API_REFERENCE.md](API_REFERENCE.md) for available functions
+3. Look at [CONTRIBUTING.md](CONTRIBUTING.md) for coding standards
+4. See `jobs/EXAMPLE_enhanced_plant_collector.lua` for a complete example
+5. Review [ROADMAP.md](ROADMAP.md) for planned features
+
 ## VoxeLibre Compatibility
 This mod fully supports VoxeLibre (Minecraft-like game for Minetest). The following adaptations have been made:
 
