@@ -259,21 +259,25 @@ job_patterns.collection = {}
   @param self table - Villager object
   @param condition function - Function to check if item should be collected
   @param range table - Search range {x, y, z}
-  @param timer_name string - Optional timer name
-  @param timer_threshold number - Optional timer threshold
+  @param options table - Optional configuration:
+    - timer_name: string - Timer name
+    - timer_threshold: number - Timer threshold (default: 20)
   
   @return boolean - true if items were collected
   
   @usage
   job_patterns.collection.collect_items(self, 
     function(item) return item:get_name():find("ore") end,
-    {x=5, y=2, z=5}
+    {x=5, y=2, z=5},
+    {timer_name = "collect", timer_threshold = 15}
   )
 ]]--
-function job_patterns.collection.collect_items(self, condition, range, timer_name, timer_threshold)
-  if timer_name then
-    self:count_timer(timer_name)
-    if not self:timer_exceeded(timer_name, timer_threshold or 20) then
+function job_patterns.collection.collect_items(self, condition, range, options)
+  options = options or {}
+  
+  if options.timer_name then
+    self:count_timer(options.timer_name)
+    if not self:timer_exceeded(options.timer_name, options.timer_threshold or 20) then
       return false
     end
   end

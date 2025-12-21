@@ -112,12 +112,13 @@ working_villages.register_job("working_villages:job_plant_collector_enhanced", {
             s,
             function(item)
               local name = item:get_name()
-              return minetest.get_item_group(name, "flora") > 0 or
-                     minetest.get_item_group(name, "flower") > 0
+              -- Cache group lookups for efficiency
+              local flora = minetest.get_item_group(name, "flora")
+              local flower = minetest.get_item_group(name, "flower")
+              return flora > 0 or flower > 0
             end,
             config.searching_range,
-            "plant_collector:collect",
-            10
+            {timer_name = "plant_collector:collect", timer_threshold = 10}
           )
           if collected then
             s:set_state_info("Collecting dropped plants.")

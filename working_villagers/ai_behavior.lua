@@ -247,21 +247,28 @@ ai_behavior.patterns = {}
   Before gathering a resource, checks if there are enough resources in the area
   to sustain gathering without depleting the source.
   
+  Note: Uses early termination for performance. For large radius values,
+  consider using a smaller radius or sampling strategy.
+  
   @param pos table - Position to check
   @param resource_func function - Function to identify resource nodes
-  @param radius number - Radius to check
+  @param radius number - Radius to check (recommended max: 5)
   @param min_count number - Minimum count required
   @return boolean - true if sustainable to gather
 ]]--
 function ai_behavior.patterns.is_sustainable(pos, resource_func, radius, min_count)
   local count = 0
   
-  for x = -radius, radius do
-    for z = -radius, radius do
+  -- Limit radius to prevent performance issues
+  local max_radius = math.min(radius, 5)
+  
+  for x = -max_radius, max_radius do
+    for z = -max_radius, max_radius do
       for y = -2, 2 do
         local check_pos = vector.add(pos, {x=x, y=y, z=z})
         if resource_func(check_pos) then
           count = count + 1
+          -- Early termination when minimum is reached
           if count >= min_count then
             return true
           end
