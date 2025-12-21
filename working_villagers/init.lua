@@ -46,6 +46,10 @@ working_villages.require("blueprints_default")
 working_villages.blueprint_construction = working_villages.require("blueprint_construction")
 working_villages.require("blueprint_forms")
 
+-- Enhanced AI and job pattern systems
+working_villages.job_patterns = working_villages.require("job_patterns")
+working_villages.ai_behavior = working_villages.require("ai_behavior")
+
 --base
 working_villages.require("api")
 working_villages.require("register")
