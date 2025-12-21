@@ -188,8 +188,8 @@ end
 function voxelibre_compat.get_skin_info()
 	if voxelibre_compat.is_voxelibre then
 		return {
-			format = "64x64", -- VoxeLibre uses 64x64 skins (Minecraft format)
-			note = "Compatible with Minecraft/VoxeLibre 64x64 skin format"
+			format = "64x64 or 64x32", -- VoxeLibre accepts both formats
+			note = "Compatible with Minecraft/VoxeLibre 64x64 format or 64x32 format"
 		}
 	else
 		return {

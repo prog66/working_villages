@@ -4,6 +4,7 @@ local log = working_villages.require("log")
 -- Track if initial spawn has been done
 local spawn_storage = minetest.get_mod_storage()
 local INITIAL_SPAWN_KEY = "initial_spawn_done"
+local INITIAL_SPAWN_DELAY = 5  -- seconds to wait after server start
 
 local function spawner(initial_job)
     return function(pos, _, _, active_object_count_wider)
@@ -67,15 +68,24 @@ local function initial_spawn_group()
         return
     end
 
+    -- Get the server's configured spawn point, or default to (0,0,0)
     local spawn_point = {x=0, y=0, z=0}
+    local spawn_setting = minetest.settings:get("static_spawnpoint")
+    if spawn_setting then
+        local spawn_coords = minetest.string_to_pos(spawn_setting)
+        if spawn_coords then
+            spawn_point = spawn_coords
+            log.action("Using configured spawn point: %s", minetest.pos_to_string(spawn_point, 0))
+        end
+    end
     
     -- Try to find a better spawn point on the ground
     -- Look for ground level near spawn
     local found_ground = false
-    for y = 10, -10, -1 do
-        local check_pos = {x=0, y=y, z=0}
+    for y = spawn_point.y + 10, spawn_point.y - 10, -1 do
+        local check_pos = {x=spawn_point.x, y=y, z=spawn_point.z}
         local node = minetest.get_node(check_pos)
-        local node_below = minetest.get_node({x=0, y=y-1, z=0})
+        local node_below = minetest.get_node({x=spawn_point.x, y=y-1, z=spawn_point.z})
         local def_below = minetest.registered_nodes[node_below.name]
         
         if node.name == "air" and def_below and 
@@ -89,7 +99,7 @@ local function initial_spawn_group()
     end
     
     if not found_ground then
-        log.warning("Could not find suitable ground near spawn, will spawn at y=0")
+        log.warning("Could not find suitable ground near spawn, will spawn at configured spawn point")
     end
 
     -- Define jobs for the initial group of 5 villagers
@@ -131,7 +141,7 @@ local function initial_spawn_group()
 end
 
 -- Schedule the initial spawn after a short delay to ensure world is loaded
-minetest.after(5, function()
+minetest.after(INITIAL_SPAWN_DELAY, function()
     initial_spawn_group()
 end)
 

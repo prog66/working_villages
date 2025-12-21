@@ -248,11 +248,13 @@ Villager skins are PNG texture files applied to the character model:
 - **minetest_game**: Traditionally uses 64x32 pixel format
 - **VoxeLibre**: Uses 64x64 pixel format (Minecraft-compatible)
 
-The mod includes two default villager skins:
-- `villager_male.png`
-- `villager_female.png`
+The mod includes two default villager skins (64x32 format):
+- `villager_male.png` (64x32)
+- `villager_female.png` (64x32)
 
-Both textures work with either game format. The compatibility layer (`voxelibre_compat.lua`) provides `get_skin_info()` to identify the expected format for each game.
+**Compatibility Note:** The 64x32 textures work correctly in both minetest_game and VoxeLibre. While VoxeLibre supports 64x64 skins, it also handles 64x32 textures properly. The character.b3d model can accept both texture formats without issues.
+
+The compatibility layer (`voxelibre_compat.lua`) provides `get_skin_info()` to identify the expected format for each game, allowing future expansion to 64x64 skins if desired.
 
 ### Full VoxeLibre Skin Support
 
