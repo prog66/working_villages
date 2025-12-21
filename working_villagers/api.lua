@@ -1,29 +1,57 @@
---TODO: split this into single modules
+--[[
+  Core API for working_villages mod.
+  
+  This file contains the core API for villagers, including:
+  - Animation frame definitions
+  - Villager registration tables
+  - Failed position tracking system
+  - Base villager methods and properties
+  
+  TODO: Split this into single modules for better organization
+]]--
 
 local log = working_villages.require("log")
 local cmnp = modutil.require("check_prefix","venus")
 
+--[[
+  Animation frames for villager entities.
+  
+  Each frame range corresponds to specific animations in the villager model.
+  Used with villager:set_animation() to change villager appearance.
+]]--
 working_villages.animation_frames = {
-  STAND     = { x=  0, y= 79, },
-  LAY       = { x=162, y=166, },
-  WALK      = { x=168, y=187, },
-  MINE      = { x=189, y=198, },
-  WALK_MINE = { x=200, y=219, },
-  SIT       = { x= 81, y=160, },
+  STAND     = { x=  0, y= 79, },  -- Standing still
+  LAY       = { x=162, y=166, },  -- Lying down (sleeping)
+  WALK      = { x=168, y=187, },  -- Walking animation
+  MINE      = { x=189, y=198, },  -- Mining/working animation
+  WALK_MINE = { x=200, y=219, },  -- Walking while carrying something
+  SIT       = { x= 81, y=160, },  -- Sitting animation
 }
 
-working_villages.registered_villagers = {}
+-- Registry tables for mod entities
+working_villages.registered_villagers = {}  -- All villager types
+working_villages.registered_jobs = {}       -- All available jobs
+working_villages.registered_eggs = {}       -- Spawn eggs
 
-working_villages.registered_jobs = {}
+--[[
+  Failed Position Tracking System
+  
+  Prevents villagers from repeatedly attempting actions at positions where
+  they have previously failed. This improves performance and prevents
+  stuck behaviors.
+  
+  Positions are marked as failed for 3 minutes, then automatically cleaned up.
+]]--
 
-working_villages.registered_eggs = {}
-
--- records failed node place attempts to prevent repeating mistakes
--- key=minetest.pos_to_string(pos) val=(os.clock()+180)
+-- Internal storage: key=hash(pos), val=expiry_time
 local failed_pos_data = {}
 local failed_pos_time = 0
 
--- remove old positions
+--[[
+  Cleans up expired failed positions.
+  
+  Called periodically to prevent memory bloat.
+]]--
 local function failed_pos_cleanup()
 	-- build a list of all items to discard
 	local discard_tab = {}
@@ -39,7 +67,14 @@ local function failed_pos_cleanup()
 	end
 end
 
--- add a failed place position
+--[[
+  Records a position as failed for 3 minutes.
+  
+  Villagers will skip this position when searching for targets.
+  
+  @param pos table - Position vector {x, y, z}
+  @usage working_villages.failed_pos_record(failed_build_pos)
+]]--
 function working_villages.failed_pos_record(pos)
 	local key = minetest.hash_node_position(pos)
 	failed_pos_data[key] = os.clock() + 180 -- mark for 3 minutes
@@ -51,14 +86,26 @@ function working_villages.failed_pos_record(pos)
 	end
 end
 
--- check if a position is marked as failed and hasn't expired
+--[[
+  Checks if a position is marked as failed and hasn't expired.
+  
+  @param pos table - Position vector {x, y, z}
+  @return boolean - true if position is currently marked as failed
+  @usage if not working_villages.failed_pos_test(pos) then attempt_action(pos) end
+]]--
 function working_villages.failed_pos_test(pos)
 	local key = minetest.hash_node_position(pos)
 	local exp = failed_pos_data[key]
 	return exp ~= nil and exp >= os.clock()
 end
 
--- working_villages.is_job reports whether a item is a job item by the name.
+--[[
+  Checks if an item name corresponds to a registered job.
+  
+  @param item_name string - Name of the item to check
+  @return boolean - true if item is a job item
+  @usage if working_villages.is_job(stack:get_name()) then ... end
+]]--
 function working_villages.is_job(item_name)
   if working_villages.registered_jobs[item_name] then
     return true
@@ -66,7 +113,13 @@ function working_villages.is_job(item_name)
   return false
 end
 
--- working_villages.is_villager reports whether a name is villager's name.
+--[[
+  Checks if a name corresponds to a registered villager type.
+  
+  @param name string - Entity name to check
+  @return boolean - true if name is a villager entity
+  @usage if working_villages.is_villager(entity.name) then ... end
+]]--
 function working_villages.is_villager(name)
   if working_villages.registered_villagers[name] then
     return true
@@ -75,15 +128,29 @@ function working_villages.is_villager(name)
 end
 
 ---------------------------------------------------------------------
+-- Villager Base Class
+---------------------------------------------------------------------
 
--- working_villages.villager represents a table that contains common methods
--- for villager object.
--- this table must be contains by a metatable.__index of villager self tables.
--- minetest.register_entity set initial properties as a metatable.__index, so
--- this table's methods must be put there.
+--[[
+  working_villages.villager - Base class for all villagers
+  
+  This table contains common methods for all villager objects.
+  It is used as the metatable.__index for villager self tables.
+  
+  All methods in this table are available on villager instances via self:method()
+]]--
 working_villages.villager = {}
 
--- working_villages.villager.get_inventory returns a inventory of a villager.
+--[[
+  Gets the detached inventory for this villager.
+  
+  The inventory contains:
+  - "main" list: General storage (16 slots)
+  - "job" list: Current job item (1 slot)
+  
+  @return InvRef - The villager's inventory
+  @usage local inv = self:get_inventory()
+]]--
 function working_villages.villager:get_inventory()
   return minetest.get_inventory {
     type = "detached",
@@ -91,7 +158,14 @@ function working_villages.villager:get_inventory()
   }
 end
 
--- working_villages.villager.get_job_name returns a name of a villager's current job.
+--[[
+  Gets the name of the villager's current job.
+  
+  Handles job changes by checking for pending new_job and updating inventory.
+  
+  @return string - Job item name (e.g., "working_villages:job_farmer")
+  @usage local job_name = self:get_job_name()
+]]--
 function working_villages.villager:get_job_name()
   local inv = self:get_inventory()
 
@@ -106,7 +180,14 @@ function working_villages.villager:get_job_name()
   return inv:get_stack("job", 1):get_name()
 end
 
--- working_villages.villager.get_job returns a villager's current job definition.
+--[[
+  Gets the full job definition for the villager's current job.
+  
+  @return table - Job definition with fields: description, inventory_image, jobfunc, etc.
+  @return nil - If villager has no job assigned
+  @usage local job = self:get_job()
+         if job then job.jobfunc(self) end
+]]--
 function working_villages.villager:get_job()
   local name = self:get_job_name()
   if name ~= "" then
@@ -115,15 +196,33 @@ function working_villages.villager:get_job()
   return nil
 end
 
--- working_villages.villager.is_enemy returns if an object is an enemy.
+--[[
+  Determines if an object is an enemy of this villager.
+  
+  TODO: Implement enemy detection logic
+  Currently always returns false.
+  
+  @param obj ObjectRef - Object to check
+  @return boolean - true if object is hostile
+]]--
 function working_villages.villager:is_enemy(obj)
   log.verbose("villager %s checks if %s is hostile",self.inventory_name,obj)
   --TODO
   return false
 end
 
--- working_villages.villager.get_nearest_player returns a player object who
--- is the nearest to the villager, the position of and the distance to the player.
+--[[
+  Finds the nearest player to this villager.
+  
+  @param range_distance number - Maximum search radius
+  @param pos table - Optional position to search from (defaults to villager position)
+  @return ObjectRef - Nearest player object
+  @return table - Player position {x, y, z}
+  @return number - Distance to player
+  @return nil - If no player found in range
+  
+  @usage local player, pos, dist = self:get_nearest_player(20)
+]]--
 function working_villages.villager:get_nearest_player(range_distance,pos)
   local min_distance = range_distance
   local player,ppos
@@ -145,7 +244,14 @@ function working_villages.villager:get_nearest_player(range_distance,pos)
   return player,ppos,min_distance
 end
 
--- working_villages.villager.get_nearest_enemy returns an enemy who is the nearest to the villager.
+--[[
+  Finds the nearest enemy to this villager.
+  
+  TODO: Implement enemy finding logic
+  
+  @param range_distance number - Maximum search radius
+  @return ObjectRef - Nearest enemy
+]]--
 function working_villages.villager:get_nearest_enemy(range_distance)
   local enemy
   local min_distance = range_distance
