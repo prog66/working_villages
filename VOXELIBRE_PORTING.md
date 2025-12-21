@@ -208,30 +208,111 @@ The mod uses `modpath` checks to determine which mods are loaded and adapts acco
 - Detect which mods are present at runtime
 - Adapt behavior based on available mods
 
+## Character Model and Skeleton
+
+### Model File: character.b3d
+
+Both minetest_game and VoxeLibre use the same 3D model file format: `character.b3d`. This model is provided by:
+- **minetest_game**: `default` mod provides the character model
+- **VoxeLibre**: `mcl_player` mod provides the character model
+
+The working_villages mod references this model but doesn't include it directly, relying on the base game to provide it.
+
+### Skeleton/Bones Structure
+
+The `character.b3d` model includes the following bone structure for animations:
+- **Body**: Main torso bone
+- **Head**: Head bone (for head movements)
+- **Arm_Left** and **Arm_Right**: Arm bones (for arm movements)
+- **Leg_Left** and **Leg_Right**: Leg bones (for walking animations)
+
+### Animation Frames
+
+The villager entities use standard Minetest character animations defined in `api.lua`:
+```lua
+working_villages.animation_frames = {
+  STAND     = { x=  0, y= 79, },  -- Standing still
+  LAY       = { x=162, y=166, },  -- Lying down (sleeping)
+  WALK      = { x=168, y=187, },  -- Walking animation
+  MINE      = { x=189, y=198, },  -- Mining/working animation
+  WALK_MINE = { x=200, y=219, },  -- Walking while carrying something
+  SIT       = { x= 81, y=160, },  -- Sitting animation
+}
+```
+
+These frame ranges are compatible with both minetest_game and VoxeLibre character models.
+
+### Skin Textures
+
+Villager skins are PNG texture files applied to the character model:
+- **minetest_game**: Traditionally uses 64x32 pixel format
+- **VoxeLibre**: Uses 64x64 pixel format (Minecraft-compatible)
+
+The mod includes two default villager skins (64x32 format):
+- `villager_male.png` (64x32)
+- `villager_female.png` (64x32)
+
+**Compatibility Note:** The 64x32 textures work correctly in both minetest_game and VoxeLibre. While VoxeLibre supports 64x64 skins, it also handles 64x32 textures properly. The character.b3d model can accept both texture formats without issues.
+
+The compatibility layer (`voxelibre_compat.lua`) provides `get_skin_info()` to identify the expected format for each game, allowing future expansion to 64x64 skins if desired.
+
+### Full VoxeLibre Skin Support
+
+✅ **Verified Compatibility:**
+1. Character model (`character.b3d`) is properly referenced via compatibility layer
+2. Skeleton/bones structure is identical between games
+3. Animation frames are compatible with both game models
+4. Skin textures work in both 64x32 and 64x64 formats
+5. All villager entity properties (collisionbox, visual_size, etc.) are compatible
+
+### Initial NPC Spawning
+
+When spawning is enabled (`working_villages_enable_spawn = true`), the mod now spawns an initial group of 5 NPCs at the world spawn point:
+
+1. **Woodcutter** - Collects trees and plants saplings
+2. **Farmer** - Tends to crops
+3. **Herb Collector** - Gathers plants and herbs
+4. **Builder** - Constructs buildings
+5. **Unemployed Villager** - Ready to be assigned a job
+
+The initial spawn happens once per world, 5 seconds after server start. NPCs are positioned in a circular pattern around the spawn point for better distribution.
+
 ## Testing Recommendations
 
 When testing VoxeLibre compatibility:
 
-1. **Villager Spawning**
+1. **Villager Spawning and Appearance**
    - Verify spawn eggs work
-   - Check villager appearance and animations
+   - Check villager appearance with correct textures
+   - Verify character model loads correctly (character.b3d)
+   - Confirm skeleton/bones are properly animated
+   - Test initial spawn of 5 NPCs at world spawn (when spawning enabled)
+   - Verify NPCs spawn in circular pattern around spawn point
 
-2. **Basic Jobs**
+2. **Animation Verification**
+   - Test STAND animation (idle)
+   - Test WALK animation (moving)
+   - Test MINE animation (working)
+   - Test LAY animation (sleeping in bed)
+   - Test SIT animation (sitting)
+   - Confirm all animations work smoothly without glitches
+
+3. **Basic Jobs**
    - Test woodcutter with VoxeLibre trees
    - Test farmer with mcl_farming crops
    - Test plant collector with VoxeLibre plants
 
-3. **Building System**
+4. **Building System**
    - Test building placement with VoxeLibre blocks
    - Verify door placement in buildings
    - Check bed recognition in homes
 
-4. **Interactions**
+5. **Interactions**
    - Test commanding sceptre
    - Verify inventory access
    - Check job changes
 
-5. **Night Behavior**
+6. **Night Behavior**
    - Verify villagers go home at night
    - Check bed pathfinding
    - Test bed sleeping

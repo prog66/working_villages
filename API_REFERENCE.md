@@ -22,16 +22,57 @@ Enregistre un nouveau type de villageois.
 - `name` (string): Nom unique du villageois (ex: "working_villages:male_villager")
 - `definition` (table): Définition de l'entité avec propriétés Minetest standard
 
+**Propriétés importantes de definition:**
+- `hp_max` (number): Points de vie maximum
+- `weight` (number): Poids pour la gravité
+- `mesh` (string): Fichier de modèle 3D (ex: "character.b3d")
+- `textures` (table): Liste de textures à appliquer au modèle
+- `egg_image` (string): Texture de l'œuf de spawn
+
 **Exemple:**
 ```lua
 working_villages.register_villager("mymod:custom_villager", {
     hp_max = 20,
-    collisionbox = {-0.3, -0.01, -0.3, 0.3, 1.75, 0.3},
-    visual = "mesh",
-    mesh = "villager.b3d",
+    weight = 20,
+    mesh = "character.b3d",
     textures = {"my_texture.png"},
-    -- ... autres propriétés
+    egg_image = "my_egg.png"
 })
+```
+
+### Modèle 3D et Squelette
+
+Les villageois utilisent le modèle `character.b3d` qui est fourni par:
+- **minetest_game**: mod `default`
+- **VoxeLibre**: mod `mcl_player`
+
+**Structure du squelette (bones):**
+- `Body`: Torse principal
+- `Head`: Tête (pour mouvements de tête)
+- `Arm_Left` et `Arm_Right`: Bras (pour animations de bras)
+- `Leg_Left` et `Leg_Right`: Jambes (pour animation de marche)
+
+**Frames d'animation disponibles:**
+```lua
+working_villages.animation_frames = {
+  STAND     = { x=  0, y= 79, },  -- Immobile
+  LAY       = { x=162, y=166, },  -- Couché (dormir)
+  WALK      = { x=168, y=187, },  -- Marche
+  MINE      = { x=189, y=198, },  -- Miner/travailler
+  WALK_MINE = { x=200, y=219, },  -- Marcher en portant
+  SIT       = { x= 81, y=160, },  -- Assis
+}
+```
+
+**Textures:**
+- Format minetest_game: 64x32 pixels (traditionnel)
+- Format VoxeLibre: 64x64 pixels (compatible Minecraft)
+- Les deux formats fonctionnent dans les deux jeux
+
+**Pour obtenir le modèle approprié selon le jeu:**
+```lua
+local voxelibre_compat = working_villages.voxelibre_compat
+local player_mesh = voxelibre_compat.get_player_mesh()  -- Retourne "character.b3d"
 ```
 
 ## Enregistrement de jobs
