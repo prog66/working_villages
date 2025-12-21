@@ -5,6 +5,8 @@ local log = working_villages.require("log")
 local spawn_storage = minetest.get_mod_storage()
 local INITIAL_SPAWN_KEY = "initial_spawn_done"
 local INITIAL_SPAWN_DELAY = 5  -- seconds to wait after server start
+local SPAWN_RADIUS = 3  -- radius in blocks for circular spawn pattern
+local SPAWN_SEARCH_RANGE = 5  -- vertical range to search for ground (±blocks)
 
 local function spawner(initial_job)
     return function(pos, _, _, active_object_count_wider)
@@ -82,13 +84,15 @@ local function initial_spawn_group()
         if spawn_coords then
             spawn_point = spawn_coords
             log.action("Using configured spawn point: %s", minetest.pos_to_string(spawn_point, 0))
+        else
+            log.warning("Invalid static_spawnpoint format: %s, using default (0,0,0)", spawn_setting)
         end
     end
     
     -- Try to find a better spawn point on the ground
     -- Look for ground level near spawn
     local found_ground = false
-    for y = spawn_point.y + 10, spawn_point.y - 10, -1 do
+    for y = spawn_point.y + SPAWN_SEARCH_RANGE, spawn_point.y - SPAWN_SEARCH_RANGE, -1 do
         local check_pos = {x=spawn_point.x, y=y, z=spawn_point.z}
         local node = minetest.get_node(check_pos)
         local node_below = minetest.get_node({x=spawn_point.x, y=y-1, z=spawn_point.z})
@@ -123,9 +127,8 @@ local function initial_spawn_group()
     for i = 1, 5 do
         -- Create positions in a circle pattern around spawn
         local angle = (i - 1) * (2 * math.pi / 5)
-        local radius = 3
-        local offset_x = math.cos(angle) * radius
-        local offset_z = math.sin(angle) * radius
+        local offset_x = math.cos(angle) * SPAWN_RADIUS
+        local offset_z = math.sin(angle) * SPAWN_RADIUS
         
         local spawn_pos = {
             x = spawn_point.x + offset_x,
