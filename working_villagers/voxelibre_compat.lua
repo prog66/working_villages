@@ -199,4 +199,23 @@ function voxelibre_compat.get_skin_info()
 	end
 end
 
+-- Get default node sound table compatible with current game
+-- Returns an empty table if neither game's sound module is available
+function voxelibre_compat.node_sound_defaults()
+	-- Try VoxeLibre sounds first if VoxeLibre is detected
+	if voxelibre_compat.is_voxelibre then
+		if mcl_sounds and mcl_sounds.node_sound_wood_defaults then
+			return mcl_sounds.node_sound_wood_defaults()
+		end
+	end
+	
+	-- Try minetest_game default sounds
+	if default and default.node_sound_defaults then
+		return default.node_sound_defaults()
+	end
+	
+	-- Return empty table if no sound system available
+	return {}
+end
+
 return voxelibre_compat
