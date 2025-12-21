@@ -21,7 +21,8 @@ features:
   * When spawning is enabled, 5 NPCs spawn at world spawn on server start
   * Includes: woodcutter, farmer, herb collector, builder, and one unemployed villager
   * NPCs are self-employed and can be commanded by any player with a commanding sceptre
-  * Enable with: `working_villages_enable_spawn = true` in settings
+  * Enable with: `working_villages_enable_spawn = true` in minetest.conf or world settings
+  * Spawn occurs once per world, 5 seconds after first server start with spawning enabled
 * **Blueprint Learning System**
   * Villagers can learn construction blueprints
   * Progressive skill system with experience points

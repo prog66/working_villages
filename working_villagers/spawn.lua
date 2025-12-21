@@ -62,6 +62,12 @@ end
 -- Initial spawn of 5 NPCs at world spawn
 -- This function spawns a group of 5 villagers near the world spawn point
 local function initial_spawn_group()
+    -- Double-check that spawning is enabled (spawn.lua is only loaded if enabled)
+    if not working_villages.setting_enabled("spawn", false) then
+        log.action("Initial villager spawn disabled by setting, skipping")
+        return
+    end
+    
     -- Check if we've already done the initial spawn
     if spawn_storage:get(INITIAL_SPAWN_KEY) == "true" then
         log.action("Initial villager spawn already completed, skipping")

@@ -183,8 +183,8 @@ function voxelibre_compat.get_player_mesh()
 	return "character.b3d"
 end
 
--- Get the appropriate skin texture prefix for villagers
--- This helps identify compatible skins for each game
+-- Get the appropriate skin texture information for villagers
+-- Returns format details and compatibility notes for each game
 function voxelibre_compat.get_skin_info()
 	if voxelibre_compat.is_voxelibre then
 		return {
