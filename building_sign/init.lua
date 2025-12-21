@@ -51,7 +51,7 @@ minetest.register_node("building_sign:building_marker", {
 		wall_side   = {-0.5, -0.3125, -0.4375, -0.4375, 0.3125, 0.4375},
 	},
 	groups = {choppy = 2, dig_immediate = 2, attached_node = 1},
-	sounds = default.node_sound_defaults(),
+	sounds = working_villages.voxelibre_compat.node_sound_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos)
 		local owner = placer:get_player_name()

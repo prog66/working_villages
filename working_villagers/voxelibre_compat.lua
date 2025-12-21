@@ -199,4 +199,61 @@ function voxelibre_compat.get_skin_info()
 	end
 end
 
+-- Get default node sound table compatible with current game
+-- Returns an empty table if neither game's sound module is available
+-- Note: This function has intentional fallback logic:
+-- 1. If VoxeLibre is detected, try mcl_sounds first (wood sounds for signs)
+-- 2. Fall back to minetest_game default sounds if available
+-- 3. Return empty table if no sound system is available
+-- This allows the mod to work in both games and gracefully handle missing sound modules
+function voxelibre_compat.node_sound_defaults()
+	-- Try VoxeLibre sounds first if VoxeLibre is detected
+	-- Signs traditionally use wood sounds in both games
+	if voxelibre_compat.is_voxelibre then
+		if mcl_sounds and mcl_sounds.node_sound_wood_defaults then
+			return mcl_sounds.node_sound_wood_defaults()
+		end
+	end
+	
+	-- Try minetest_game default wood sounds for signs
+	-- This also serves as fallback if VoxeLibre is detected but mcl_sounds is not loaded
+	if default and default.node_sound_wood_defaults then
+		return default.node_sound_wood_defaults()
+	end
+	
+	-- Final fallback to generic default sounds if wood sounds not available
+	if default and default.node_sound_defaults then
+		return default.node_sound_defaults()
+	end
+	
+	-- Return empty table if no sound system available
+	return {}
+end
+
+-- Get GUI formspec elements compatible with current game
+-- Returns appropriate GUI styling strings or empty strings
+function voxelibre_compat.get_gui_bg()
+	if default and default.gui_bg then
+		return default.gui_bg
+	end
+	-- VoxeLibre doesn't require gui_bg, return empty string
+	return ""
+end
+
+function voxelibre_compat.get_gui_bg_img()
+	if default and default.gui_bg_img then
+		return default.gui_bg_img
+	end
+	-- VoxeLibre doesn't require gui_bg_img, return empty string
+	return ""
+end
+
+function voxelibre_compat.get_gui_slots()
+	if default and default.gui_slots then
+		return default.gui_slots
+	end
+	-- VoxeLibre doesn't require gui_slots, return empty string
+	return ""
+end
+
 return voxelibre_compat

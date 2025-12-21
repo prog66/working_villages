@@ -30,7 +30,7 @@ read_globals = {
 	-- mods - minetest_game
 	"default", "doors",
 	-- mods - VoxeLibre
-	"mcl_core", "mcl_doors", "mcl_beds", "mcl_chests", "mcl_farming", "mcl_torches",
+	"mcl_core", "mcl_doors", "mcl_beds", "mcl_chests", "mcl_farming", "mcl_torches", "mcl_sounds",
 	-- special minetest functions
 	"table.copy",
 }

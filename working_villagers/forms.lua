@@ -93,9 +93,9 @@ function forms.form_base(width,height,villager)
 	end
 
 	return "size["..width..","..height.."]"
-		.. default.gui_bg
-		.. default.gui_bg_img
-		.. default.gui_slots
+		.. working_villages.voxelibre_compat.get_gui_bg()
+		.. working_villages.voxelibre_compat.get_gui_bg_img()
+		.. working_villages.voxelibre_compat.get_gui_slots()
 		.. "label[0,0;"..villager_name..jobname.."]"
 end
 
@@ -215,9 +215,9 @@ forms.register_page("working_villages:job_change",{
 			villager_name = "label[0,0;"..villager.nametag.."]"
 		end
 		return "size[8,6]"
-			.. default.gui_bg
-			.. default.gui_bg_img
-			.. default.gui_slots
+			.. working_villages.voxelibre_compat.get_gui_bg()
+			.. working_villages.voxelibre_compat.get_gui_bg_img()
+			.. working_villages.voxelibre_compat.get_gui_slots()
 			.. villager_name
 			.. "label[".. cp.x - 0.25 ..",".. cp.y ..";current job]"
 			.. "list[detached:".. villager.inventory_name ..";job;".. cp.x ..",".. cp.y + 0.5 ..";1,1;]"
@@ -366,9 +366,9 @@ forms.register_page("working_villages:data_change",{
 		local bp = { x = 3.5, y = 6 }
 		change_index = change_index + 1
 		return "size[8,7]"
-			.. default.gui_bg
-			.. default.gui_bg_img
-			.. default.gui_slots
+			.. working_villages.voxelibre_compat.get_gui_bg()
+			.. working_villages.voxelibre_compat.get_gui_bg_img()
+			.. working_villages.voxelibre_compat.get_gui_slots()
 			.. villager_name_label
 			.. "label[".. cp.x - 0.5 ..",".. cp.y-0.1 ..";current villager data]"
 			.. "label[-1,-1;"..change_index.."]"
@@ -460,9 +460,9 @@ forms.register_page("working_villages:inv_gui", {
 			villager_name = "label[0,0;"..villager.nametag.."]"
 		end
 		return "size[8,9]"
-			.. default.gui_bg
-			.. default.gui_bg_img
-			.. default.gui_slots
+			.. working_villages.voxelibre_compat.get_gui_bg()
+			.. working_villages.voxelibre_compat.get_gui_bg_img()
+			.. working_villages.voxelibre_compat.get_gui_slots()
 			.. villager_name
 			.. "list[detached:"..villager.inventory_name..";main;0,0.5;4,4;]"
 			.. "list[current_player;main;0,5;8,1;]"
