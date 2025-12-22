@@ -336,12 +336,13 @@ function voxelibre_compat.node_sound_defaults()
 	
 	-- Try minetest_game default wood sounds for signs
 	-- This also serves as fallback if VoxeLibre is detected but mcl_sounds is not loaded
-	if minetest.get_modpath("default") and default and default.node_sound_wood_defaults then
+	local has_default = minetest.get_modpath("default")
+	if has_default and default and default.node_sound_wood_defaults then
 		return default.node_sound_wood_defaults()
 	end
 	
 	-- Final fallback to generic default sounds if wood sounds not available
-	if minetest.get_modpath("default") and default and default.node_sound_defaults then
+	if has_default and default and default.node_sound_defaults then
 		return default.node_sound_defaults()
 	end
 	
