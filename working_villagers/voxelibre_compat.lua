@@ -180,6 +180,22 @@ function voxelibre_compat.get_player_mesh()
 	-- Both games use the same character.b3d model file
 	-- minetest_game: provided by default mod
 	-- VoxeLibre: provided by mcl_player mod
+	
+	-- Check if the required mods that provide character.b3d are loaded
+	if voxelibre_compat.is_voxelibre then
+		-- VoxeLibre: check for mcl_player mod
+		if not minetest.get_modpath("mcl_player") then
+			minetest.log("warning", "[working_villages] character.b3d mesh may not be available. " ..
+				"For VoxeLibre, ensure the 'mcl_player' mod is enabled.")
+		end
+	else
+		-- minetest_game: check for default mod
+		if not minetest.get_modpath("default") then
+			minetest.log("warning", "[working_villages] character.b3d mesh may not be available. " ..
+				"For minetest_game, ensure the 'default' mod is enabled.")
+		end
+	end
+	
 	return "character.b3d"
 end
 
