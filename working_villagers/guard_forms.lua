@@ -41,7 +41,6 @@ forms.register_page("working_villages:guard_config", {
 		-- Get current configuration
 		local current_mode = villager:get_job_data("mode") or "patrol"
 		local guard_target = villager:get_job_data("guard_target")
-		local escort_target = villager:get_job_data("guard_target")
 		
 		-- Build the form
 		local formspec = forms.form_base(9, 9, villager)
@@ -76,9 +75,9 @@ forms.register_page("working_villages:guard_config", {
 		-- Escort mode options
 		elseif current_mode == "escort" then
 			local escort_name = ""
-			if type(escort_target) == "string" then
-				escort_name = escort_target
-			elseif escort_target == nil or escort_target == "" then
+			if type(guard_target) == "string" then
+				escort_name = guard_target
+			elseif guard_target == nil or guard_target == "" then
 				escort_name = villager.owner_name or ""
 			end
 			formspec = formspec .. "label[0.5,4.7;Nom du joueur a escorter :]"
@@ -130,15 +129,13 @@ forms.register_page("working_villages:guard_config", {
 		if fields.apply then
 			local new_mode = "patrol" -- default
 			
-			-- Parse dropdown selection
+			-- Parse dropdown selection (dropdown returns selected index as string)
 			if fields.guard_mode then
-				local mode_map = {
-					["stationner"] = "stationary",
-					["escorter"] = "escort",
-					["patrouiller"] = "patrol",
-					["errer"] = "wandering"
-				}
-				new_mode = mode_map[fields.guard_mode] or "patrol"
+				local modes = {"stationary", "escort", "patrol", "wandering"}
+				local mode_index = tonumber(fields.guard_mode)
+				if mode_index and mode_index >= 1 and mode_index <= 4 then
+					new_mode = modes[mode_index]
+				end
 			end
 			
 			-- Set the mode
