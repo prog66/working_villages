@@ -2,6 +2,117 @@
 
 This document describes the new specialized jobs added to the working_villages mod.
 
+## Guard Job (Garde)
+
+### Overview
+The guard is a protective villager that patrols areas, stands watch, or escorts players. Guards automatically defend against hostile entities and can be configured for different operational modes.
+
+### Capabilities
+
+1. **Combat**
+   - Automatically engages hostile entities within 20 blocks
+   - Auto-equips weapons from inventory
+   - Prefers swords over axes, better materials over worse
+
+2. **Multiple Operating Modes**
+   - **Stationary (stationner)**: Stands guard at a specific position
+   - **Escort (escorter)**: Follows and protects a specific player
+   - **Patrol (patrouiller)**: Patrols within a defined radius
+   - **Wandering (errer)**: Moves randomly without a specific area
+
+3. **Automatic Weapon Management**
+   - Searches for weapons in inventory
+   - Auto-equips best available weapon
+   - Creates basic weapons if none available
+
+### Configuration
+
+Guards can be configured through the talking menu by clicking "Configurer le garde" (Configure guard):
+
+#### Stationary Mode
+- **Position Setting**: Define where the guard should stand watch
+- **Quick Set**: Use "Ici" button to set current position
+- **Format**: Enter position as (x,y,z) or leave empty to use current location
+
+#### Escort Mode
+- **Target Player**: Specify the player name to escort
+- **Default**: Uses the guard's owner if no target specified
+- **Behavior**: Follows target player and maintains 3-block distance
+
+#### Patrol Mode
+- **Patrol Radius**: Set the patrol area size (in blocks)
+- **Patrol Center**: Define the central point of patrol area
+- **Quick Set**: Use "Ici" button to set center to current position
+- **Default Radius**: 12 blocks (configurable in settings)
+- **Format**: Center position as (x,y,z) or leave empty for current location
+
+#### Wandering Mode
+- No configuration needed
+- Guard moves randomly without restrictions
+- Useful for general area defense
+
+### Behavior
+
+- **Combat Priority**: Always engages enemies regardless of mode
+- **Weapon Preference**: Sword > Axe, Iron > Stone > Wood
+- **Weapon Creation**: Auto-creates basic weapons if inventory is empty
+- **Mode Persistence**: Configuration saved between game sessions
+
+### Requirements
+
+**Optional but Recommended:**
+- Sword or axe (any tier)
+- Guard will create basic weapons if needed
+
+### Default Settings
+
+These can be changed in `minetest.conf`:
+```
+working_villages_guard_default_mode = patrol
+working_villages_guard_patrol_radius = 12
+working_villages_guard_auto_weapon = true
+```
+
+### Job Change Recipe
+
+Given through the job change interface in the villager's inventory.
+
+### Compatible Weapons
+
+#### Minetest Game
+- Swords: `default:sword_steel`, `default:sword_stone`, `default:sword_wood`
+- Axes: `default:axe_steel`, `default:axe_stone`, `default:axe_wood`
+
+#### VoxeLibre
+- Swords: `mcl_tools:sword_iron`, `mcl_tools:sword_stone`, `mcl_tools:sword_wood`
+- Axes: `mcl_tools:axe_iron`, `mcl_tools:axe_stone`, `mcl_tools:axe_wood`
+
+### Usage Examples
+
+#### Setting Up a Gate Guard
+1. Assign guard job to villager
+2. Open talking menu and select "Configurer le garde"
+3. Choose "stationner" (stationary) mode
+4. Set position to gate location or click "Ici" at desired spot
+5. Apply configuration
+
+#### Setting Up a Player Escort
+1. Assign guard job to villager
+2. Open configuration menu
+3. Choose "escorter" (escort) mode
+4. Enter player name to protect
+5. Apply configuration
+
+#### Setting Up an Area Patrol
+1. Assign guard job to villager
+2. Open configuration menu
+3. Choose "patrouiller" (patrol) mode
+4. Set patrol radius (e.g., 20 blocks)
+5. Set patrol center or click "Ici" for current location
+6. Apply configuration
+
+---
+
 ## Blacksmith Job
 
 ### Overview
@@ -208,6 +319,28 @@ Currently, the jobs use hardcoded settings. Future versions may include:
 ---
 
 ## Troubleshooting
+
+### Guard Issues
+
+**Guard not engaging enemies:**
+- Verify enemies are within 20-block range
+- Check that guard has a weapon (will auto-create if needed)
+- Ensure guard is not paused
+
+**Guard not following escort target:**
+- Confirm target player name is spelled correctly
+- Verify target player is online
+- Check escort mode is properly configured
+
+**Guard not staying at position:**
+- Verify stationary mode is selected
+- Check that position is set correctly
+- Confirm configuration was applied
+
+**Configuration not saving:**
+- Ensure you clicked "Appliquer" (Apply) button
+- Verify you have permission to configure the villager
+- Check for console errors
 
 ### Blacksmith Issues
 
