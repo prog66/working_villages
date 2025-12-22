@@ -21,3 +21,37 @@ end)
 
 forms.put_link("working_villages:talking_menu", "working_villages:state",
   "Que fais-tu en ce moment ?")
+
+-- Add learning mode specific dialogue
+forms.register_text_page("working_villages:learning_status",
+	function(villager)
+		local job = villager:get_job()
+		if not job or job.description ~= "apprenant (working_villages)" then
+			return "Je ne suis pas en mode apprentissage actuellement."
+		end
+		
+		local messages = {
+			"J'explore le monde et j'apprends de nouvelles choses chaque jour.",
+			"Je parle avec les autres villageois pour comprendre comment fonctionne notre village.",
+			"J'essaie differentes activites pour voir ce que je pourrais faire.",
+			"Je cherche encore ma voie. Peut-etre avez-vous un metier pour moi ?",
+		}
+		return messages[math.random(#messages)]
+	end)
+
+forms.put_link("working_villages:talking_menu", "working_villages:learning_status",
+	"Que penses-tu de l'apprentissage ?")
+
+-- Add encouragement option for learners
+forms.register_text_page("working_villages:encouragement",
+	function(villager)
+		local job = villager:get_job()
+		if not job or job.description ~= "apprenant (working_villages)" then
+			return "Merci pour l'encouragement !"
+		end
+		return "Merci beaucoup ! Vos encouragements m'aident a apprendre. " ..
+			"Un jour, j'espere devenir aussi competent que les autres villageois !"
+	end)
+
+forms.put_link("working_villages:talking_menu", "working_villages:encouragement",
+	"Continue d'apprendre, c'est bien !")
