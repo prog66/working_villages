@@ -675,21 +675,43 @@ end
 
 -- working_villages.villager.update_infotext updates the infotext of the villager.
 function working_villages.villager:update_infotext()
-  local infotext = ""
-  local job_name = self:get_job()
-
-  if job_name ~= nil then
-    job_name = job_name.description
-    infotext = infotext .. job_name .. "\n"
+  local lines = {}
+  
+  -- Villager name at the top if exists
+  if self.nametag and self.nametag ~= "" then
+    table.insert(lines, "=== " .. self.nametag .. " ===")
   else
-    infotext = infotext .. "aucun metier\n"
+    table.insert(lines, "=== Villageois ===")
+  end
+  
+  -- Job information with icon
+  local job = self:get_job()
+  if job ~= nil then
+    table.insert(lines, "⚒ Métier: " .. job.description)
+  else
+    table.insert(lines, "⚒ Métier: aucun")
     self.disp_action = "inactif"
   end
-  infotext = infotext .. "[Proprietaire] : " .. self.owner_name
-  infotext = infotext .. "\nCe villageois est " .. self.disp_action
+  
+  -- Current action/status
+  local action_text = self.disp_action or "inactif"
   if self.pause then
-    infotext = infotext .. ", [en pause]"
+    table.insert(lines, "⏸ Statut: " .. action_text .. " (en pause)")
+  else
+    table.insert(lines, "▶ Statut: " .. action_text)
   end
+  
+  -- Owner information
+  if self.owner_name and self.owner_name ~= "" then
+    table.insert(lines, "👤 Propriétaire: " .. self.owner_name)
+  end
+  
+  -- Village name if exists
+  if self.village_name and self.village_name ~= "" then
+    table.insert(lines, "🏘 Village: " .. self.village_name)
+  end
+  
+  local infotext = table.concat(lines, "\n")
   self.object:set_properties{infotext = infotext}
 end
 
@@ -735,7 +757,47 @@ function working_villages.villager:apply_owner_visuals()
 end
 
 local chat_interval = tonumber(minetest.settings:get("working_villages_autonomous_chat_interval")) or 30
+local chat_message_queue = {}  -- Queue for villager messages to avoid spam
 
+-- Clean up old messages from queue periodically
+local function clean_message_queue()
+  local now = minetest.get_gametime()
+  for key, time in pairs(chat_message_queue) do
+    if now - time > 120 then  -- Remove messages older than 2 minutes
+      chat_message_queue[key] = nil
+    end
+  end
+end
+
+-- Check if a similar message was recently sent
+local function is_message_in_queue(message)
+  local now = minetest.get_gametime()
+  local key = message:lower():gsub("%s+", " ")  -- Normalize message
+  if chat_message_queue[key] and (now - chat_message_queue[key]) < 60 then
+    return true
+  end
+  return false
+end
+
+-- Add message to queue
+local function add_message_to_queue(message)
+  local key = message:lower():gsub("%s+", " ")
+  chat_message_queue[key] = minetest.get_gametime()
+end
+
+--[[
+  Makes the villager speak in global chat with spam prevention.
+  
+  Features:
+  - Only speaks when a player is nearby (within 16 blocks)
+  - Respects minimum interval between messages (default 30s)
+  - Prevents duplicate messages (2x interval)
+  - Global message queue to prevent spam from multiple villagers
+  
+  @param message string - The message to say
+  @param min_interval number - Optional minimum interval between messages (default: setting or 30s)
+  @return boolean - true if message was sent, false otherwise
+]]--
 function working_villages.villager:say(message, min_interval)
   if not message or message == "" then
     return false
@@ -748,10 +810,19 @@ function working_villages.villager:say(message, min_interval)
 
   local now = minetest.get_gametime()
   local interval = min_interval or chat_interval
+  
+  -- Check personal cooldown
   if self.last_chat_time and (now - self.last_chat_time) < interval then
     return false
   end
+  
+  -- Check for duplicate message (longer cooldown)
   if self.last_chat_message == message and self.last_chat_time and (now - self.last_chat_time) < (interval * 2) then
+    return false
+  end
+  
+  -- Check global message queue to prevent spam from multiple villagers
+  if is_message_in_queue(message) then
     return false
   end
 
@@ -760,10 +831,44 @@ function working_villages.villager:say(message, min_interval)
 
   local name = self.nametag
   if not name or name == "" then
-    name = "Villageois"
+    local job = self:get_job()
+    if job then
+      name = job.description
+    else
+      name = "Villageois"
+    end
   end
+  
   minetest.chat_send_all(name .. ": " .. message)
+  add_message_to_queue(message)
+  
+  -- Periodic cleanup
+  if math.random(100) < 5 then  -- 5% chance
+    clean_message_queue()
+  end
+  
   return true
+end
+
+--[[
+  Announces the villager's current action in chat.
+  
+  Automatically generates appropriate messages based on the villager's state_info.
+  This function should be called by jobs to keep players informed of what villagers are doing.
+  
+  @param custom_message string - Optional custom message, otherwise uses state_info
+  @param min_interval number - Optional minimum interval between announcements (default: 60s)
+  @return boolean - true if announcement was made, false otherwise
+]]--
+function working_villages.villager:announce_action(custom_message, min_interval)
+  local message = custom_message or self.state_info
+  if not message or message == "" then
+    return false
+  end
+  
+  -- Use longer interval for action announcements to reduce spam
+  local interval = min_interval or (chat_interval * 2)
+  return self:say(message, interval)
 end
 
 -- working_villages.villager.is_near checks if the villager is within the radius of a position

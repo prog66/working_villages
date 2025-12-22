@@ -93,6 +93,7 @@ Quand je trouve un jeune arbre, je le plante pres d'un endroit lumineux. "..
 		self:count_timer("woodcutter:search")
 		self:count_timer("woodcutter:change_dir")
 		self:count_timer("woodcutter:reforest")
+		self:count_timer("woodcutter:announce")
 		self:handle_obstacles()
 		if self:timer_exceeded("woodcutter:search",20) then
 			self:collect_nearest_item_by_condition(is_sapling, searching_range)
@@ -116,6 +117,9 @@ Quand je trouve un jeune arbre, je le plante pres d'un endroit lumineux. "..
 						-- Award experience for planting trees (reforestation)
 						local inv_name = self:get_inventory_name()
 						blueprints.add_experience(inv_name, 1)
+						if self:timer_exceeded("woodcutter:announce", 150) then
+							self:announce_action("Je plante des jeunes arbres pour renouveler la foret.")
+						end
 					end
 				end
 			end
@@ -127,6 +131,7 @@ Quand je trouve un jeune arbre, je le plante pres d'un endroit lumineux. "..
 					-- Too few trees nearby, skip cutting and plant more
 					self:set_state_info("Je preserve la foret : pas assez d'arbres. Je vais planter.")
 					self:set_displayed_action("forestier responsable")
+					self:announce_action("Je protege la foret en plantant plus d'arbres.", 180)
 				else
 					local destination = func.find_adjacent_clear(target)
 					destination = func.find_ground_below(destination)
@@ -151,6 +156,9 @@ Quand je trouve un jeune arbre, je le plante pres d'un endroit lumineux. "..
 							-- Award experience for cutting trees
 							local inv_name = self:get_inventory_name()
 							blueprints.add_experience(inv_name, 1)
+							if self:timer_exceeded("woodcutter:announce", 150) then
+								self:announce_action("Je coupe des arbres pour le bois de construction.")
+							end
 						end
 					end
 				end
