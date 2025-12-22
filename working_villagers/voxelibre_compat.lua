@@ -181,21 +181,7 @@ function voxelibre_compat.get_player_mesh()
 	-- minetest_game: provided by default mod
 	-- VoxeLibre: provided by mcl_player mod
 	
-	-- Check if the required mods are loaded that provide character.b3d
-	local has_model_provider = false
-	if voxelibre_compat.is_voxelibre then
-		has_model_provider = minetest.get_modpath("mcl_player") ~= nil
-	else
-		has_model_provider = minetest.get_modpath("default") ~= nil
-	end
-	
-	-- Log a warning if the model provider is not available
-	if not has_model_provider then
-		minetest.log("warning", "[working_villages] character.b3d model provider not found. " ..
-			"For VoxeLibre, enable mcl_player mod. For minetest_game, enable default mod. " ..
-			"Villagers may not display correctly. " ..
-			"See working_villages/models/README.md for more information.")
-	end
+	-- Note: Startup warnings about missing model providers are logged in init.lua
 	
 	return "character.b3d"
 end

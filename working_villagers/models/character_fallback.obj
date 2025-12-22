@@ -1,6 +1,6 @@
 # Simple cube-based humanoid character model
-# Fallback model for when character.b3d is not available
-# This provides a basic representation for villagers
+# Reference model showing approximate villager proportions
+# This is for reference only - not automatically used by the mod
 
 # Material file (not used but standard)
 mtllib character_fallback.mtl
