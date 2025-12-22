@@ -17,6 +17,15 @@ The plan is to make villagers build up their own villages.
 ## implemented Features
 no crafting recipes yet (you will have to use creative)
 features:
+* **Learning Mode for Idle Villagers** (NEW!)
+  * Villagers without a job automatically enter learning mode
+  * They explore the environment and discover new places
+  * They socialize with other villagers and players
+  * They experiment with simple tasks (gathering items, observing)
+  * They ask players for validation on what they learn
+  * Makes the village feel more alive and immersive
+  * Can be disabled with: `working_villages_enable_learning_mode = false`
+  * Settings: `working_villages_learner_explore_radius`, `working_villages_learner_social_range`, `working_villages_learner_experiment_interval`
 * **Initial Villager Spawn** (NEW!)
   * When spawning is enabled, 5 NPCs spawn at world spawn on server start
   * Includes: woodcutter, farmer, herb collector, builder, and one unemployed villager
@@ -48,6 +57,7 @@ features:
   * jobs can be changed in the inventory by clicking change job
   * in the job change form the jobs can be changed by replacing the current job by one of the jobs below (shift+click possible)
 * **registered jobs:**
+  * **learner/apprentice** (learning mode for villagers without a job - explores, socializes, experiments) - NEW!
   * **blacksmith** (works with metal, repairs tools, smelts ores) - NEW!
   * **miner** (mines stone and ores, places torches underground) - NEW!
   * woodcutter/lumberjack (cutting trees and planting saplings)

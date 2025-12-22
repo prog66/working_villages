@@ -258,3 +258,12 @@ working_villages.register_job("working_villages:job_apprenant", {
 	inventory_image  = "default_paper.png^working_villages_question.png",
 	jobfunc = learner_jobfunc,
 })
+
+-- Craft recipe for learner job
+-- Made from empty job + book (representing learning/education)
+minetest.register_craft{
+	output = "working_villages:job_apprenant",
+	recipe = {
+		{"working_villages:job_empty", working_villages.voxelibre_compat.get_item("default:book")},
+	},
+}
