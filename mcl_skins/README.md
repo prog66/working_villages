@@ -60,7 +60,7 @@ mcl_skins.register_item({
 Show the skin configuration screen.
 
 - **player** is a player ObjectRef.
-- **active_tab** is the tab that will be displayed. This parameter is optional. Can be one of: `"arm"`, `"base"`, `"footwear"`, `"eye"`, `"mouth"`, `"bottom"`, `"top"`, `"hair"`, `"headwear"`
+- **active_tab** is the tab that will be displayed. This parameter is optional. Can be one of: `"base"`, `"footwear"`, `"eye"`, `"mouth"`, `"bottom"`, `"top"`, `"hair"`, `"headwear"`
 - **page_num** The page number to display if there are multiple pages of items. This parameter is optional. Must be a number. If it is not a valid page number the closest page number will be shown.
 
 #### Example
