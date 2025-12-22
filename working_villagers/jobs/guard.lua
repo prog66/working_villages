@@ -7,11 +7,12 @@ local default_mode = minetest.settings:get("working_villages_guard_default_mode"
 local patrol_radius = tonumber(minetest.settings:get("working_villages_guard_patrol_radius")) or 12
 local auto_weapon = minetest.settings:get_bool("working_villages_guard_auto_weapon", true)
 
-local function pick_patrol_target(center)
+local function pick_patrol_target(center, radius)
+	radius = radius or patrol_radius
 	local pos = {
-		x = center.x + math.random(-patrol_radius, patrol_radius),
+		x = center.x + math.random(-radius, radius),
 		y = center.y + 2,
-		z = center.z + math.random(-patrol_radius, patrol_radius),
+		z = center.z + math.random(-radius, radius),
 	}
 	local ground = func.find_ground_below(pos)
 	return ground or center
@@ -129,7 +130,8 @@ working_villages.register_job("working_villages:job_guard", {
 			log.verbose("%s patrouille", self.inventory_name)
 			self:count_timer("guard:patrol")
 			if self:timer_exceeded("guard:patrol", 40) or not self:get_job_data("patrol_target") then
-				self:set_job_data("patrol_target", pick_patrol_target(guard_pos))
+				local custom_radius = self:get_job_data("patrol_radius")
+				self:set_job_data("patrol_target", pick_patrol_target(guard_pos, custom_radius))
 			end
 			local patrol_target = self:get_job_data("patrol_target")
 			if patrol_target then

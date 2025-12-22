@@ -86,8 +86,8 @@ forms.register_page("working_villages:guard_config", {
 		
 		-- Patrol mode options
 		elseif current_mode == "patrol" then
-			-- Get current patrol radius from settings or default
-			local patrol_radius = tonumber(minetest.settings:get("working_villages_guard_patrol_radius")) or 12
+			-- Get current patrol radius from job_data or fall back to settings default
+			local patrol_radius = villager:get_job_data("patrol_radius") or tonumber(minetest.settings:get("working_villages_guard_patrol_radius")) or 12
 			local patrol_center = guard_target
 			local center_str = ""
 			if type(patrol_center) == "table" and patrol_center.x then
@@ -168,13 +168,14 @@ forms.register_page("working_villages:guard_config", {
 				end
 				
 			elseif new_mode == "patrol" then
-				-- Save patrol radius to global settings if changed
+				-- Save patrol radius per guard in job_data
 				if fields.patrol_radius and fields.patrol_radius ~= "" then
 					local radius = tonumber(fields.patrol_radius)
 					if radius and radius > 0 and radius <= 100 then
-						-- Note: This will affect all guards using the default radius
-						-- Individual patrol radius per guard would require job_data storage
+						villager:set_job_data("patrol_radius", radius)
 						minetest.chat_send_player(player_name, "Rayon de patrouille : " .. radius .. " noeuds")
+					else
+						minetest.chat_send_player(player_name, "Rayon invalide. Utilisez une valeur entre 1 et 100.")
 					end
 				end
 				
