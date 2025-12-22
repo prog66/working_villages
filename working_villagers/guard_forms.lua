@@ -3,6 +3,9 @@
 
 local forms = working_villages.require("forms")
 
+-- Constants
+local MAX_PATROL_RADIUS = 100
+
 -- Helper function to get valid inventory name
 local function get_inv_name(villager)
 	if not villager then
@@ -96,7 +99,7 @@ forms.register_page("working_villages:guard_config", {
 			
 			formspec = formspec .. "label[0.5,4.7;Rayon de patrouille (noeuds) :]"
 			formspec = formspec .. "field[0.8,5.5;3,1;patrol_radius;;" .. patrol_radius .. "]"
-			formspec = formspec .. "tooltip[patrol_radius;Distance maximale de patrouille depuis le centre]"
+			formspec = formspec .. "tooltip[patrol_radius;Distance maximale de patrouille depuis le centre (1-" .. MAX_PATROL_RADIUS .. " noeuds)]"
 			
 			formspec = formspec .. "label[0.5,6;Centre de patrouille :]"
 			formspec = formspec .. "field[0.8,6.8;6,1;patrol_center;;" .. center_str .. "]"
@@ -133,7 +136,7 @@ forms.register_page("working_villages:guard_config", {
 			if fields.guard_mode then
 				local modes = {"stationary", "escort", "patrol", "wandering"}
 				local mode_index = tonumber(fields.guard_mode)
-				if mode_index and mode_index >= 1 and mode_index <= 4 then
+				if mode_index and mode_index >= 1 and mode_index <= #modes then
 					new_mode = modes[mode_index]
 				end
 			end
@@ -171,11 +174,11 @@ forms.register_page("working_villages:guard_config", {
 				-- Save patrol radius per guard in job_data
 				if fields.patrol_radius and fields.patrol_radius ~= "" then
 					local radius = tonumber(fields.patrol_radius)
-					if radius and radius > 0 and radius <= 100 then
+					if radius and radius > 0 and radius <= MAX_PATROL_RADIUS then
 						villager:set_job_data("patrol_radius", radius)
 						minetest.chat_send_player(player_name, "Rayon de patrouille : " .. radius .. " noeuds")
 					else
-						minetest.chat_send_player(player_name, "Rayon invalide. Utilisez une valeur entre 1 et 100.")
+						minetest.chat_send_player(player_name, "Rayon invalide. Utilisez une valeur entre 1 et " .. MAX_PATROL_RADIUS .. ".")
 					end
 				end
 				
