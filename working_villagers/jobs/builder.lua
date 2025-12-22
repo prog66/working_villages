@@ -161,6 +161,7 @@ working_villages.register_job("working_villages:job_builder", {
 
 		self:count_timer("builder:search")
 		self:count_timer("builder:announce")
+		self:count_timer("builder:error_msg")
 		if self:timer_exceeded("builder:search",20) then
 			-- Reset chest interaction flag so builder can get materials again
 			self.job_data.manipulated_chest = false
@@ -191,6 +192,8 @@ working_villages.register_job("working_villages:job_builder", {
 					self:set_state_info("Construction terminee ! Experience gagnee.")
 					self:set_job_data("builder_marker", nil)
 					self:announce_action("J'ai termine la construction d'un batiment !", 30)
+					-- Notify owner via HUD
+					self:notify_owner("Construction terminee ! Votre constructeur a termine un batiment.")
 					return
 				end
 				self:set_state_info("Je travaille sur un batiment.")
@@ -311,17 +314,21 @@ working_villages.register_job("working_villages:job_builder", {
 						end
 					end
 				else
-					local msg = "constructeur a " .. minetest.pos_to_string(self.object:get_pos()) .. " n'a pas " .. nname
-					if self.owner_name then
-						minetest.chat_send_player(self.owner_name,msg)
-					else
-						print(msg)
+					-- Reset chest flag to allow getting materials from chest
+					self.job_data.manipulated_chest = false
+					-- Only send error message occasionally to avoid spam
+					if self:timer_exceeded("builder:error_msg", 60) then
+						local msg = "constructeur a " .. minetest.pos_to_string(self.object:get_pos()) .. " n'a pas " .. nname
+						if self.owner_name then
+							minetest.chat_send_player(self.owner_name,msg)
+						else
+							print(msg)
+						end
 					end
 					self:set_state_info(("J'attends que quelqu'un me donne %s."):format(nname))
 					if self:timer_exceeded("builder:announce", 200) then
 						self:announce_action(("J'ai besoin de %s pour continuer la construction."):format(nname))
 					end
-					self.job_data.manipulated_chest = false
 					coroutine.yield(co_command.pause,"attente de materiaux")
 				end
 			end
