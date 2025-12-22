@@ -1157,7 +1157,12 @@ do
   })
 
   local function select_wield_bone(obj)
-    if obj.get_bone_position then
+    if obj.get_bone_override then
+      local bone_override = obj:get_bone_override("Arm_Right")
+      if bone_override then
+        return "Arm_Right"
+      end
+    elseif obj.get_bone_position then
       local pos = obj:get_bone_position("Arm_Right")
       if pos then
         return "Arm_Right"
@@ -1167,7 +1172,14 @@ do
   end
 
   local function select_head_bone(obj)
-    if obj.get_bone_position then
+    if obj.get_bone_override then
+      local candidates = { "Head", "Head2", "Head_R", "Head_L" }
+      for _, bone in ipairs(candidates) do
+        if obj:get_bone_override(bone) then
+          return bone
+        end
+      end
+    elseif obj.get_bone_position then
       local candidates = { "Head", "Head2", "Head_R", "Head_L" }
       for _, bone in ipairs(candidates) do
         if obj:get_bone_position(bone) then

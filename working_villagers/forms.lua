@@ -517,7 +517,6 @@ forms.register_page("working_villages:inv_gui", {
 			-- Wield item section
 			.. "label[4.5,1.2;Outil équipé:]"
 			.. "list[detached:"..villager.inventory_name..";wield_item;4.5,1.5;1,1;]"
-			.. "tooltip[detached:"..villager.inventory_name..";wield_item;0,0;1,1;L'objet que le villageois tient actuellement]"
 			-- Armor section with cleaner layout
 			.. "label[6.2,1.2;Équipement:]"
 			.. "label[6.2,1.6;Casque:]"
