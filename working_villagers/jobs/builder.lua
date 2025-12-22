@@ -160,6 +160,7 @@ working_villages.register_job("working_villages:job_builder", {
 		end
 
 		self:count_timer("builder:search")
+		self:count_timer("builder:announce")
 		if self:timer_exceeded("builder:search",20) then
 			-- Reset chest interaction flag so builder can get materials again
 			self.job_data.manipulated_chest = false
@@ -189,9 +190,13 @@ working_villages.register_job("working_villages:job_builder", {
 					blueprints.add_experience(inv_name, 5)
 					self:set_state_info("Construction terminee ! Experience gagnee.")
 					self:set_job_data("builder_marker", nil)
+					self:announce_action("J'ai termine la construction d'un batiment !", 30)
 					return
 				end
 				self:set_state_info("Je travaille sur un batiment.")
+				if self:timer_exceeded("builder:announce", 180) then
+					self:announce_action("Je construis un batiment petit a petit.")
+				end
 				local index = meta:get_int("index")
 				local nnode = building_on_pos.nodedata and building_on_pos.nodedata[index]
 				local skipped = 0
@@ -313,6 +318,9 @@ working_villages.register_job("working_villages:job_builder", {
 						print(msg)
 					end
 					self:set_state_info(("J'attends que quelqu'un me donne %s."):format(nname))
+					if self:timer_exceeded("builder:announce", 200) then
+						self:announce_action(("J'ai besoin de %s pour continuer la construction."):format(nname))
+					end
 					self.job_data.manipulated_chest = false
 					coroutine.yield(co_command.pause,"attente de materiaux")
 				end

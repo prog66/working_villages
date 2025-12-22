@@ -164,6 +164,7 @@ working_villages.register_job("working_villages:job_farmer", {
 		self:count_timer("farmer:search")
 		self:count_timer("farmer:change_dir")
 		self:count_timer("farmer:expand_farm")
+		self:count_timer("farmer:announce")
 		self:handle_obstacles()
 		if self:timer_exceeded("farmer:search",20) then
 			self:collect_nearest_item_by_condition(farming_plants.is_plant, searching_range)
@@ -189,6 +190,10 @@ working_villages.register_job("working_villages:job_farmer", {
 					local inv_name = self:get_inventory_name()
 					blueprints.add_experience(inv_name, 1)
 					self:set_displayed_action("recolte des cultures")
+					-- Announce farming activity periodically
+					if self:timer_exceeded("farmer:announce", 120) then
+						self:announce_action("Je recolte et replante les cultures.")
+					end
 				else
 					self:set_state_info("Je cherche des graines pour replanter.")
 				end
@@ -205,6 +210,7 @@ working_villages.register_job("working_villages:job_farmer", {
 						self:go_to(destination)
 						-- In a future enhancement, could use a hoe to till the soil
 						self:set_state_info("J'ai trouve un terrain a preparer.")
+						self:announce_action("Je prepare de nouvelles terres cultivables.", 120)
 					end
 				end
 			end

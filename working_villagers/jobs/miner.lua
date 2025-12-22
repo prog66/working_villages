@@ -122,6 +122,7 @@ working_villages.register_job("working_villages:job_miner", {
 		self:count_timer("miner:search")
 		self:count_timer("miner:change_dir")
 		self:count_timer("miner:torch_check")
+		self:count_timer("miner:announce")
 		self:handle_obstacles()
 		
 		-- Check if we have a pickaxe
@@ -138,6 +139,7 @@ working_villages.register_job("working_villages:job_miner", {
 		if not has_pickaxe then
 			self:set_state_info("J'ai besoin d'une pioche pour miner. Donnez-m'en une.")
 			self:set_displayed_action("cherche une pioche")
+			self:announce_action("J'ai besoin d'une pioche pour travailler.", 90)
 			return
 		end
 		
@@ -183,6 +185,9 @@ working_villages.register_job("working_villages:job_miner", {
 					blueprints.add_experience(inv_name, 1)
 					
 					self:set_state_info("Je mine des ressources utiles.")
+					if self:timer_exceeded("miner:announce", 140) then
+						self:announce_action("Je mine de la pierre et des minerais.")
+					end
 				else
 					working_villages.failed_pos_record(target)
 					self:set_displayed_action("cherche un autre filon")
@@ -210,6 +215,7 @@ working_villages.register_job("working_villages:job_miner", {
 							local torch_pos = vector.subtract(wall_pos, dir)
 							self:place(torch_name, torch_pos)
 							self:set_displayed_action("pose une torche")
+							self:announce_action("Je pose des torches pour eclairer les galeries.", 180)
 							break
 						end
 					end

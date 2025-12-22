@@ -109,6 +109,7 @@ working_villages.register_job("working_villages:job_blacksmith", {
 		
 		self:count_timer("blacksmith:search")
 		self:count_timer("blacksmith:change_dir")
+		self:count_timer("blacksmith:announce")
 		self:handle_obstacles()
 		
 		if self:timer_exceeded("blacksmith:search", 20) then
@@ -125,6 +126,9 @@ working_villages.register_job("working_villages:job_blacksmith", {
 						self:set_displayed_action("repare des outils")
 						self:delay(50)
 						repaired_something = true
+						if self:timer_exceeded("blacksmith:announce", 160) then
+							self:announce_action("Je repare les outils uses pour qu'ils durent plus longtemps.")
+						end
 						break
 					end
 				end
@@ -153,6 +157,9 @@ working_villages.register_job("working_villages:job_blacksmith", {
 								-- For now, just indicate the blacksmith is working
 								self:set_state_info("Je travaille a la forge, je prepare la fusion du minerai.")
 								self:delay(100)
+								if self:timer_exceeded("blacksmith:announce", 160) then
+									self:announce_action("Je fond le minerai pour creer des lingots de metal.")
+								end
 							end
 						end
 					else
@@ -160,6 +167,9 @@ working_villages.register_job("working_villages:job_blacksmith", {
 					end
 				else
 					self:set_state_info("Je cherche un four.")
+					if self:timer_exceeded("blacksmith:announce", 200) then
+						self:announce_action("J'ai besoin d'un four pour travailler le metal.")
+					end
 				end
 			end
 		elseif self:timer_exceeded("blacksmith:change_dir", 50) then

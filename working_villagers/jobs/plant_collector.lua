@@ -81,6 +81,7 @@ working_villages.register_job("working_villages:job_herbcollector", {
 
 		self:count_timer("herbcollector:search")
 		self:count_timer("herbcollector:change_dir")
+		self:count_timer("herbcollector:announce")
 		self:handle_obstacles()
 		if self:timer_exceeded("herbcollector:search",20) then
 			self:collect_nearest_item_by_condition(herbs.is_herb, searching_range)
@@ -98,6 +99,11 @@ working_villages.register_job("working_villages:job_herbcollector", {
         --local herb_data = herbs.get_herb(minetest.get_node(target).name);
         herbs.get_herb(minetest.get_node(target).name);
 				self:dig(target,true)
+				self:set_state_info("Je cueille des plantes.")
+				self:set_displayed_action("cueille des plantes")
+				if self:timer_exceeded("herbcollector:announce", 130) then
+					self:announce_action("Je collecte des plantes pour en faire des colorants et des remedes.")
+				end
 			end
 		elseif self:timer_exceeded("herbcollector:change_dir",50) then
 			self:change_direction_randomly()

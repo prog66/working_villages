@@ -235,21 +235,30 @@ end
 
 forms.register_page("working_villages:job_change",{
 	constructor = function(_, villager) --self, villager, playername
-		local cp = { x = 3.5, y = 0 }
-		local villager_name = ""
+		local villager_name = "Villageois"
 		if villager.nametag and villager.nametag~="" then
-			villager_name = "label[0,0;"..villager.nametag.."]"
+			villager_name = villager.nametag
 		end
-		return "size[8,6]"
+		
+		local current_job = "aucun"
+		local job = villager:get_job()
+		if job then
+			current_job = job.description
+		end
+		
+		return "size[8.5,7]"
 			.. working_villages.voxelibre_compat.get_gui_bg()
 			.. working_villages.voxelibre_compat.get_gui_bg_img()
 			.. working_villages.voxelibre_compat.get_gui_slots()
-			.. villager_name
-			.. "label[".. cp.x - 0.25 ..",".. cp.y ..";metier actuel]"
-			.. "list[detached:".. villager.inventory_name ..";job;".. cp.x ..",".. cp.y + 0.5 ..";1,1;]"
-			.. "list[detached:working_villages:job_inv;main;0,2;8,4;]"
+			.. "label[0.2,0.2;" .. minetest.formspec_escape("=== Changement de métier: " .. villager_name .. " ===") .. "]"
+			.. "label[0.2,0.7;" .. minetest.formspec_escape("Métier actuel: " .. current_job) .. "]"
+			.. "label[3.5,1.3;Métier actuel:]"
+			.. "list[detached:".. villager.inventory_name ..";job;3.75,1.6;1,1;]"
+			.. "label[0.2,2.8;Métiers disponibles:]"
+			.. "label[0.2,3.1;(Glissez un métier dans l'emplacement ci-dessus)]"
+			.. "list[detached:working_villages:job_inv;main;0.2,3.5;8,3;]"
 			.. "listring[]"
-			.. "button[6,".. cp.y + 0.5 ..";1,1;back;retour]"
+			.. "button[6.5,1.6;1.5,0.8;back;Retour]"
 	end,
 	receiver = function(_, villager, sender, fields)
 		local sender_name = sender:get_player_name()
@@ -344,10 +353,8 @@ forms.register_page("working_villages:data_change",{
 			marker_pos = minetest.pos_to_string(floor_pos(home:get_marker()))
 		end
 		local villager_name = ""
-		local villager_name_label = ""
 		if villager.nametag and villager.nametag~="" then
 			villager_name = villager.nametag
-			villager_name_label = "label[0,0;"..villager.nametag.."]"
 		end
 		local village_name = ""
 		if villager.village_name then
@@ -385,39 +392,46 @@ forms.register_page("working_villages:data_change",{
 			job_pos = minetest.pos_to_string(data.job_pos)
 		end
 
-		local cp = { x = 3.5, y = 0 }
-		local hp = { x = 0.5, y = 2.5 }
-		local wp = { x = 0.5, y = 3.5 }
-		local jp = { x = 0.5, y = 4.5 }
-		local bp = { x = 3.5, y = 6 }
 		change_index = change_index + 1
-		return "size[8,7]"
+		return "size[8.5,8]"
 			.. working_villages.voxelibre_compat.get_gui_bg()
 			.. working_villages.voxelibre_compat.get_gui_bg_img()
 			.. working_villages.voxelibre_compat.get_gui_slots()
-			.. villager_name_label
-			.. "label[".. cp.x - 0.5 ..",".. cp.y-0.1 ..";donnees du villageois]"
+			.. "label[0.2,0.2;" .. minetest.formspec_escape("=== Paramètres: " .. (villager_name ~= "" and villager_name or "Villageois") .. " ===") .. "]"
 			.. "label[-1,-1;"..change_index.."]"
-			.. "field[" .. cp.x-3 .. "," .. cp.y + 0.9 ..";2.5,1;villager_pos;position villageois;" .. player_pos .. "]"
-			.. "field[" .. cp.x+2 .. "," .. cp.y + 0.9 ..";2.5,1;player_pos;position joueur;" .. villager_pos .. "]"
-			.. "field[" .. cp.x-3 .. "," .. cp.y + 1.9 ..";2.5,1;marker_pos;position marqueur;" .. marker_pos .. "]"
-			.. "field[" .. cp.x-0.5 .. "," .. cp.y + 1.9 ..";2.5,1;villager_name;nom villageois;" .. villager_name .. "]"
-			.. "field[" .. cp.x+2 .. "," .. cp.y + 1.9 ..";2.5,1;village_name;nom du village;" .. village_name .. "]"
-			.. "field[" .. hp.x .. "," .. hp.y + 0.4 ..";2.5,1;home_pos;porte de la maison;" .. home_pos .. "]"
-      .. "tooltip[home_pos;Utilisez \"near\" pour trouver la porte la plus proche (max 5 nodes).]"
-			.. "field[" .. hp.x+2.5 .. "," .. hp.y + 0.4 ..";2.5,1;bed_pos;position du lit;" .. bed_pos .. "]"
-      .. "tooltip[bed_pos;Utilisez \"near\" pour trouver le lit le plus proche (max 5 nodes).]"
-			.. "field[" .. hp.x+5 .. "," .. hp.y + 0.4 ..";2.5,1;chest_pos;position du coffre;" .. chest_pos .. "]"
-      .. "tooltip[chest_pos;Utilisez \"near\" pour trouver le coffre le plus proche (max 5 nodes).]"
-			.. "field[" .. wp.x .. "," .. wp.y + 0.4 ..";2.5,1;food_pos;position nourriture;" .. food_pos .. "]"
-      .. "tooltip[food_pos;Utilisez \"near\" pour trouver le coffre le plus proche (max 5 nodes).]"
-			.. "field[" .. wp.x+2.5 .. "," .. wp.y + 0.4 ..";2.5,1;tools_pos;position outils;" .. tools_pos .. "]"
-      .. "tooltip[tools_pos;Utilisez \"near\" pour trouver le coffre le plus proche (max 5 nodes).]"
-			.. "field[" .. wp.x+5 .. "," .. wp.y + 0.4 ..";2.5,1;storage_pos;position stockage;" .. storage_pos .. "]"
-      .. "tooltip[storage_pos;Utilisez \"near\" pour trouver le coffre le plus proche (max 5 nodes).]"
-			.. "field[" .. jp.x .. "," .. jp.y + 0.4 ..";2.5,1;job_pos;position du metier;" .. job_pos .. "]"
-			.. "button[3,".. bp.y + 0.5 ..";1,1;set_data;valider]"
-			.. "button[6,".. bp.y + 0.5 ..";1,1;back;retour]"
+			-- Identity section
+			.. "label[0.2,0.8;Identité:]"
+			.. "field[0.2,1.3;2.5,0.8;villager_name;Nom du villageois;" .. minetest.formspec_escape(villager_name) .. "]"
+			.. "field[3,1.3;2.5,0.8;village_name;Village;" .. minetest.formspec_escape(village_name) .. "]"
+			-- Position reference
+			.. "label[0.2,2.1;Positions de référence:]"
+			.. "field[0.2,2.6;2.5,0.8;villager_pos;Position villageois;" .. minetest.formspec_escape(player_pos) .. "]"
+			.. "field[3,2.6;2.5,0.8;player_pos;Position joueur;" .. minetest.formspec_escape(villager_pos) .. "]"
+			.. "field[5.7,2.6;2.5,0.8;marker_pos;Marqueur maison;" .. minetest.formspec_escape(marker_pos) .. "]"
+			.. "tooltip[marker_pos;Position du marqueur de construction de maison]"
+			-- Home positions
+			.. "label[0.2,3.5;Positions de la maison:]"
+			.. "field[0.2,4;2.5,0.8;home_pos;Porte;" .. minetest.formspec_escape(home_pos) .. "]"
+			.. "tooltip[home_pos;Porte d'entrée (\"near\" pour auto-détection)]"
+			.. "field[3,4;2.5,0.8;bed_pos;Lit;" .. minetest.formspec_escape(bed_pos) .. "]"
+			.. "tooltip[bed_pos;Position du lit (\"near\" pour auto-détection)]"
+			.. "field[5.7,4;2.5,0.8;chest_pos;Coffre personnel;" .. minetest.formspec_escape(chest_pos) .. "]"
+			.. "tooltip[chest_pos;Coffre personnel (\"near\" pour auto-détection)]"
+			-- Village positions
+			.. "label[0.2,4.9;Positions du village:]"
+			.. "field[0.2,5.4;2.5,0.8;food_pos;Nourriture;" .. minetest.formspec_escape(food_pos) .. "]"
+			.. "tooltip[food_pos;Coffre de nourriture partagé]"
+			.. "field[3,5.4;2.5,0.8;tools_pos;Outils;" .. minetest.formspec_escape(tools_pos) .. "]"
+			.. "tooltip[tools_pos;Coffre d'outils partagé]"
+			.. "field[5.7,5.4;2.5,0.8;storage_pos;Stockage;" .. minetest.formspec_escape(storage_pos) .. "]"
+			.. "tooltip[storage_pos;Coffre de stockage partagé]"
+			-- Job position
+			.. "label[0.2,6.3;Poste de travail:]"
+			.. "field[0.2,6.8;2.5,0.8;job_pos;Position métier;" .. minetest.formspec_escape(job_pos) .. "]"
+			.. "tooltip[job_pos;Position où le villageois exerce son métier]"
+			-- Buttons
+			.. "button[3.5,7.2;1.5,0.8;set_data;Valider]"
+			.. "button[5.5,7.2;1.5,0.8;back;Retour]"
 	end,
 	--receiver = function(page, villager, sender, fields)
 	receiver = function(_, villager, sender, fields)
@@ -472,50 +486,63 @@ forms.register_page("working_villages:data_change",{
 
 forms.register_page("working_villages:inv_gui", {
 	constructor = function(_, villager) --self, villager, playername
-		-- job name
+		-- Header information
+		local villager_name = "Villageois"
+		if villager.nametag and villager.nametag~="" then
+			villager_name = villager.nametag
+		end
+		
 		local jobname = villager:get_job()
 		if jobname then
 			jobname = jobname.description
 		else
 			jobname = "aucun metier"
 		end
-		local wp = { x = 4.25, y = 0.5}
-		local hp = { x = 4.0, y = 3.5}
-		local villager_name = ""
-		if villager.nametag and villager.nametag~="" then
-			villager_name = "label[0,0;"..villager.nametag.."]"
+		
+		local village_info = ""
+		if villager.village_name and villager.village_name ~= "" then
+			village_info = " - Village: " .. villager.village_name
 		end
-		return "size[8,9]"
+		
+		return "size[9,10]"
 			.. working_villages.voxelibre_compat.get_gui_bg()
 			.. working_villages.voxelibre_compat.get_gui_bg_img()
 			.. working_villages.voxelibre_compat.get_gui_slots()
-			.. villager_name
-			.. "list[detached:"..villager.inventory_name..";main;0,0.5;4,4;]"
-			.. "list[current_player;main;0,5;8,1;]"
-			.. "list[current_player;main;0,6.2;8,3;8]"
+			-- Header section
+			.. "label[0.2,0.2;" .. minetest.formspec_escape("=== " .. villager_name .. " ===") .. "]"
+			.. "label[0.2,0.6;" .. minetest.formspec_escape("Métier: " .. jobname .. village_info) .. "]"
+			-- Main inventory section
+			.. "label[0.2,1.2;Inventaire du villageois:]"
+			.. "list[detached:"..villager.inventory_name..";main;0.2,1.5;4,4;]"
+			-- Wield item section
+			.. "label[4.5,1.2;Outil équipé:]"
+			.. "list[detached:"..villager.inventory_name..";wield_item;4.5,1.5;1,1;]"
+			.. "tooltip[detached:"..villager.inventory_name..";wield_item;0,0;1,1;L'objet que le villageois tient actuellement]"
+			-- Armor section with cleaner layout
+			.. "label[6.2,1.2;Équipement:]"
+			.. "label[6.2,1.6;Casque:]"
+			.. "list[detached:"..villager.inventory_name..";head;7,1.5;1,1;]"
+			.. "label[6.2,2.6;Plastron:]"
+			.. "list[detached:"..villager.inventory_name..";torso;7,2.5;1,1;]"
+			.. "label[6.2,3.6;Jambières:]"
+			.. "list[detached:"..villager.inventory_name..";legs;7,3.5;1,1;]"
+			.. "label[6.2,4.6;Bottes:]"
+			.. "list[detached:"..villager.inventory_name..";feet;7,4.5;1,1;]"
+			-- Player inventory
+			.. "label[0.2,5.7;Votre inventaire:]"
+			.. "list[current_player;main;0.2,6;8,1;]"
+			.. "list[current_player;main;0.2,7.2;8,3;8]"
+			-- Listring for item transfer
 			.. "listring[detached:"..villager.inventory_name..";main]"
 			.. "listring[detached:"..villager.inventory_name..";head]"
 			.. "listring[detached:"..villager.inventory_name..";torso]"
 			.. "listring[detached:"..villager.inventory_name..";legs]"
 			.. "listring[detached:"..villager.inventory_name..";feet]"
 			.. "listring[current_player;main]"
-			.. "label[" .. wp.x + 0.08 .."," .. wp.y - 0.3 .. ";Outil visible (trouvez-le ici ou fichier) ]"
-			.. "list[detached:"..villager.inventory_name..";wield_item;" .. wp.x .. "," .. wp.y + 0.5 ..";1,1;]"
-			.. "label[4,2.4;Armure: glissez casque, plastron, jambières et bottes]"
-			.. "label[3.65,3.05;Casque]"
-			.. "label[3.65,4.05;Torse]"
-			.. "label[3.65,5.05;Jambes]"
-			.. "label[3.65,6.05;Pieds]"
-			.. "list[detached:"..villager.inventory_name..";head;4.35,3;1,1;]"
-			.. "list[detached:"..villager.inventory_name..";torso;4.35,4;1,1;]"
-			.. "list[detached:"..villager.inventory_name..";legs;4.35,5;1,1;]"
-			.. "list[detached:"..villager.inventory_name..";feet;4.35,6;1,1;]"
-			.. "button[5.5,1.2;2,1;job;changer metier]"
-			.. "label[4,2;metier actuel:\n"..jobname.."]"
-			.. "button[5.5,2.8;2,1;data;changer donnees]"
-			--.. "field[" .. jp.x .. "," .. jp.y + 0.4 ..";2.5,1;job_pos;job position;" .. job_pos .. "]"
-			--.. "field[" .. hp.x .. "," .. hp.y + 0.4 ..";2.5,1;home_pos;home position;" .. home_pos .. "]"
-			.. "button_exit[" .. hp.x + 2 .. "," .. hp.y + 0.09 .. ";1,1;ok;fermer]"
+			-- Action buttons at the bottom
+			.. "button[4.5,2.8;2,0.8;job;Changer métier]"
+			.. "button[4.5,3.8;2,0.8;data;Paramètres]"
+			.. "button_exit[4.5,4.8;2,0.8;ok;Fermer]"
 	end,
 	receiver = function(_, villager, sender, fields)
 		local sender_name = sender:get_player_name()
