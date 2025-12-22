@@ -352,7 +352,7 @@ end
 -- Get GUI formspec elements compatible with current game
 -- Returns appropriate GUI styling strings or empty strings
 function voxelibre_compat.get_gui_bg()
-	if default and default.gui_bg then
+	if minetest.get_modpath("default") and default and default.gui_bg then
 		return default.gui_bg
 	end
 	-- VoxeLibre doesn't require gui_bg, return empty string
@@ -360,7 +360,7 @@ function voxelibre_compat.get_gui_bg()
 end
 
 function voxelibre_compat.get_gui_bg_img()
-	if default and default.gui_bg_img then
+	if minetest.get_modpath("default") and default and default.gui_bg_img then
 		return default.gui_bg_img
 	end
 	-- VoxeLibre doesn't require gui_bg_img, return empty string
@@ -368,7 +368,7 @@ function voxelibre_compat.get_gui_bg_img()
 end
 
 function voxelibre_compat.get_gui_slots()
-	if default and default.gui_slots then
+	if minetest.get_modpath("default") and default and default.gui_slots then
 		return default.gui_slots
 	end
 	-- VoxeLibre doesn't require gui_slots, return empty string
