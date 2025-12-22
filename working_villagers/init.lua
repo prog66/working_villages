@@ -28,8 +28,18 @@ working_villages.voxelibre_compat = working_villages.require("voxelibre_compat")
 working_villages.farming_compat = working_villages.require("farming_compat")
 if working_villages.voxelibre_compat.is_voxelibre then
   log.action("VoxeLibre detected - enabling compatibility mode")
+  -- Check if required model provider is available
+  if not minetest.get_modpath("mcl_player") then
+    log.warning("mcl_player mod not found! Villagers require character.b3d model from mcl_player.")
+    log.warning("Please enable the mcl_player mod for proper villager display.")
+  end
 else
   log.action("minetest_game detected - using standard mode")
+  -- Check if required model provider is available
+  if not minetest.get_modpath("default") then
+    log.warning("default mod not found! Villagers require character.b3d model from default mod.")
+    log.warning("Please enable the default mod for proper villager display.")
+  end
 end
 
 working_villages.require("groups")

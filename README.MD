@@ -165,12 +165,18 @@ doors can be used by the villagers that's why there is a dependency
 working_villages is compatible with both **minetest_game** and **VoxeLibre** (formerly MineClone2):
 
 #### For minetest_game:
-- Required: None
-- Optional: `default` (provides character.b3d model), `doors`, `beds`, `farming`
+- **Required for villager models**: `default` (provides character.b3d model)
+- Optional: `doors`, `beds`, `farming`
 
 #### For VoxeLibre:
-- Required: None
-- Optional: `mcl_core`, `mcl_player` (provides character.b3d model), `mcl_doors`, `mcl_beds`, `mcl_chests`, `mcl_farming`, `mcl_torches`
+- **Required for villager models**: `mcl_player` (provides character.b3d model)
+- Optional: `mcl_core`, `mcl_doors`, `mcl_beds`, `mcl_chests`, `mcl_farming`, `mcl_torches`
+
+**Important**: Villagers require the `character.b3d` 3D model file to display properly. This file is provided by:
+- `default` mod in minetest_game
+- `mcl_player` mod in VoxeLibre
+
+If these mods are not enabled, you will see errors like `Mesh not found: "character.b3d"` and villagers will not display correctly. Make sure the appropriate mod is enabled for your game type.
 
 The mod automatically detects which game is running and adapts its behavior accordingly. All features work seamlessly in both environments.
 
