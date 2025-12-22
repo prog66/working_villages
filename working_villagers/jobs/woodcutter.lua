@@ -79,11 +79,11 @@ end
 local searching_range = {x = 10, y = 10, z = 10, h = 5}
 
 working_villages.register_job("working_villages:job_woodcutter", {
-	description      = "woodcutter (working_villages)",
-	long_description = "I look for any Tree trunks around and chop them down.\
-I might also chop down a house. Don't get angry please I'm not the best at my job.\
-When I find a sapling I'll plant it on some soil near a bright place so a new tree can grow from it. "..
-"I practice sustainable forestry and gain experience from my work.",
+	description      = "bucheron (working_villages)",
+	long_description = "Je cherche des troncs d'arbres et je les coupe.\
+Je peux aussi couper une maison par erreur, ne m'en veux pas.\
+Quand je trouve un jeune arbre, je le plante pres d'un endroit lumineux. "..
+"Je pratique une coupe durable et je gagne de l'experience.",
 	inventory_image  = "default_paper.png^working_villages_woodcutter.png",
 	jobfunc = function(self)
 		self:handle_night()
@@ -105,12 +105,12 @@ When I find a sapling I'll plant it on some soil near a bright place so a new tr
 						print("failure: no adjacent walkable found")
 						destination = target
 					end
-					self:set_displayed_action("planting a tree")
+					self:set_displayed_action("plante un arbre")
 					self:go_to(destination)
 					local success, ret = self:place(is_sapling, target)
 					if not success then
 						working_villages.failed_pos_record(target)
-						self:set_displayed_action("confused as to why planting failed")
+						self:set_displayed_action("confus, la plantation a echoue")
 						self:delay(100)
 					else
 						-- Award experience for planting trees (reforestation)
@@ -125,8 +125,8 @@ When I find a sapling I'll plant it on some soil near a bright place so a new tr
 				local tree_count = count_nearby_trees(target, 5)
 				if tree_count < 3 then
 					-- Too few trees nearby, skip cutting and plant more
-					self:set_state_info("Preserving forest - too few trees nearby. Will plant more saplings.")
-					self:set_displayed_action("being a responsible forester")
+					self:set_state_info("Je preserve la foret : pas assez d'arbres. Je vais planter.")
+					self:set_displayed_action("forestier responsable")
 				else
 					local destination = func.find_adjacent_clear(target)
 					destination = func.find_ground_below(destination)
@@ -134,18 +134,18 @@ When I find a sapling I'll plant it on some soil near a bright place so a new tr
 						print("failure: no adjacent walkable found")
 						destination = target
 					end
-					self:set_displayed_action("cutting a tree")
+					self:set_displayed_action("coupe un arbre")
 					-- We may not be able to reach the log
 					local success, ret = self:go_to(destination)
 					if not success then
 						working_villages.failed_pos_record(target)
-						self:set_displayed_action("looking at the unreachable log")
+						self:set_displayed_action("regarde un tronc inaccessible")
 						self:delay(100)
 					else
 						success, ret = self:dig(target,true)
 						if not success then
 							working_villages.failed_pos_record(target)
-							self:set_displayed_action("confused as to why cutting failed")
+							self:set_displayed_action("confus, la coupe a echoue")
 							self:delay(100)
 						else
 							-- Award experience for cutting trees
@@ -155,14 +155,14 @@ When I find a sapling I'll plant it on some soil near a bright place so a new tr
 					end
 				end
 			end
-			self:set_displayed_action("looking for work")
+			self:set_displayed_action("cherche du travail")
 		elseif self:timer_exceeded("woodcutter:reforest", 200) then
 			-- Periodically focus on reforestation
 			if self:has_item_in_main(is_sapling) then
 				local target = func.search_surrounding(self.object:get_pos(), is_sapling_spot, searching_range)
 				if target then
-					self:set_displayed_action("reforesting the area")
-					self:set_state_info("Planting trees to maintain the forest.")
+					self:set_displayed_action("reboise la zone")
+					self:set_state_info("Je plante des arbres pour garder la foret.")
 				end
 			end
 		elseif self:timer_exceeded("woodcutter:change_dir",50) then

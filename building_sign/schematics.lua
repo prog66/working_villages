@@ -2,7 +2,16 @@
 
 local DEFAULT_NODE = building_sign.DEFAULT_NODE
 
+local function resolve_alias(name)
+	local alias = minetest.registered_aliases[name]
+	if alias then
+		return alias
+	end
+	return name
+end
+
 function building_sign.get_registered_nodename(name)
+	name = resolve_alias(name)
 	if working_villages.voxelibre_compat.is_door(name) then
 		-- Handle both minetest_game and VoxeLibre door formats
 		name = name:gsub("_[b]_[12]", "")
@@ -16,6 +25,10 @@ function building_sign.get_registered_nodename(name)
 	elseif string.find(name, "farming") or string.find(name, "mcl_farming") then
 		name = name:gsub("_%d", "")
 	end
+	if working_villages.voxelibre_compat.is_voxelibre then
+		name = working_villages.voxelibre_compat.get_item(name)
+	end
+	name = resolve_alias(name)
 	return name
 end
 
@@ -44,9 +57,17 @@ function building_sign.load_schematic(modpath,filename,pos)
 	local nodedata = {}
 	for i,v in ipairs(data) do --this is actually not nessecary
 		if v.name and v.x and v.y and v.z then
-			local node = {name=v.name, param1=v.param1, param2=v.param2}
+			local node_name = v.name
+			if working_villages.voxelibre_compat.is_voxelibre then
+				node_name = working_villages.voxelibre_compat.get_item(node_name)
+				local alias = minetest.registered_aliases[node_name]
+				if alias then
+					node_name = alias
+				end
+			end
+			local node = {name=node_name, param1=v.param1, param2=v.param2}
 			local npos = vector.add(working_villages.buildings.get_build_pos(meta), {x=v.x, y=v.y, z=v.z})
-			local name = working_villages.buildings.get_registered_nodename(v.name)
+			local name = working_villages.buildings.get_registered_nodename(node_name)
 			if minetest.registered_items[name]==nil then
 				node = DEFAULT_NODE
 			end

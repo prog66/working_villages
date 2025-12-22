@@ -48,8 +48,8 @@ function follower.step(v)
 end
 
 working_villages.register_job("working_villages:job_folow_player", {
-  description      = "follower (working_villages)",
-  long_description = "I'll just follow you wherever you go.",
+  description      = "suiveur (working_villages)",
+  long_description = "Je te suis ou que tu ailles.",
   inventory_image  = "default_paper.png^memorandum_letters.png",
   jobfunc = function(v)
     while (v.pause) do

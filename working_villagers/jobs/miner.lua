@@ -109,10 +109,10 @@ end
 local searching_range = {x = 10, y = 10, z = 10}
 
 working_villages.register_job("working_villages:job_miner", {
-	description = "miner (working_villages)",
-	long_description = "I mine stone and ores from the ground. "..
-		"I collect valuable minerals and help excavate areas for construction. "..
-		"I need a pickaxe to do my work and I'll place torches to light up dark areas.",
+	description = "mineur (working_villages)",
+	long_description = "Je mine la pierre et les minerais. "..
+		"Je collecte des mineraux utiles et j'aide a creuser pour la construction. "..
+		"J'ai besoin d'une pioche et je pose des torches pour eclairer.",
 	inventory_image = "default_paper.png^working_villages_miner.png",
 	jobfunc = function(self)
 		self:handle_night()
@@ -136,8 +136,8 @@ working_villages.register_job("working_villages:job_miner", {
 		end
 		
 		if not has_pickaxe then
-			self:set_state_info("I need a pickaxe to mine. Please give me one.")
-			self:set_displayed_action("looking for a pickaxe")
+			self:set_state_info("J'ai besoin d'une pioche pour miner. Donnez-m'en une.")
+			self:set_displayed_action("cherche une pioche")
 			return
 		end
 		
@@ -173,7 +173,7 @@ working_villages.register_job("working_villages:job_miner", {
 					destination = target
 				end
 				
-				self:set_displayed_action("mining")
+				self:set_displayed_action("mine")
 				local success = self:go_to(destination)
 				if success then
 					self:dig(target, true)
@@ -182,13 +182,13 @@ working_villages.register_job("working_villages:job_miner", {
 					local inv_name = self:get_inventory_name()
 					blueprints.add_experience(inv_name, 1)
 					
-					self:set_state_info("Mining valuable resources.")
+					self:set_state_info("Je mine des ressources utiles.")
 				else
 					working_villages.failed_pos_record(target)
-					self:set_displayed_action("looking for another mining spot")
+					self:set_displayed_action("cherche un autre filon")
 				end
 			else
-				self:set_state_info("Looking for stone or ore to mine.")
+				self:set_state_info("Je cherche de la pierre ou du minerai.")
 			end
 		elseif self:timer_exceeded("miner:torch_check", 100) then
 			-- Occasionally check if we should place a torch
@@ -209,7 +209,7 @@ working_villages.register_job("working_villages:job_miner", {
 						if wall_node.name ~= "air" then
 							local torch_pos = vector.subtract(wall_pos, dir)
 							self:place(torch_name, torch_pos)
-							self:set_displayed_action("placing a torch")
+							self:set_displayed_action("pose une torche")
 							break
 						end
 					end

@@ -97,10 +97,10 @@ end
 local searching_range = {x = 15, y = 5, z = 15}
 
 working_villages.register_job("working_villages:job_blacksmith", {
-	description = "blacksmith (working_villages)",
-	long_description = "I work with metal and fire. I collect metal ores, smelt them into ingots, "..
-		"repair damaged tools, and help build metal structures. "..
-		"I need access to a furnace to do my best work.",
+	description = "forgeron (working_villages)",
+	long_description = "Je travaille le metal et le feu. Je collecte des minerais, je les fond en lingots, "..
+		"je repare les outils abimes et j'aide a construire en metal. "..
+		"J'ai besoin d'un four pour bien travailler.",
 	inventory_image = "default_paper.png^working_villages_blacksmith.png",
 	jobfunc = function(self)
 		self:handle_night()
@@ -121,8 +121,8 @@ working_villages.register_job("working_villages:job_blacksmith", {
 				if not stack:is_empty() and needs_repair(stack) then
 					if repair_tool(self, stack) then
 						inv:set_stack("main", i, stack)
-						self:set_state_info("Repaired a " .. stack:get_name())
-						self:set_displayed_action("repairing tools")
+						self:set_state_info("Repare : " .. stack:get_name())
+						self:set_displayed_action("repare des outils")
 						self:delay(50)
 						repaired_something = true
 						break
@@ -146,19 +146,20 @@ working_villages.register_job("working_villages:job_blacksmith", {
 						if destination then
 							destination = func.find_ground_below(destination)
 							if destination then
-								self:set_displayed_action("working at the forge")
+								self:set_displayed_action("travaille a la forge")
 								self:go_to(destination)
+								self:use_node(furnace_pos)
 								-- In a real implementation, we would interact with the furnace
 								-- For now, just indicate the blacksmith is working
-								self:set_state_info("Working at the forge, preparing to smelt ore.")
+								self:set_state_info("Je travaille a la forge, je prepare la fusion du minerai.")
 								self:delay(100)
 							end
 						end
 					else
-						self:set_state_info("Looking for metal ores or items to repair.")
+						self:set_state_info("Je cherche du minerai ou des outils a reparer.")
 					end
 				else
-					self:set_state_info("Looking for a furnace to work at.")
+					self:set_state_info("Je cherche un four.")
 				end
 			end
 		elseif self:timer_exceeded("blacksmith:change_dir", 50) then

@@ -7,12 +7,95 @@ local compat = working_villages.voxelibre_compat
 -- Use the compatibility layer for plant definitions
 local farming_plants = farming_compat
 local farming_demands = farming_compat.get_demands()
+local farming_data = farming_compat.get_plants()
+local seed_items = {}
+for _, plant in pairs(farming_data) do
+	for _, seed in ipairs(plant.replant or {}) do
+		seed_items[seed] = true
+	end
+end
 
 local function find_plant_node(pos)
 	return farming_compat.is_plant_node(pos)
 end
 
+local function has_seed(name)
+	return seed_items[name]
+end
+
+local function find_seed_in_inventory(self, preferred)
+	local inv = self:get_inventory()
+	if preferred then
+		for _, stack in ipairs(inv:get_list("main")) do
+			if not stack:is_empty() and stack:get_name() == preferred then
+				return preferred
+			end
+		end
+	end
+	for _, stack in ipairs(inv:get_list("main")) do
+		if not stack:is_empty() and has_seed(stack:get_name()) then
+			return stack:get_name()
+		end
+	end
+	return nil
+end
+
+local function ensure_farmer_tool(self)
+	local tool_candidates = {
+		compat.get_item("default:hoe_steel"),
+		compat.get_item("default:hoe_stone"),
+		compat.get_item("default:hoe_wood"),
+	}
+	local inv = self:get_inventory()
+	local wield_name = self:get_wield_item_stack():get_name()
+
+	for _, candidate in ipairs(tool_candidates) do
+		if candidate and candidate ~= "" and minetest.registered_items[candidate] then
+			if wield_name == candidate then
+				return true
+			end
+			if self:move_main_to_wield(function(name) return name == candidate end) then
+				return true
+			end
+			local leftover = inv:add_item("main", ItemStack(candidate))
+			if leftover:is_empty() then
+				self:move_main_to_wield(function(name) return name == candidate end)
+				return true
+			end
+		end
+	end
+	return false
+end
+
+local function attempt_plant_seed(self, pos, seed_name)
+	if not seed_name or seed_name == "" then
+		return false
+	end
+	if not is_farmland(pos) then
+		return false
+	end
+	self:set_state_info("Je replante des graines.")
+	self:set_displayed_action("replante des graines")
+	return self:place(seed_name, pos)
+end
+
+local function try_replant(self, target, seed_list)
+	if not target then
+		return false
+	end
+	if seed_list then
+		for _, seed in ipairs(seed_list) do
+			if seed and attempt_plant_seed(self, target, find_seed_in_inventory(self, seed)) then
+				return true
+			end
+		end
+	end
+	local fallback = find_seed_in_inventory(self)
+	return attempt_plant_seed(self, target, fallback)
+end
+
 local searching_range = {x = 10, y = 3, z = 10}
+local seed_collection_range = {x = 2, y = 1, z = 2}
 
 -- Check if a position is suitable for farming (has soil below)
 local function is_farmland(pos)
@@ -52,19 +135,31 @@ local function take_func(villager,stack)
 			return true
 		end
 	end
+	if has_seed(item_name) then
+		local inv = villager:get_inventory()
+		if not inv:contains_item("main", ItemStack(item_name)) then
+			return true
+		end
+	end
 	return false
 end
 
 working_villages.register_job("working_villages:job_farmer", {
-	description			= "farmer (working_villages)",
-	long_description = "I look for farming plants to collect and replant them. "..
-		"I can also prepare new farmland and gain experience from successful harvests. "..
-		"With experience, I can learn to build better farms and improve crop yields.",
+	description			= "fermier (working_villages)",
+	long_description = "Je cherche des cultures a recolter et replanter. "..
+		"Je peux aussi preparer de nouvelles terres et gagner de l'experience en recoltant. "..
+		"Avec l'experience, j'apprends a faire de meilleures fermes.",
 	inventory_image	= "default_paper.png^working_villages_farmer.png",
 	jobfunc = function(self)
 		self:handle_night()
 		self:handle_chest(take_func, put_func)
 		self:handle_job_pos()
+
+		ensure_farmer_tool(self)
+		self:collect_nearest_item_by_condition(
+			function(item) return has_seed(item.name) end,
+			searching_range
+		)
 
 		self:count_timer("farmer:search")
 		self:count_timer("farmer:change_dir")
@@ -83,16 +178,19 @@ working_villages.register_job("working_villages:job_farmer", {
 					destination = target
 				end
 				self:go_to(destination)
-				local plant_data = farming_plants.get_plant(minetest.get_node(target).name);
+				local plant_data = farming_plants.get_plant(minetest.get_node(target).name)
 				self:dig(target,true)
-				if plant_data and plant_data.replant then
-					for index, value in ipairs(plant_data.replant) do
-						self:place(value, vector.add(target, vector.new(0,index-1,0)))
-					end
-					-- Award experience for successful harvest and replant
+				self:collect_nearest_item_by_condition(
+					function(item) return has_seed(item.name) end,
+					seed_collection_range
+				)
+				local replanted = try_replant(self, target, plant_data and plant_data.replant)
+				if replanted then
 					local inv_name = self:get_inventory_name()
 					blueprints.add_experience(inv_name, 1)
-					self:set_displayed_action("harvesting crops")
+					self:set_displayed_action("recolte des cultures")
+				else
+					self:set_state_info("Je cherche des graines pour replanter.")
 				end
 			end
 		elseif self:timer_exceeded("farmer:expand_farm", 100) then
@@ -103,10 +201,10 @@ working_villages.register_job("working_villages:job_farmer", {
 				if destination then
 					destination = func.find_ground_below(destination)
 					if destination ~= false then
-						self:set_displayed_action("preparing farmland")
+						self:set_displayed_action("prepare les cultures")
 						self:go_to(destination)
 						-- In a future enhancement, could use a hoe to till the soil
-						self:set_state_info("Found potential farmland to expand.")
+						self:set_state_info("J'ai trouve un terrain a preparer.")
 					end
 				end
 			end

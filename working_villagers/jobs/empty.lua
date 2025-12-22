@@ -1,5 +1,5 @@
 working_villages.register_job("working_villages:job_empty", {
-	description      = "empty (working_villages)",
+	description      = "vide (working_villages)",
 	inventory_image  = "default_paper.png",
 	jobfunc          = function() end,
 })

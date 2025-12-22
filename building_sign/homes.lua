@@ -64,8 +64,8 @@ function building_sign.home:get_marker_meta()
 	end
 	if minetest.get_node(home_marker_pos).name ~= "working_villages:building_marker" then
 		if not(vector.equals(home_marker_pos,{x=0,y=0,z=0})) then
-			minetest.log("warning", "The position of an non existant home was requested.")
-			minetest.log("warning", "Given home position:" .. minetest.pos_to_string(home_marker_pos))
+			minetest.log("warning", "Position d'une maison inexistante demandee.")
+			minetest.log("warning", "Position de maison donnee : " .. minetest.pos_to_string(home_marker_pos))
 		end
 		return false
 	end
@@ -73,11 +73,11 @@ function building_sign.home:get_marker_meta()
 	if meta:get_string("valid")~="true" then
 		local owner = meta:get_string("owner")
 		if owner == "" then
-			minetest.log("warning", "The data of an unconfigured home was requested.")
-			minetest.log("warning", "Given home position:" .. minetest.pos_to_string(home_marker_pos))
+			minetest.log("warning", "Donnees demandees pour une maison non configuree.")
+			minetest.log("warning", "Position de maison donnee : " .. minetest.pos_to_string(home_marker_pos))
 		else
-			minetest.chat_send_player(owner, "The data of an unconfigured home was requested.")
-			minetest.chat_send_player(owner, "Given home position:" .. minetest.pos_to_string(home_marker_pos))
+			minetest.chat_send_player(owner, "Donnees demandees pour une maison non configuree.")
+			minetest.chat_send_player(owner, "Position de maison donnee : " .. minetest.pos_to_string(home_marker_pos))
 		end
 		return false
 	end
@@ -96,7 +96,7 @@ function building_sign.home:get_door()
 	local door_pos = meta:get_string("door")
 	if not door_pos then
 		local home_marker_pos = self:get_marker()
-		minetest.log("warning", "The position outside the house was not entered for the home at:" ..
+		minetest.log("warning", "La position exterieure n'a pas ete renseignee pour la maison a : " ..
 		    minetest.pos_to_string(home_marker_pos))
 		return false
 	end
@@ -117,7 +117,7 @@ function building_sign.home:get_bed()
 	local bed_pos = meta:get_string("bed")
 	if not bed_pos then
 		local home_marker_pos = self:get_marker()
-		minetest.log("warning", "The position of the bed was not entered for the home at:" ..
+		minetest.log("warning", "La position du lit n'a pas ete renseignee pour la maison a : " ..
 		    minetest.pos_to_string(home_marker_pos))
 		return false
 	end

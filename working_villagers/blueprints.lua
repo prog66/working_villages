@@ -3,6 +3,45 @@
 
 local blueprints = {}
 
+local function load_nodes_from_schematic(filename)
+	local nodes = {}
+	if not filename then
+		return nodes
+	end
+	local path = working_villages.modpath .. "/schems/" .. filename
+	local input = io.open(path, "r")
+	if not input then
+		minetest.log("warning", "[blueprints] Impossible de charger " .. filename)
+		return nodes
+	end
+	local data = minetest.deserialize(input:read("*a"))
+	io.close(input)
+	if not data then
+		minetest.log("warning", "[blueprints] Fichier schem corrompu : " .. filename)
+		return nodes
+	end
+	for _, entry in ipairs(data) do
+		if entry.name and entry.x and entry.y and entry.z then
+			local node_name = entry.name
+			if working_villages.voxelibre_compat.is_voxelibre then
+				node_name = working_villages.voxelibre_compat.get_item(node_name)
+			end
+			node_name = working_villages.buildings.get_registered_nodename(node_name)
+			if node_name and node_name ~= "air" and minetest.registered_nodes[node_name] then
+				table.insert(nodes, {
+					pos = {x = entry.x, y = entry.y, z = entry.z},
+					node = {
+						name = node_name,
+						param1 = entry.param1 or 0,
+						param2 = entry.param2 or 0,
+					},
+				})
+			end
+		end
+	end
+	return nodes
+end
+
 -- Storage for learned blueprints per villager
 -- Format: { [villager_inv_name] = { blueprints = {blueprint_name = level}, experience = num } }
 blueprints.learned = {}
@@ -62,21 +101,25 @@ end
 -- }
 function blueprints.register(name, definition)
 	if not definition.category or not definition.difficulty then
-		minetest.log("error", "[blueprints] Blueprint " .. name .. " missing required fields")
+		minetest.log("error", "[blueprints] Plan " .. name .. " manque des champs requis")
 		return false
 	end
-	
+	local nodes = definition.nodes or {}
+	if (#nodes == 0) and definition.schematic_file then
+		nodes = load_nodes_from_schematic(definition.schematic_file)
+	end
+
 	blueprints.registered[name] = {
 		category = definition.category,
 		difficulty = definition.difficulty,
-		description = definition.description or "A blueprint",
-		nodes = definition.nodes or {},
+		description = definition.description or "Un plan",
+		nodes = nodes,
 		schematic_file = definition.schematic_file,
 		improvements = definition.improvements or {},
 		max_level = #(definition.improvements or {}) + 1,
 	}
 	
-	minetest.log("action", "[blueprints] Registered blueprint: " .. name)
+	minetest.log("action", "[blueprints] Plan enregistre : " .. name)
 	return true
 end
 
@@ -135,28 +178,28 @@ end
 function blueprints.teach(inv_name, blueprint_name)
 	local blueprint = blueprints.get(blueprint_name)
 	if not blueprint then
-		return false, "Blueprint not found: " .. blueprint_name
+		return false, "Plan introuvable : " .. blueprint_name
 	end
 	
 	local data = blueprints.get_villager_data(inv_name)
 	
 	-- Check if already learned
 	if blueprints.has_learned(inv_name, blueprint_name) then
-		return false, "Already learned this blueprint"
+		return false, "Plan deja appris"
 	end
 	
 	-- Check if villager has enough experience for this difficulty
 	local required_exp = blueprint.difficulty * 10
 	if data.experience < required_exp then
-		return false, "Not enough experience (need " .. required_exp .. ", have " .. data.experience .. ")"
+		return false, "Pas assez d'experience (besoin de " .. required_exp .. ", vous avez " .. data.experience .. ")"
 	end
 	
 	-- Teach the blueprint
 	data.blueprints[blueprint_name] = 1  -- Start at level 1
 	blueprints.save_learned()
 	
-	minetest.log("action", "[blueprints] Villager " .. inv_name .. " learned blueprint: " .. blueprint_name)
-	return true, "Successfully learned blueprint: " .. blueprint_name
+	minetest.log("action", "[blueprints] Villageois " .. inv_name .. " a appris le plan : " .. blueprint_name)
+	return true, "Plan appris : " .. blueprint_name
 end
 
 -- Improve a learned blueprint (level up)
@@ -164,24 +207,24 @@ end
 function blueprints.improve(inv_name, blueprint_name)
 	local blueprint = blueprints.get(blueprint_name)
 	if not blueprint then
-		return false, "Blueprint not found"
+		return false, "Plan introuvable"
 	end
 	
 	local data = blueprints.get_villager_data(inv_name)
 	local current_level = data.blueprints[blueprint_name]
 	
 	if not current_level then
-		return false, "Blueprint not learned yet"
+		return false, "Plan pas encore appris"
 	end
 	
 	if current_level >= blueprint.max_level then
-		return false, "Blueprint already at maximum level"
+		return false, "Plan deja au niveau maximum"
 	end
 	
 	-- Check if villager has enough experience to improve
 	local required_exp = current_level * blueprint.difficulty * 20
 	if data.experience < required_exp then
-		return false, "Not enough experience for improvement"
+		return false, "Pas assez d'experience pour ameliorer"
 	end
 	
 	-- Improve the blueprint
@@ -189,8 +232,23 @@ function blueprints.improve(inv_name, blueprint_name)
 	data.experience = data.experience - required_exp
 	blueprints.save_learned()
 	
-	minetest.log("action", "[blueprints] Villager " .. inv_name .. " improved blueprint " .. blueprint_name .. " to level " .. (current_level + 1))
-	return true, "Blueprint improved to level " .. (current_level + 1)
+	minetest.log("action", "[blueprints] Villageois " .. inv_name .. " a ameliore le plan " .. blueprint_name .. " au niveau " .. (current_level + 1))
+	return true, "Plan ameliore au niveau " .. (current_level + 1)
+end
+
+function blueprints.force_improve(inv_name, blueprint_name)
+	local blueprint = blueprints.get(blueprint_name)
+	if not blueprint then
+		return false, "Plan introuvable"
+	end
+	local data = blueprints.get_villager_data(inv_name)
+	local current_level = data.blueprints[blueprint_name] or 0
+	if current_level >= blueprint.max_level then
+		return false, "Plan deja maximal"
+	end
+	data.blueprints[blueprint_name] = current_level + 1
+	blueprints.save_learned()
+	return true, "Plan forcement ameliore"
 end
 
 -- Award experience to a villager

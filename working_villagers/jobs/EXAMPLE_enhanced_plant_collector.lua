@@ -64,10 +64,10 @@ local take_func = job_patterns.chest_handlers.create_take_func({"hoe"})
   Enhanced plant collector job using AI behavior system.
 ]]--
 working_villages.register_job("working_villages:job_plant_collector_enhanced", {
-  description = "enhanced plant collector (working_villages)",
-  long_description = "I collect various plants and flowers to produce dyes and materials. "..
-    "I use intelligent decision-making to prioritize tasks and remember productive locations. "..
-    "I work sustainably and avoid over-harvesting areas.",
+  description = "cueilleur avance (working_villages)",
+  long_description = "Je collecte des plantes et des fleurs pour produire des teintures et materiaux. "..
+    "Je priorise les taches et je memorise les lieux utiles. "..
+    "Je travaille sans surexploiter les zones.",
   inventory_image = "default_paper.png^working_villages_plant_collector.png",
   
   jobfunc = function(self)
@@ -93,7 +93,7 @@ working_villages.register_job("working_villages:job_plant_collector_enhanced", {
           return (time > 0.8 or time < 0.2) and s.home_pos ~= nil
         end,
         execute = function(s)
-          s:set_state_info("Returning home for the night.")
+          s:set_state_info("Je rentre pour la nuit.")
           s:go_to(s.home_pos)
           return true
         end,
@@ -121,7 +121,7 @@ working_villages.register_job("working_villages:job_plant_collector_enhanced", {
             {timer_name = "plant_collector:collect", timer_threshold = 10}
           )
           if collected then
-            s:set_state_info("Collecting dropped plants.")
+            s:set_state_info("Je ramasse des plantes au sol.")
           end
           return collected
         end,
@@ -156,8 +156,8 @@ working_villages.register_job("working_villages:job_plant_collector_enhanced", {
             timer_threshold = config.search_timer_threshold,
             find_func = is_collectible_plant,
             search_range = config.searching_range,
-            no_target_message = "Looking for plants to collect nearby.",
-            working_message = "Found plants to collect.",
+            no_target_message = "Je cherche des plantes a recolter.",
+            working_message = "J'ai trouve des plantes a recolter.",
             action_func = function(self, target_pos)
               -- Collect the plant
               local node = minetest.get_node(target_pos)
@@ -210,7 +210,7 @@ working_villages.register_job("working_villages:job_plant_collector_enhanced", {
           if #remembered > 0 then
             -- Visit a random remembered location
             local location = remembered[math.random(1, #remembered)]
-            s:set_state_info("Checking a previously productive location.")
+            s:set_state_info("Je verifie un endroit productif.")
             
             local destination = func.find_adjacent_clear(location.pos)
             if destination then
@@ -255,7 +255,7 @@ working_villages.register_job("working_villages:job_plant_collector_enhanced", {
           return s:timer_exceeded("plant_collector:chest", 40)
         end,
         execute = function(s)
-          s:set_state_info("Looking for a chest to store items.")
+          s:set_state_info("Je cherche un coffre pour stocker.")
           -- Chest handling is done in standard_init
           return true
         end,
@@ -274,7 +274,7 @@ working_villages.register_job("working_villages:job_plant_collector_enhanced", {
     else
       -- No valid tasks available - idle
       ai_behavior.state_machine.set_state(self, ai_behavior.STATES.IDLE)
-      self:set_state_info("Waiting for something to do.")
+      self:set_state_info("J'attends quelque chose a faire.")
     end
     
     -- Optional: Debug state info
@@ -282,11 +282,11 @@ working_villages.register_job("working_villages:job_plant_collector_enhanced", {
       local state = ai_behavior.state_machine.get_state(self)
       local duration = ai_behavior.state_machine.get_state_duration(self)
       minetest.chat_send_all(string.format(
-        "[%s] State: %s (%.1fs), Task: %s",
+        "[%s] Etat: %s (%.1fs), Tache: %s",
         self.inventory_name,
         state,
         duration,
-        best_task and best_task.name or "none"
+        best_task and best_task.name or "aucune"
       ))
     end
   end

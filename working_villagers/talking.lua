@@ -1,18 +1,18 @@
 local forms = working_villages.require("forms")
 
-forms.register_menu_page("working_villages:talking_menu", "hello")
+forms.register_menu_page("working_villages:talking_menu", "bonjour")
 
 forms.register_text_page("working_villages:job_desc",
 	function(villager)
 		local job = villager:get_job()
 		if not job then
-			return "I don't have a job."
+			return "Je n'ai pas de metier."
 		end
-		return job.long_description or "something..."
+		return job.long_description or "quelque chose..."
 end)
 
 forms.put_link("working_villages:talking_menu", "working_villages:job_desc",
-	"What do you do in your job?")
+	"Que fais-tu dans ton metier ?")
 
 forms.register_text_page("working_villages:state",
   function(villager)
@@ -20,5 +20,4 @@ forms.register_text_page("working_villages:state",
 end)
 
 forms.put_link("working_villages:talking_menu", "working_villages:state",
-  "What do you doing at the moment?")
-
+  "Que fais-tu en ce moment ?")

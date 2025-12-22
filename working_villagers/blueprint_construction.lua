@@ -13,12 +13,12 @@ end
 function blueprint_construction.get_construction_data(inv_name, blueprint_name, pos)
 	local blueprint = blueprints.get(blueprint_name)
 	if not blueprint then
-		return nil, "Blueprint not found"
+		return nil, "Plan introuvable"
 	end
 	
 	local level = blueprints.get_level(inv_name, blueprint_name)
 	if level == 0 then
-		return nil, "Blueprint not learned"
+		return nil, "Plan non appris"
 	end
 	
 	-- Get base node data
@@ -87,7 +87,7 @@ end
 function blueprint_construction.start_construction(villager_inv_name, blueprint_name, pos)
 	-- Check if blueprint is learned
 	if not blueprints.has_learned(villager_inv_name, blueprint_name) then
-		return false, "Blueprint not learned yet"
+		return false, "Plan pas encore appris"
 	end
 	
 	-- Get construction data
@@ -95,7 +95,7 @@ function blueprint_construction.start_construction(villager_inv_name, blueprint_
 	local nodedata, err = blueprint_construction.get_construction_data(villager_inv_name, blueprint_name, pos)
 	
 	if not nodedata then
-		return false, err or "Failed to get construction data"
+		return false, err or "Impossible d'obtenir les donnees de construction"
 	end
 	
 	-- Create building data structure
@@ -107,7 +107,7 @@ function blueprint_construction.start_construction(villager_inv_name, blueprint_
 		started_by = villager_inv_name,
 	}
 	
-	return true, "Construction project started", building_data
+	return true, "Projet de construction demarre", building_data
 end
 
 -- Suggest a blueprint for a villager to learn based on their experience
@@ -158,7 +158,7 @@ function blueprint_construction.auto_learn_if_ready(inv_name)
 	if suggested_name then
 		local success, msg = blueprints.teach(inv_name, suggested_name)
 		if success then
-			minetest.log("action", "[blueprint_construction] Villager " .. inv_name .. " auto-learned: " .. suggested_name)
+			minetest.log("action", "[blueprint_construction] Villageois " .. inv_name .. " a appris automatiquement : " .. suggested_name)
 			return true, suggested_name
 		end
 	end
@@ -180,7 +180,7 @@ function blueprint_construction.auto_improve_random(inv_name)
 		local chosen = improvable[math.random(#improvable)]
 		local success, msg = blueprints.improve(inv_name, chosen)
 		if success then
-			minetest.log("action", "[blueprint_construction] Villager " .. inv_name .. " improved: " .. chosen)
+			minetest.log("action", "[blueprint_construction] Villageois " .. inv_name .. " a ameliore : " .. chosen)
 			return true, chosen
 		end
 	end

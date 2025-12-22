@@ -10,6 +10,12 @@ end
 forms.last_pages = {}
 
 function forms.go_back(villager,player_name)
+	if not villager or not villager.inventory_name then
+		return
+	end
+	if not forms.last_pages[villager.inventory_name] then
+		return
+	end
 	local last_page = forms.last_pages[villager.inventory_name].last
 	forms.show_formspec(villager, last_page, player_name)
 end
@@ -46,6 +52,15 @@ function forms.show_formspec(villager, formname, playername)
 		log.warning("page %s not registered", formname)
 		page = registered_forms["working_villages:talking_menu"]
 	end
+	if not villager or not villager.inventory_name then
+		local form = "size[8,3]" ..
+			working_villages.voxelibre_compat.get_gui_bg() ..
+			working_villages.voxelibre_compat.get_gui_bg_img() ..
+			working_villages.voxelibre_compat.get_gui_slots() ..
+			"label[0.5,0.8;Erreur: villageois introuvable]"
+		minetest.show_formspec(playername, formname.."_invalid", form)
+		return
+	end
 	minetest.show_formspec(playername, formname.."_"..villager.inventory_name, page:constructor(villager, playername))
 	forms.villagers[villager.inventory_name] = villager
 
@@ -78,17 +93,28 @@ minetest.register_on_player_receive_fields(
 
 function forms.form_base(width,height,villager)
 	local jobname
+	local job_desc
 
 	if villager then
-		jobname = villager:get_job()
-	end --perhaps only add jobname label if villager is given
-	if jobname then
-		jobname = jobname.description
+		if type(villager.get_job) == "function" then
+			local job_obj = villager:get_job()
+			if job_obj and job_obj.description then
+				job_desc = job_obj.description
+			end
+		elseif type(villager.get_job_name) == "function" then
+			local job_name = villager:get_job_name()
+			if job_name and working_villages.registered_jobs[job_name] then
+				job_desc = working_villages.registered_jobs[job_name].description
+			end
+		end
+	end
+	if job_desc then
+		jobname = job_desc
 	else
-		jobname = "no job"
+		jobname = "aucun metier"
 	end
 	local villager_name = ""
-	if villager.nametag and villager.nametag~="" then
+	if villager and villager.nametag and villager.nametag~="" then
 		villager_name = villager.nametag.." - "
 	end
 
@@ -122,7 +148,7 @@ function forms.register_menu_page(pageid, title)
 					break
 				end
 			end
-			form = form .. "button_exit[3.5,"..(formbottom-1)..";1,1;exit;bye]"
+			form = form .. "button_exit[3.5,"..(formbottom-1)..";1,1;exit;fermer]"
 			return form
 		end,
 		receiver = function(_, villager, sender, fields) --self, villager, sender, fields
@@ -195,7 +221,7 @@ function forms.register_text_page(pageid,text_constructor)
 				out_text = "(error) " .. out_text
 			end
 			form = form .. forms.text_widget(0,1,6,6,"out_text",out_text)
-			form = form .. "button[2.5,7;1,1;back;ok]"
+			form = form .. "button[2.5,7;1,1;back;retour]"
 			return form
 		end,
 		receiver = function(_,villager,sender,fields)
@@ -219,11 +245,11 @@ forms.register_page("working_villages:job_change",{
 			.. working_villages.voxelibre_compat.get_gui_bg_img()
 			.. working_villages.voxelibre_compat.get_gui_slots()
 			.. villager_name
-			.. "label[".. cp.x - 0.25 ..",".. cp.y ..";current job]"
+			.. "label[".. cp.x - 0.25 ..",".. cp.y ..";metier actuel]"
 			.. "list[detached:".. villager.inventory_name ..";job;".. cp.x ..",".. cp.y + 0.5 ..";1,1;]"
 			.. "list[detached:working_villages:job_inv;main;0,2;8,4;]"
 			.. "listring[]"
-			.. "button[6,".. cp.y + 0.5 ..";1,1;back;back]"
+			.. "button[6,".. cp.y + 0.5 ..";1,1;back;retour]"
 	end,
 	receiver = function(_, villager, sender, fields)
 		local sender_name = sender:get_player_name()
@@ -275,26 +301,26 @@ end
 local function set_villager_home(sender_name, villager, marker_pos)
 	if not (marker_pos.x and marker_pos.y and marker_pos.z) then
 		-- fail on illegal input of coordinates
-		minetest.chat_send_player(sender_name, 'You failed to provide correct coordinates for the home position. '..
-			'Please enter the X, Y, and Z coordinates of the desired destination in a comma seperated list. '..
-			'Example: The input "10,20,30" means the destination at the coordinates X=10, Y=20 and Z=30.')
+		minetest.chat_send_player(sender_name, 'Coordonnees invalides pour la position de la maison. '..
+			'Entrez X, Y et Z sous forme de liste separee par des virgules. '..
+			'Exemple : "10,20,30" correspond a X=10, Y=20 et Z=30.')
 		return
 	end
 	if(marker_pos.x>30927 or marker_pos.x<-30912 or marker_pos.y>30927 or marker_pos.y<-30912 or marker_pos.z>30927 or marker_pos.z<-30912) then
-		minetest.chat_send_player(sender_name, "The coordinates of your home position "..
-			"do not exist in our coordinate system. Correct coordinates range from -30912 to 30927 in all axes.")
+		minetest.chat_send_player(sender_name, "Les coordonnees de la maison sont hors limites. "..
+			"Plage valide : -30912 a 30927 pour chaque axe.")
 		return
 	end
 	if minetest.get_node(marker_pos).name ~= "working_villages:building_marker" then
-		minetest.chat_send_player(sender_name, 'No home marker could be found at the entered position.')
+		minetest.chat_send_player(sender_name, "Aucun marqueur de maison a cette position.")
 		return
 	end
 
 	villager:set_home(marker_pos)
-	minetest.chat_send_player(sender_name, 'Home marker set!')
+	minetest.chat_send_player(sender_name, "Marqueur de maison defini.")
 	if minetest.get_meta(marker_pos):get_string("valid") == "false" then
-		minetest.chat_send_player(sender_name, 'Home marker not configured, '..
-			'please right-click the home marker to configure it.')
+		minetest.chat_send_player(sender_name, "Marqueur non configure, "..
+			"clic droit pour le configurer.")
 	end
 end
 
@@ -370,28 +396,28 @@ forms.register_page("working_villages:data_change",{
 			.. working_villages.voxelibre_compat.get_gui_bg_img()
 			.. working_villages.voxelibre_compat.get_gui_slots()
 			.. villager_name_label
-			.. "label[".. cp.x - 0.5 ..",".. cp.y-0.1 ..";current villager data]"
+			.. "label[".. cp.x - 0.5 ..",".. cp.y-0.1 ..";donnees du villageois]"
 			.. "label[-1,-1;"..change_index.."]"
-			.. "field[" .. cp.x-3 .. "," .. cp.y + 0.9 ..";2.5,1;villager_pos;villager position;" .. player_pos .. "]"
-			.. "field[" .. cp.x+2 .. "," .. cp.y + 0.9 ..";2.5,1;player_pos;player position;" .. villager_pos .. "]"
-			.. "field[" .. cp.x-3 .. "," .. cp.y + 1.9 ..";2.5,1;marker_pos;building marker pos;" .. marker_pos .. "]"
-			.. "field[" .. cp.x-0.5 .. "," .. cp.y + 1.9 ..";2.5,1;villager_name;villager name;" .. villager_name .. "]"
-			.. "field[" .. cp.x+2 .. "," .. cp.y + 1.9 ..";2.5,1;village_name;village name;" .. village_name .. "]"
-			.. "field[" .. hp.x .. "," .. hp.y + 0.4 ..";2.5,1;home_pos;house door position;" .. home_pos .. "]"
-      .. "tooltip[home_pos;Use \"near\" to find nearest door (from villager up to 5 nodes).]"
-			.. "field[" .. hp.x+2.5 .. "," .. hp.y + 0.4 ..";2.5,1;bed_pos;bed position;" .. bed_pos .. "]"
-      .. "tooltip[bed_pos;Use \"near\" to find nearest bed (from villager up to 5 nodes).]"
-			.. "field[" .. hp.x+5 .. "," .. hp.y + 0.4 ..";2.5,1;chest_pos;chest position;" .. chest_pos .. "]"
-      .. "tooltip[chest_pos;Use \"near\" to find nearest chest (from villager up to 5 nodes).]"
-			.. "field[" .. wp.x .. "," .. wp.y + 0.4 ..";2.5,1;food_pos;food position;" .. food_pos .. "]"
-      .. "tooltip[food_pos;Use \"near\" to find nearest chest (from villager up to 5 nodes).]"
-			.. "field[" .. wp.x+2.5 .. "," .. wp.y + 0.4 ..";2.5,1;tools_pos;tools position;" .. tools_pos .. "]"
-      .. "tooltip[tools_pos;Use \"near\" to find nearest chest (from villager up to 5 nodes).]"
-			.. "field[" .. wp.x+5 .. "," .. wp.y + 0.4 ..";2.5,1;storage_pos;storage position;" .. storage_pos .. "]"
-      .. "tooltip[storage_pos;Use \"near\" to find nearest chest (from villager up to 5 nodes).]"
-			.. "field[" .. jp.x .. "," .. jp.y + 0.4 ..";2.5,1;job_pos;job position;" .. job_pos .. "]"
-			.. "button[3,".. bp.y + 0.5 ..";1,1;set_data;set]"
-			.. "button[6,".. bp.y + 0.5 ..";1,1;back;back]"
+			.. "field[" .. cp.x-3 .. "," .. cp.y + 0.9 ..";2.5,1;villager_pos;position villageois;" .. player_pos .. "]"
+			.. "field[" .. cp.x+2 .. "," .. cp.y + 0.9 ..";2.5,1;player_pos;position joueur;" .. villager_pos .. "]"
+			.. "field[" .. cp.x-3 .. "," .. cp.y + 1.9 ..";2.5,1;marker_pos;position marqueur;" .. marker_pos .. "]"
+			.. "field[" .. cp.x-0.5 .. "," .. cp.y + 1.9 ..";2.5,1;villager_name;nom villageois;" .. villager_name .. "]"
+			.. "field[" .. cp.x+2 .. "," .. cp.y + 1.9 ..";2.5,1;village_name;nom du village;" .. village_name .. "]"
+			.. "field[" .. hp.x .. "," .. hp.y + 0.4 ..";2.5,1;home_pos;porte de la maison;" .. home_pos .. "]"
+      .. "tooltip[home_pos;Utilisez \"near\" pour trouver la porte la plus proche (max 5 nodes).]"
+			.. "field[" .. hp.x+2.5 .. "," .. hp.y + 0.4 ..";2.5,1;bed_pos;position du lit;" .. bed_pos .. "]"
+      .. "tooltip[bed_pos;Utilisez \"near\" pour trouver le lit le plus proche (max 5 nodes).]"
+			.. "field[" .. hp.x+5 .. "," .. hp.y + 0.4 ..";2.5,1;chest_pos;position du coffre;" .. chest_pos .. "]"
+      .. "tooltip[chest_pos;Utilisez \"near\" pour trouver le coffre le plus proche (max 5 nodes).]"
+			.. "field[" .. wp.x .. "," .. wp.y + 0.4 ..";2.5,1;food_pos;position nourriture;" .. food_pos .. "]"
+      .. "tooltip[food_pos;Utilisez \"near\" pour trouver le coffre le plus proche (max 5 nodes).]"
+			.. "field[" .. wp.x+2.5 .. "," .. wp.y + 0.4 ..";2.5,1;tools_pos;position outils;" .. tools_pos .. "]"
+      .. "tooltip[tools_pos;Utilisez \"near\" pour trouver le coffre le plus proche (max 5 nodes).]"
+			.. "field[" .. wp.x+5 .. "," .. wp.y + 0.4 ..";2.5,1;storage_pos;position stockage;" .. storage_pos .. "]"
+      .. "tooltip[storage_pos;Utilisez \"near\" pour trouver le coffre le plus proche (max 5 nodes).]"
+			.. "field[" .. jp.x .. "," .. jp.y + 0.4 ..";2.5,1;job_pos;position du metier;" .. job_pos .. "]"
+			.. "button[3,".. bp.y + 0.5 ..";1,1;set_data;valider]"
+			.. "button[6,".. bp.y + 0.5 ..";1,1;back;retour]"
 	end,
 	--receiver = function(page, villager, sender, fields)
 	receiver = function(_, villager, sender, fields)
@@ -451,7 +477,7 @@ forms.register_page("working_villages:inv_gui", {
 		if jobname then
 			jobname = jobname.description
 		else
-			jobname = "no job"
+			jobname = "aucun metier"
 		end
 		local wp = { x = 4.25, y = 0.5}
 		local hp = { x = 4.0, y = 3.5}
@@ -468,15 +494,28 @@ forms.register_page("working_villages:inv_gui", {
 			.. "list[current_player;main;0,5;8,1;]"
 			.. "list[current_player;main;0,6.2;8,3;8]"
 			.. "listring[detached:"..villager.inventory_name..";main]"
+			.. "listring[detached:"..villager.inventory_name..";head]"
+			.. "listring[detached:"..villager.inventory_name..";torso]"
+			.. "listring[detached:"..villager.inventory_name..";legs]"
+			.. "listring[detached:"..villager.inventory_name..";feet]"
 			.. "listring[current_player;main]"
-			.. "label[" .. wp.x + 0.1 .."," .. wp.y .. ";wield]"
+			.. "label[" .. wp.x + 0.08 .."," .. wp.y - 0.3 .. ";Outil visible (trouvez-le ici ou fichier) ]"
 			.. "list[detached:"..villager.inventory_name..";wield_item;" .. wp.x .. "," .. wp.y + 0.5 ..";1,1;]"
-			.. "button[5.5,1.2;2,1;job;change job]"
-			.. "label[4,2;current job:\n"..jobname.."]"
-			.. "button[5.5,2.8;2,1;data;change data]"
+			.. "label[4,2.4;Armure: glissez casque, plastron, jambières et bottes]"
+			.. "label[3.65,3.05;Casque]"
+			.. "label[3.65,4.05;Torse]"
+			.. "label[3.65,5.05;Jambes]"
+			.. "label[3.65,6.05;Pieds]"
+			.. "list[detached:"..villager.inventory_name..";head;4.35,3;1,1;]"
+			.. "list[detached:"..villager.inventory_name..";torso;4.35,4;1,1;]"
+			.. "list[detached:"..villager.inventory_name..";legs;4.35,5;1,1;]"
+			.. "list[detached:"..villager.inventory_name..";feet;4.35,6;1,1;]"
+			.. "button[5.5,1.2;2,1;job;changer metier]"
+			.. "label[4,2;metier actuel:\n"..jobname.."]"
+			.. "button[5.5,2.8;2,1;data;changer donnees]"
 			--.. "field[" .. jp.x .. "," .. jp.y + 0.4 ..";2.5,1;job_pos;job position;" .. job_pos .. "]"
 			--.. "field[" .. hp.x .. "," .. hp.y + 0.4 ..";2.5,1;home_pos;home position;" .. home_pos .. "]"
-			.. "button_exit[" .. hp.x + 2 .. "," .. hp.y + 0.09 .. ";1,1;ok;close]"
+			.. "button_exit[" .. hp.x + 2 .. "," .. hp.y + 0.09 .. ";1,1;ok;fermer]"
 	end,
 	receiver = function(_, villager, sender, fields)
 		local sender_name = sender:get_player_name()

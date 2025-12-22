@@ -71,8 +71,8 @@ local function put_func()
 end
 
 working_villages.register_job("working_villages:job_herbcollector", {
-	description      = "herb collector (working_villages)",
-	long_description = "I look for all sorts of plants and collect them.",
+	description      = "cueilleur (working_villages)",
+	long_description = "Je cherche toutes sortes de plantes et je les ramasse.",
 	inventory_image  = "default_paper.png^working_villages_herb_collector.png",
 	jobfunc = function(self)
 		self:handle_night()

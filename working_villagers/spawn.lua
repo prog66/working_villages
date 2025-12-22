@@ -35,6 +35,9 @@ local function spawner(initial_job)
                 entity.new_job = initial_job
                 entity.owner_name = "working_villages:self_employed"
                 entity:update_infotext()
+                if entity.apply_owner_visuals then
+                    entity:apply_owner_visuals()
+                end
                 return
             end
         end
@@ -54,6 +57,9 @@ local function spawn_villager_at(pos, job_name)
             entity.new_job = job_name or ""
             entity.owner_name = "working_villages:self_employed"
             entity:update_infotext()
+            if entity.apply_owner_visuals then
+                entity:apply_owner_visuals()
+            end
             log.action("Spawned villager with job %s at %s", job_name or "none", minetest.pos_to_string(pos, 0))
             return true
         end
@@ -183,4 +189,3 @@ minetest.register_abm({
     catch_up = false,
     action = spawner("working_villages:job_woodcutter"),
 })
-

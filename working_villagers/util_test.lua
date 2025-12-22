@@ -1,7 +1,7 @@
 local u = working_villages.require("util")
 
 minetest.register_tool("working_villages:neighbor_test_tool", {
-  description = "neighbor test tool\nplaces wood in euclidean distance",
+  description = "outil de test voisin\nplace du bois a distance euclidienne",
   inventory_image = "working_villages_commanding_sceptre.png",
   on_use = function(_, user, pointed_thing) -- (itemstack, user, pointed_thing)
     local pos = vector.round(pointed_thing.above)

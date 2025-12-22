@@ -34,7 +34,7 @@ function torcher.place_torch_at(v,pos)
       --TODO:try elsewhere
       log.verbose("pos in front of villager %s blocked", v.inventory_name)
     elseif ret == fail.not_in_inventory then
-      local msg = "Hey wait, I don't have any more torches!"
+      local msg = "Hey, je n'ai plus de torches !"
       local player = v:get_nearest_player(10)
       if player ~= nil then
         minetest.chat_send_player(player:get_player_name(),msg)
@@ -43,7 +43,7 @@ function torcher.place_torch_at(v,pos)
       else
         print(("torcher at %s doesn't have torches"):format(minetest.pos_to_string(v.object:get_pos())))
       end
-      return co_command.pause,"in need of torches"
+      return co_command.pause,"besoin de torches"
     else
       log.error("unknown failure in torch placement of villager %s: %s",v.inventory_name,ret)
     end
@@ -51,8 +51,8 @@ function torcher.place_torch_at(v,pos)
 end
 
 working_villages.register_job("working_villages:job_torcher", {
-	description      = "torcher (working_villages)",
-	long_description = "I'm following the nearest player enlightning his way by placing torches.",
+	description      = "porteur de torches (working_villages)",
+	long_description = "Je suis le joueur le plus proche et j'eclaire le chemin avec des torches.",
 	inventory_image  = "default_paper.png^working_villages_torcher.png",
 	jobfunc = function(self)
 		while (self.pause) do

@@ -158,6 +158,10 @@ function working_villages.villager:get_inventory()
   }
 end
 
+function working_villages.villager:get_inventory_name()
+  return self.inventory_name
+end
+
 --[[
   Gets the name of the villager's current job.
   
@@ -206,9 +210,138 @@ end
   @return boolean - true if object is hostile
 ]]--
 function working_villages.villager:is_enemy(obj)
-  log.verbose("villager %s checks if %s is hostile",self.inventory_name,obj)
-  --TODO
+  if not obj or obj == self.object then
+    return false
+  end
+  if obj:is_player() then
+    return false
+  end
+  local luaentity = obj:get_luaentity()
+  if not luaentity then
+    return false
+  end
+  if luaentity.name and working_villages.is_villager(luaentity.name) then
+    return false
+  end
+
+  if mcl_mobs and mcl_mobs.registered_mobs and luaentity.name then
+    local def = mcl_mobs.registered_mobs[luaentity.name]
+    if def and (def.spawn_class == "hostile" or def.type == "monster" or def.attack_npcs) then
+      return true
+    end
+  end
+
+  if luaentity.spawn_class == "hostile" or luaentity.type == "monster" then
+    return true
+  end
+  if luaentity.attack_npcs then
+    return true
+  end
+
   return false
+end
+
+local function get_weapon_score(itemname)
+  if not itemname or itemname == "" then
+    return 0
+  end
+  local def = minetest.registered_items[itemname]
+  if not def then
+    return 0
+  end
+  local groups = def.groups or {}
+  local score = 0
+  if (groups.sword or 0) > 0 then
+    score = score + 100 + groups.sword
+  end
+  if (groups.axe or 0) > 0 then
+    score = score + 80 + groups.axe
+  end
+  if (groups.pickaxe or 0) > 0 then
+    score = score + 60 + groups.pickaxe
+  end
+  if (groups.shovel or 0) > 0 then
+    score = score + 40 + groups.shovel
+  end
+  local caps = def.tool_capabilities
+  if caps and caps.damage_groups and caps.damage_groups.fleshy then
+    score = score + caps.damage_groups.fleshy
+  end
+  return score
+end
+
+function working_villages.villager:is_weapon(itemname)
+  return get_weapon_score(itemname) > 0
+end
+
+function working_villages.villager:equip_best_weapon()
+  local inv = self:get_inventory()
+  local best_name
+  local best_score = 0
+  for _, stack in ipairs(inv:get_list("main")) do
+    local name = stack:get_name()
+    local score = get_weapon_score(name)
+    if score > best_score then
+      best_score = score
+      best_name = name
+    end
+  end
+
+  if best_score <= 0 then
+    return false
+  end
+
+  local wield_name = self:get_wield_item_stack():get_name()
+  if get_weapon_score(wield_name) >= best_score then
+    return true
+  end
+  return self:move_main_to_wield(function(name)
+    return name == best_name
+  end)
+end
+
+local function get_attack_damage(stack)
+  if not stack or stack:is_empty() then
+    return 2
+  end
+  local def = stack:get_definition()
+  if def and def.tool_capabilities and def.tool_capabilities.damage_groups then
+    local dmg = def.tool_capabilities.damage_groups.fleshy
+    if dmg and dmg > 0 then
+      return dmg
+    end
+  end
+  return 2
+end
+
+function working_villages.villager:atack(target)
+  if not target or not target:get_pos() then
+    return false
+  end
+  local target_pos = target:get_pos()
+  local self_pos = self.object:get_pos()
+  local dist = vector.distance(self_pos, target_pos)
+
+  if dist > 2.5 then
+    self:set_displayed_action("combat")
+    self:set_state_info("Je poursuis un ennemi.")
+    self:change_direction(target_pos)
+    self:handle_obstacles(true)
+    return true
+  end
+
+  self:count_timer("guard:attack")
+  if not self:timer_exceeded("guard:attack", 10) then
+    return true
+  end
+
+  local dir = vector.direction(self_pos, target_pos)
+  local damage = get_attack_damage(self:get_wield_item_stack())
+  target:punch(self.object, 1.0, {full_punch_interval = 1.0, damage_groups = {fleshy = damage}}, dir)
+  self:set_animation(working_villages.animation_frames.MINE)
+  coroutine.yield()
+  self:set_animation(working_villages.animation_frames.STAND)
+  return true
 end
 
 --[[
@@ -395,6 +528,33 @@ function working_villages.villager:set_wield_item_stack(stack)
   inv:set_stack("wield_item", 1, stack)
 end
 
+local function ensure_slot_name(slot)
+  if slot == "head" or slot == "torso" or slot == "legs" or slot == "feet" then
+    return slot
+  end
+  error("invalid armor slot: " .. tostring(slot))
+end
+
+function working_villages.villager:get_armor_stack(slot)
+  local inv = self:get_inventory()
+  local slot_name = ensure_slot_name(slot)
+  return inv:get_stack(slot_name, 1)
+end
+
+function working_villages.villager:set_armor_stack(slot, stack)
+  local inv = self:get_inventory()
+  local slot_name = ensure_slot_name(slot)
+  inv:set_stack(slot_name, 1, stack)
+end
+
+function working_villages.villager:get_head_item_stack()
+  return self:get_armor_stack("head")
+end
+
+function working_villages.villager:set_head_item_stack(stack)
+  self:set_armor_stack("head", stack)
+end
+
 -- working_villages.villager.add_item_to_main add item to main slot.
 -- and returns leftover.
 function working_villages.villager:add_item_to_main(stack)
@@ -522,15 +682,88 @@ function working_villages.villager:update_infotext()
     job_name = job_name.description
     infotext = infotext .. job_name .. "\n"
   else
-    infotext = infotext .. "no job\n"
-    self.disp_action = "inactive"
+    infotext = infotext .. "aucun metier\n"
+    self.disp_action = "inactif"
   end
-  infotext = infotext .. "[Owner] : " .. self.owner_name
-  infotext = infotext .. "\nthis villager is " .. self.disp_action
+  infotext = infotext .. "[Proprietaire] : " .. self.owner_name
+  infotext = infotext .. "\nCe villageois est " .. self.disp_action
   if self.pause then
-    infotext = infotext .. ", [paused]"
+    infotext = infotext .. ", [en pause]"
   end
   self.object:set_properties{infotext = infotext}
+end
+
+function working_villages.villager:notify_owner(message)
+  if not message or message == "" then
+    return
+  end
+  if self.owner_name and self.owner_name ~= "" then
+    minetest.chat_send_player(self.owner_name, message)
+  else
+    minetest.log("action", "[working_villages] %s: %s", self.inventory_name, message)
+  end
+end
+
+function working_villages.villager:apply_owner_visuals()
+  local compat = working_villages.voxelibre_compat
+  if not compat or not compat.is_voxelibre then
+    return
+  end
+
+  local base_texture = self.base_texture
+  if not base_texture and self.initial_properties and self.initial_properties.textures then
+    base_texture = self.initial_properties.textures[1]
+  end
+  if not base_texture or base_texture == "" then
+    base_texture = "villager_male.png"
+  end
+
+  local mesh = compat.get_player_mesh()
+  local textures = compat.format_textures(mesh, base_texture)
+  local owner_name = self.owner_name
+
+  if owner_name and owner_name ~= "" and owner_name ~= "working_villages:self_employed" then
+    local player = minetest.get_player_by_name(owner_name)
+    local skin = player and compat.get_player_skin(player)
+    if skin and skin.texture then
+      mesh = compat.get_player_mesh(skin.slim_arms)
+      textures = compat.format_textures(mesh, skin.texture)
+    end
+  end
+
+  self.object:set_properties({mesh = mesh, textures = textures})
+end
+
+local chat_interval = tonumber(minetest.settings:get("working_villages_autonomous_chat_interval")) or 30
+
+function working_villages.villager:say(message, min_interval)
+  if not message or message == "" then
+    return false
+  end
+
+  local player, _, _ = self:get_nearest_player(16)
+  if not player then
+    return false
+  end
+
+  local now = minetest.get_gametime()
+  local interval = min_interval or chat_interval
+  if self.last_chat_time and (now - self.last_chat_time) < interval then
+    return false
+  end
+  if self.last_chat_message == message and self.last_chat_time and (now - self.last_chat_time) < (interval * 2) then
+    return false
+  end
+
+  self.last_chat_time = now
+  self.last_chat_message = message
+
+  local name = self.nametag
+  if not name or name == "" then
+    name = "Villageois"
+  end
+  minetest.chat_send_all(name .. ": " .. message)
+  return true
 end
 
 -- working_villages.villager.is_near checks if the villager is within the radius of a position
@@ -570,6 +803,45 @@ function working_villages.villager:jump()
   ctrl:set_velocity{x = velocity.x, y = jump_force, z = velocity.z}
 end
 
+local function make_fake_player(self)
+  return {
+    is_player = function() return true end,
+    get_player_name = function() return self.owner_name or "working_villages" end,
+    get_player_control = function() return {sneak = true} end,
+    get_pos = function()
+      if self.object then
+        return self.object:get_pos()
+      end
+      return {x = 0, y = 0, z = 0}
+    end,
+    get_look_dir = function()
+      local yaw = self.object and self.object:get_yaw() or 0
+      return minetest.yaw_to_dir(yaw)
+    end,
+    get_wielded_item = function()
+      return self:get_wield_item_stack()
+    end,
+  }
+end
+
+function working_villages.villager:use_node(pos)
+  local node = minetest.get_node(pos)
+  local def = minetest.registered_nodes[node.name]
+  if not def or not def.on_rightclick then
+    return false
+  end
+  local now = minetest.get_gametime()
+  local key = minetest.hash_node_position(pos)
+  if self._last_node_use and self._last_node_use.key == key and (now - self._last_node_use.time) < 1 then
+    return false
+  end
+  self._last_node_use = {key = key, time = now}
+  local user = make_fake_player(self)
+  local itemstack = user:get_wielded_item() or ItemStack("")
+  def.on_rightclick(pos, node, user, itemstack, {type = "node", under = pos, above = pos})
+  return true
+end
+
 --working_villages.villager.handle_obstacles(ignore_fence,ignore_doors)
 --if the villager hits a walkable he wil jump
 --if ignore_fence is false the villager will not jump over fences
@@ -588,8 +860,12 @@ function working_villages.villager:handle_obstacles(ignore_fence,ignore_doors)
     above_node = minetest.get_node(above_node)
     if minetest.get_item_group(front_node.name, "fence") > 0 and not(ignore_fence) then
       self:change_direction_randomly()
-    elseif working_villages.voxelibre_compat.is_door(front_node.name) and not(ignore_doors) then
-      if doors and doors.get then
+    elseif not ignore_doors and (
+      working_villages.voxelibre_compat.is_door(front_node.name)
+      or minetest.get_item_group(front_node.name, "trapdoor") > 0
+      or minetest.get_item_group(front_node.name, "fence_gate") > 0
+    ) then
+      if doors and doors.get and working_villages.voxelibre_compat.is_door(front_node.name) then
         local door = doors.get(front_pos)
         local door_dir = vector.apply(minetest.facedir_to_dir(front_node.param2),math.abs)
         local villager_dir = vector.round(vector.apply(front_diff,math.abs))
@@ -600,6 +876,8 @@ function working_villages.villager:handle_obstacles(ignore_fence,ignore_doors)
             door:open()
           end
         end
+      else
+        self:use_node(front_pos)
       end
     elseif minetest.registered_nodes[front_node.name].walkable
       and not(minetest.registered_nodes[above_node.name].walkable) then
@@ -624,7 +902,8 @@ function working_villages.villager:handle_obstacles(ignore_fence,ignore_doors)
   end
   if not ignore_doors then
     local back_pos = self:get_back()
-    if working_villages.voxelibre_compat.is_door(minetest.get_node(back_pos).name) then
+    local back_node = minetest.get_node(back_pos)
+    if working_villages.voxelibre_compat.is_door(back_node.name) then
       if doors and doors.get then
         local door = doors.get(back_pos)
         door:close()
@@ -688,7 +967,7 @@ working_villages.require("villager_state")
 -- working_villages.villager.is_active check if the villager is paused.
 -- deprecated check self.pause instesad
 function working_villages.villager:is_active()
-  print("self:is_active is deprecated: check self.pause directly it's a boolean value")
+  print("self:is_active est obsolete : verifiez self.pause directement")
   --return self.pause == "active"
   return self.pause
 end
@@ -696,14 +975,14 @@ end
 --working_villages.villager.set_paused set the villager to paused state
 --deprecated use set_pause
 function working_villages.villager:set_paused(reason)
-  print("self:set_paused() is deprecated use self:set_pause() and self:set_displayed_action() instead")
+  print("self:set_paused() est obsolete, utilisez self:set_pause() et self:set_displayed_action()")
   --[[
   self.pause = "resting"
   self.object:set_velocity{x = 0, y = 0, z = 0}
   self:set_animation(working_villages.animation_frames.STAND)
   ]]
   self:set_pause(true)
-  self:set_displayed_action(reason or "resting")
+  self:set_displayed_action(reason or "repos")
 end
 
 working_villages.require("async_actions")
@@ -772,14 +1051,37 @@ do
     wield_image = "working_villages_dummy_empty_craftitem.png",
   })
 
+  local function select_wield_bone(obj)
+    if obj.get_bone_position then
+      local pos = obj:get_bone_position("Arm_Right")
+      if pos then
+        return "Arm_Right"
+      end
+    end
+    return "Arm_R"
+  end
+
+  local function select_head_bone(obj)
+    if obj.get_bone_position then
+      local candidates = { "Head", "Head2", "Head_R", "Head_L" }
+      for _, bone in ipairs(candidates) do
+        if obj:get_bone_position(bone) then
+          return bone
+        end
+      end
+    end
+    return "Head"
+  end
+
   local function on_activate(self)
     -- attach to the nearest villager.
     local all_objects = minetest.get_objects_inside_radius(self.object:get_pos(), 0.1)
     for _, obj in ipairs(all_objects) do
       local luaentity = obj:get_luaentity()
 
-      if working_villages.is_villager(luaentity.name) then
-        self.object:set_attach(obj, "Arm_R", {x = 0.065, y = 0.50, z = -0.15}, {x = -45, y = 0, z = 0})
+      if luaentity and working_villages.is_villager(luaentity.name) then
+        local bone = select_wield_bone(obj)
+        self.object:set_attach(obj, bone, {x = 0.065, y = 0.50, z = -0.15}, {x = -45, y = 0, z = 0})
         self.object:set_properties{textures={"working_villages:dummy_empty_craftitem"}}
         return
       end
@@ -811,6 +1113,43 @@ do
     return
   end
 
+  local function on_activate_head(self)
+    local all_objects = minetest.get_objects_inside_radius(self.object:get_pos(), 0.1)
+    for _, obj in ipairs(all_objects) do
+      local luaentity = obj:get_luaentity()
+
+      if luaentity and working_villages.is_villager(luaentity.name) then
+        local bone = select_head_bone(obj)
+        self.object:set_attach(obj, bone, {x = 0, y = 0.70, z = 0}, {x = 0, y = 0, z = 0})
+        self.object:set_properties{textures={"working_villages:dummy_empty_craftitem"}}
+        return
+      end
+    end
+  end
+
+  local function on_step_head(self)
+    local all_objects = minetest.get_objects_inside_radius(self.object:get_pos(), 0.1)
+    for _, obj in ipairs(all_objects) do
+      local luaentity = obj:get_luaentity()
+
+      if working_villages.is_villager(luaentity.name) then
+        local stack = luaentity:get_head_item_stack()
+
+        if stack:get_name() ~= self.itemname then
+          if stack:is_empty() then
+            self.itemname = ""
+            self.object:set_properties{textures={"working_villages:dummy_empty_craftitem"}}
+          else
+            self.itemname = stack:get_name()
+            self.object:set_properties{textures={self.itemname}}
+          end
+        end
+        return
+      end
+    end
+    self.object:remove()
+  end
+
   minetest.register_entity("working_villages:dummy_item", {
     initial_properties = {
       hp_max		    = 1,
@@ -824,9 +1163,53 @@ do
     on_step       = on_step,
     itemname      = "",
   })
+
+  minetest.register_entity("working_villages:dummy_head", {
+    initial_properties = {
+      hp_max		    = 1,
+      visual		    = "wielditem",
+      visual_size	  = {x = 0.035, y = 0.035},
+      collisionbox	= {0, 0, 0, 0, 0, 0},
+      physical	    = false,
+      textures	    = {"air"},
+    },
+    on_activate	  = on_activate_head,
+    on_step       = on_step_head,
+    itemname      = "",
+  })
 end
 
 ---------------------------------------------------------------------
+
+local function ensure_dummy_head(self)
+  local pos = self.object:get_pos()
+  local all_objects = minetest.get_objects_inside_radius(pos, 0.5)
+  for _, obj in ipairs(all_objects) do
+    local luaentity = obj:get_luaentity()
+    if luaentity and luaentity.name == "working_villages:dummy_head" then
+      if obj.get_attach and obj:get_attach() == self.object then
+        return
+      end
+    end
+  end
+  minetest.add_entity(pos, "working_villages:dummy_head")
+end
+
+local function ensure_dummy_item(self)
+  local pos = self.object:get_pos()
+  local all_objects = minetest.get_objects_inside_radius(pos, 0.5)
+  for _, obj in ipairs(all_objects) do
+    local luaentity = obj:get_luaentity()
+    if luaentity and luaentity.name == "working_villages:dummy_item" then
+      if obj.get_attach and obj:get_attach() == self.object then
+        ensure_dummy_head(self)
+        return
+      end
+    end
+  end
+  minetest.add_entity(pos, "working_villages:dummy_item")
+  ensure_dummy_head(self)
+end
 
 working_villages.job_inv = minetest.create_detached_inventory("working_villages:job_inv", {
   on_take = function(inv, listname, _, stack) --inv, listname, index, stack, player
@@ -874,8 +1257,12 @@ function working_villages.register_egg(egg_name, def)
         new_villager:get_luaentity():set_yaw_by_direction(
           vector.subtract(user:get_pos(), new_villager:get_pos())
         )
-        new_villager:get_luaentity().owner_name = user:get_player_name()
-        new_villager:get_luaentity():update_infotext()
+        local entity = new_villager:get_luaentity()
+        entity.owner_name = user:get_player_name()
+        entity:update_infotext()
+        if entity.apply_owner_visuals then
+          entity:apply_owner_visuals()
+        end
 
         itemstack:take_item()
         return itemstack
@@ -901,6 +1288,19 @@ function working_villages.register_villager(product_name, def)
   -- create_inventory creates a new inventory, and returns it.
   local function create_inventory(self)
     self.inventory_name = self.product_name .. "_" .. tostring(self.manufacturing_number)
+    local armor_group_for_slot = {
+      head = "armor_head",
+      torso = "armor_torso",
+      legs = "armor_legs",
+      feet = "armor_feet",
+    }
+    local function is_armor_for_slot(slot, stack)
+      local group = armor_group_for_slot[slot]
+      if not group then
+        return false
+      end
+      return minetest.get_item_group(stack:get_name(), group) > 0
+    end
     local inventory = minetest.create_detached_inventory(self.inventory_name, {
       on_put = function(_, listname, _, stack) --inv, listname, index, stack, player
         if listname == "job" then
@@ -912,8 +1312,8 @@ function working_villages.register_villager(product_name, def)
           elseif type(job.jobfunc)=="function" then
             self.job_thread = coroutine.create(job.jobfunc)
           end
-          self:set_displayed_action("active")
-          self:set_state_info(("I started working as %s."):format(job.description))
+          self:set_displayed_action("actif")
+          self:set_state_info(("Je commence le metier de %s."):format(job.description))
       end
       end,
       allow_put = function(inv, listname, _, stack) --inv, listname, index, stack, player
@@ -926,6 +1326,12 @@ function working_villages.register_villager(product_name, def)
         end
         return stack:get_count()
       elseif listname == "wield_item" then
+        return 0
+      end
+      if armor_group_for_slot[listname] then
+        if is_armor_for_slot(listname, stack) then
+          return stack:get_count()
+        end
         return 0
       end
       return 0
@@ -942,7 +1348,7 @@ function working_villages.register_villager(product_name, def)
               self.job_thread = false
             end
           end
-          self:set_state_info("I stopped working.")
+          self:set_state_info("J'arrete de travailler.")
           self:update_infotext()
       end
       end,
@@ -975,8 +1381,8 @@ function working_villages.register_villager(product_name, def)
             end
           end
 
-          self:set_displayed_action("active")
-          self:set_state_info(("I started working as %s."):format(job.description))
+          self:set_displayed_action("actif")
+          self:set_state_info(("Je commence le metier de %s."):format(job.description))
         end
       end,
 
@@ -990,6 +1396,11 @@ function working_villages.register_villager(product_name, def)
           return count
         elseif to_list == "job" and working_villages.is_job(inv:get_stack(from_list, from_index):get_name()) then
           return count
+        elseif armor_group_for_slot[to_list] then
+          if is_armor_for_slot(to_list, inv:get_stack(from_list, from_index)) then
+            return count
+          end
+          return 0
         end
 
         return 0
@@ -999,6 +1410,10 @@ function working_villages.register_villager(product_name, def)
     inventory:set_size("main", 16)
     inventory:set_size("job",  1)
     inventory:set_size("wield_item", 1)
+    inventory:set_size("head", 1)
+    inventory:set_size("torso", 1)
+    inventory:set_size("legs", 1)
+    inventory:set_size("feet", 1)
 
     return inventory
   end
@@ -1029,9 +1444,6 @@ function working_villages.register_villager(product_name, def)
       self.manufacturing_number = working_villages.manufacturing_data[name]
       working_villages.manufacturing_data[name] = working_villages.manufacturing_data[name] + 1
       create_inventory(self)
-
-      -- attach dummy item to new villager.
-      minetest.add_entity(self.object:get_pos(), "working_villages:dummy_item")
     else
       -- if static data is not empty string, this object has beed already created.
       local data = minetest.deserialize(staticdata)
@@ -1053,7 +1465,12 @@ function working_villages.register_villager(product_name, def)
       fix_pos_data(self)
     end
 
-    self:set_displayed_action("active")
+    ensure_dummy_item(self)
+
+    self:set_displayed_action("actif")
+    self.base_texture = self.base_texture or
+      (self.initial_properties and self.initial_properties.textures and self.initial_properties.textures[1])
+    self:apply_owner_visuals()
 
     self.object:set_nametag_attributes{
       text = self.nametag
@@ -1079,7 +1496,7 @@ function working_villages.register_villager(product_name, def)
         if type(job.on_pause)=="function" then
           job.on_pause(self)
         end
-        self:set_displayed_action("resting")
+        self:set_displayed_action("repos")
       end
     end
   end
@@ -1125,6 +1542,14 @@ function working_villages.register_villager(product_name, def)
     self:pickup_item()
 
     if self.pause then
+      if self.pause_auto then
+        self:count_timer("auto_resume")
+        if self:timer_exceeded("auto_resume", 200) then
+          self:set_pause(false)
+          self:set_displayed_action("actif")
+          self:set_state_info("Je reprends automatiquement le travail.")
+        end
+      end
       return
     end
     job_coroutines.resume(self,dtime)
@@ -1176,9 +1601,9 @@ function working_villages.register_villager(product_name, def)
 
   -- extra initial properties
   villager_def.pause                       = false
-  villager_def.disp_action                 = "inactive\nNo job"
+  villager_def.disp_action                 = "inactif\nAucun metier"
   villager_def.state                       = "job"
-  villager_def.state_info                  = "I am doing nothing particular."
+  villager_def.state_info                  = "Je ne fais rien de particulier."
   villager_def.job_thread                  = false
   villager_def.product_name                = ""
   villager_def.manufacturing_number        = -1
@@ -1212,9 +1637,8 @@ function working_villages.register_villager(product_name, def)
 
   -- register villager egg.
   working_villages.register_egg(name .. "_egg", {
-    description     = name .. " egg",
+    description     = name .. " oeuf",
     inventory_image = def.egg_image,
     product_name    = name,
   })
 end
-

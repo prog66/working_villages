@@ -27,3 +27,36 @@ working_villages_owner_protection (owner protection) string false
 #    Enables spawning self-employed working villagers. The villagers that
 #    spawn in will interact with any player who has a command sceptre.
 working_villages_enable_spawn (spawn working villagers) bool false
+
+[autonomous]
+
+#    Minimum interval in seconds between villager chat messages.
+working_villages_autonomous_chat_interval (autonomous chat interval) int 30
+
+#    Radius (nodes) used for autonomous exploration.
+working_villages_autonomous_explore_radius (autonomous explore radius) int 10
+
+[builder]
+
+#    Builders get missing materials automatically.
+working_villages_builder_unlimited_materials (builder unlimited materials) bool true
+
+#    Search radius (nodes) for construction markers.
+working_villages_builder_search_radius (builder search radius) int 30
+
+#    Builders attempt experimental builds when possible.
+working_villages_builder_experiment_mode (builder experiment mode) bool true
+
+#    Time (seconds) between experimental build attempts.
+working_villages_builder_experiment_interval (builder experiment interval) int 1800
+
+[guard]
+
+#    Default guard mode: stationary, escort, patrol, wandering.
+working_villages_guard_default_mode (guard default mode) string patrol
+
+#    Patrol radius (nodes) for guard mode "patrol".
+working_villages_guard_patrol_radius (guard patrol radius) int 12
+
+#    Guards equip a weapon automatically if they have none.
+working_villages_guard_auto_weapon (guard auto weapon) bool true

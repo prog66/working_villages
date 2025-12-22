@@ -8,18 +8,18 @@ local compat = working_villages.voxelibre_compat
 blueprints.register("simple_house", {
 	category = blueprints.CATEGORY.HOUSE,
 	difficulty = blueprints.DIFFICULTY.BEGINNER,
-	description = "A simple wooden house with a bed and door",
+	description = "Une simple maison en bois avec un lit et une porte",
 	schematic_file = "simple_hut.we",
 	improvements = {
 		{
 			type = "replace_nodes",
-			description = "Upgrade to stone foundation",
+			description = "Passer aux fondations en pierre",
 			from = compat.get_item("default:wood"),
 			to = compat.get_item("default:stone"),
 		},
 		{
 			type = "add_decoration",
-			description = "Add windows and decorations",
+			description = "Ajouter des fenetres et decorations",
 			nodes = {},  -- Would contain window positions
 		},
 	},
@@ -29,17 +29,17 @@ blueprints.register("simple_house", {
 blueprints.register("fancy_house", {
 	category = blueprints.CATEGORY.HOUSE,
 	difficulty = blueprints.DIFFICULTY.INTERMEDIATE,
-	description = "A more elaborate house with multiple rooms",
+	description = "Une maison plus elaboree avec plusieurs pieces",
 	schematic_file = "fancy_hut.we",
 	improvements = {
 		{
 			type = "add_decoration",
-			description = "Add furniture and lighting",
+			description = "Ajouter du mobilier et de l'eclairage",
 			nodes = {},  -- Would contain torch and furniture positions
 		},
 		{
 			type = "replace_nodes",
-			description = "Upgrade to better materials",
+			description = "Ameliorer avec de meilleurs materiaux",
 			from = compat.get_item("default:wood"),
 			to = compat.get_item("default:junglewood"),
 		},
@@ -50,16 +50,16 @@ blueprints.register("fancy_house", {
 blueprints.register("farm_plot", {
 	category = blueprints.CATEGORY.FARM,
 	difficulty = blueprints.DIFFICULTY.BEGINNER,
-	description = "A small farming plot with tilled soil",
+	description = "Un petit champ avec terre labouree",
 	improvements = {
 		{
 			type = "add_nodes",
-			description = "Add irrigation channels",
+			description = "Ajouter des canaux d'irrigation",
 			nodes = {},
 		},
 		{
 			type = "add_decoration",
-			description = "Add fence around the farm",
+			description = "Ajouter une cloture autour de la ferme",
 			nodes = {},
 		},
 	},
@@ -69,16 +69,16 @@ blueprints.register("farm_plot", {
 blueprints.register("workshop", {
 	category = blueprints.CATEGORY.WORKSHOP,
 	difficulty = blueprints.DIFFICULTY.INTERMEDIATE,
-	description = "A workshop building with storage",
+	description = "Un atelier avec stockage",
 	improvements = {
 		{
 			type = "add_nodes",
-			description = "Add workbenches and storage chests",
+			description = "Ajouter des etablis et coffres",
 			nodes = {},
 		},
 		{
 			type = "add_decoration",
-			description = "Add lighting and organization",
+			description = "Ajouter eclairage et organisation",
 			nodes = {},
 		},
 	},
@@ -88,17 +88,17 @@ blueprints.register("workshop", {
 blueprints.register("blacksmith_forge", {
 	category = blueprints.CATEGORY.WORKSHOP,
 	difficulty = blueprints.DIFFICULTY.ADVANCED,
-	description = "A blacksmith workshop with forge and anvil",
+	description = "Un atelier de forge avec forge et enclume",
 	improvements = {
 		{
 			type = "replace_nodes",
-			description = "Upgrade to heat-resistant materials",
+			description = "Ameliorer avec des materiaux resistants a la chaleur",
 			from = compat.get_item("default:wood"),
 			to = compat.get_item("default:stone"),
 		},
 		{
 			type = "add_nodes",
-			description = "Add advanced smithing tools",
+			description = "Ajouter des outils avances de forge",
 			nodes = {},
 		},
 	},
@@ -108,16 +108,16 @@ blueprints.register("blacksmith_forge", {
 blueprints.register("town_square", {
 	category = blueprints.CATEGORY.INFRASTRUCTURE,
 	difficulty = blueprints.DIFFICULTY.ADVANCED,
-	description = "A central gathering area for the village",
+	description = "Une place centrale pour le village",
 	improvements = {
 		{
 			type = "add_decoration",
-			description = "Add benches and decorative elements",
+			description = "Ajouter des bancs et decorations",
 			nodes = {},
 		},
 		{
 			type = "add_nodes",
-			description = "Add central fountain or monument",
+			description = "Ajouter une fontaine ou un monument",
 			nodes = {},
 		},
 	},
@@ -127,22 +127,22 @@ blueprints.register("town_square", {
 blueprints.register("watchtower", {
 	category = blueprints.CATEGORY.INFRASTRUCTURE,
 	difficulty = blueprints.DIFFICULTY.INTERMEDIATE,
-	description = "A tall tower for village protection",
+	description = "Une tour haute pour proteger le village",
 	improvements = {
 		{
 			type = "add_nodes",
-			description = "Add ladder and platform levels",
+			description = "Ajouter echelle et plateformes",
 			nodes = {},
 		},
 		{
 			type = "replace_nodes",
-			description = "Reinforce with stone",
+			description = "Renforcer avec de la pierre",
 			from = compat.get_item("default:wood"),
 			to = compat.get_item("default:cobble"),
 		},
 		{
 			type = "add_decoration",
-			description = "Add torches and warning bells",
+			description = "Ajouter des torches et cloches d'alerte",
 			nodes = {},
 		},
 	},
@@ -152,16 +152,16 @@ blueprints.register("watchtower", {
 blueprints.register("garden", {
 	category = blueprints.CATEGORY.DECORATION,
 	difficulty = blueprints.DIFFICULTY.BEGINNER,
-	description = "A decorative garden with plants and paths",
+	description = "Un jardin decoratif avec plantes et chemins",
 	improvements = {
 		{
 			type = "add_decoration",
-			description = "Add flowers and decorative plants",
+			description = "Ajouter des fleurs et plantes decoratives",
 			nodes = {},
 		},
 		{
 			type = "add_nodes",
-			description = "Add paths and borders",
+			description = "Ajouter des chemins et bordures",
 			nodes = {},
 		},
 	},

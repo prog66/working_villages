@@ -70,6 +70,8 @@ working_villages.require("jobs/woodcutter")
 -- new specialized jobs
 working_villages.require("jobs/blacksmith")
 working_villages.require("jobs/miner")
+-- autonomous job
+working_villages.require("jobs/autonomous")
 --testing jobs
 working_villages.require("jobs/torcher")
 working_villages.require("jobs/snowclearer")
@@ -85,4 +87,3 @@ end
 --ready
 local time_to_load= os.clock() - init
 log.action("loaded init in %.4f s", time_to_load)
-

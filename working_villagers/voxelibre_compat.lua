@@ -4,6 +4,28 @@
 
 local voxelibre_compat = {}
 
+local function file_exists(path)
+	local file = io.open(path, "rb")
+	if file then
+		file:close()
+		return true
+	end
+	return false
+end
+
+local function mesh_available(mod_name, relative_path)
+	local modpath = minetest.get_modpath(mod_name)
+	if not modpath then
+		return false
+	end
+	return file_exists(modpath .. "/" .. relative_path)
+end
+
+local function is_armor_mesh(mesh_name)
+	return mesh_name == "mcl_armor_character.b3d" or
+		mesh_name == "mcl_armor_character_female.b3d"
+end
+
 -- Detect if VoxeLibre is loaded
 voxelibre_compat.is_voxelibre = minetest.get_modpath("mcl_core") ~= nil
 
@@ -14,17 +36,32 @@ voxelibre_compat.item_map = {
 	["default:torch"] = "mcl_torches:torch",
 	["default:torch_wall"] = "mcl_torches:torch_wall",
 	["default:wood"] = "mcl_core:wood",
+	["default:tree"] = "mcl_core:tree",
+	["default:stone"] = "mcl_core:stone",
+	["default:cobble"] = "mcl_core:cobble",
+	["default:junglewood"] = "mcl_core:junglewood",
 	["default:paper"] = "mcl_core:paper",
 	["default:obsidian"] = "mcl_core:obsidian",
 	["default:snow"] = "mcl_core:snow",
-	["default:apple"] = "mcl_core:apple",
 	["default:cactus"] = "mcl_core:cactus",
 	["default:papyrus"] = "mcl_core:reeds",
 	["default:dry_shrub"] = "mcl_core:deadbush",
+	["default:apple"] = "mcl_core:apple",
+	["default:fence_wood"] = "mcl_fences:fence",
+	["default:furnace"] = "mcl_furnaces:furnace",
+
+	-- Ores and ingots
+	["default:stone_with_iron"] = "mcl_core:stone_with_iron",
+	["default:stone_with_gold"] = "mcl_core:stone_with_gold",
+	["default:stone_with_copper"] = "mcl_copper:stone_with_copper",
+	["default:steel_ingot"] = "mcl_core:iron_ingot",
+	["default:gold_ingot"] = "mcl_core:gold_ingot",
+	["default:copper_ingot"] = "mcl_copper:copper_ingot",
 	
 	-- Doors (simplified mapping, actual VoxeLibre doors are more complex)
 	["doors:door_wood_a"] = "mcl_doors:wooden_door_b_1",
 	["doors:door_wood_c"] = "mcl_doors:wooden_door_t_1",
+	["doors:door_wood"] = "mcl_doors:wooden_door",
 	
 	-- Beds (generic mapping, specific bed types need to be handled dynamically)
 	["beds:bed_top"] = "mcl_beds:bed_red_top",
@@ -42,7 +79,39 @@ function voxelibre_compat.get_item(item_name)
 	if not voxelibre_compat.is_voxelibre then
 		return item_name
 	end
-	return voxelibre_compat.item_map[item_name] or item_name
+	local mapped = voxelibre_compat.item_map[item_name]
+	if mapped then
+		return mapped
+	end
+
+	local alias = minetest.registered_aliases[item_name]
+	if alias then
+		return alias
+	end
+
+	if item_name:sub(1, 5) == "wool:" then
+		local candidate = "mcl_wool:" .. item_name:sub(6)
+		if minetest.registered_items[candidate] then
+			return candidate
+		end
+	end
+
+	if item_name:sub(1, 7) == "stairs:" then
+		local candidate = "mcl_stairs:" .. item_name:sub(8)
+		if minetest.registered_items[candidate] then
+			return candidate
+		end
+	end
+
+	local suffix = item_name:match("^default:(.+)$")
+	if suffix then
+		local candidate = "mcl_core:" .. suffix
+		if minetest.registered_items[candidate] then
+			return candidate
+		end
+	end
+
+	return item_name
 end
 
 -- Get multiple variants of an item (for detection purposes)
@@ -173,30 +242,64 @@ function voxelibre_compat.is_chest(node)
 	end
 end
 
--- Get the appropriate player model mesh for the current game
--- Both minetest_game and VoxeLibre use character.b3d
--- The model is provided by the base game mods (default or mcl_player)
-function voxelibre_compat.get_player_mesh()
-	-- Both games use the same character.b3d model file
-	-- minetest_game: provided by default mod
-	-- VoxeLibre: provided by mcl_player mod
-	
-	-- Check if the required mods that provide character.b3d are loaded
+-- Get the appropriate player model mesh for the current game.
+-- VoxeLibre typically uses the mcl_armor_character meshes, while minetest_game uses character.b3d.
+function voxelibre_compat.get_player_mesh(slim_arms)
 	if voxelibre_compat.is_voxelibre then
-		-- VoxeLibre: check for mcl_player mod
-		if not minetest.get_modpath("mcl_player") then
-			minetest.log("warning", "[working_villages] character.b3d mesh may not be available. " ..
-				"For VoxeLibre, ensure the 'mcl_player' mod is enabled.")
+		if slim_arms and mesh_available("mcl_armor", "models/mcl_armor_character_female.b3d") then
+			return "mcl_armor_character_female.b3d"
 		end
-	else
-		-- minetest_game: check for default mod
-		if not minetest.get_modpath("default") then
-			minetest.log("warning", "[working_villages] character.b3d mesh may not be available. " ..
-				"For minetest_game, ensure the 'default' mod is enabled.")
+		if mesh_available("mcl_armor", "models/mcl_armor_character.b3d") then
+			return "mcl_armor_character.b3d"
 		end
 	end
-	
+
+	if mesh_available("default", "models/character.b3d") or
+		mesh_available("mcl_player", "models/character.b3d") then
+		return "character.b3d"
+	end
+
+	minetest.log("warning", "[working_villages] No known player mesh found; falling back to character.b3d.")
 	return "character.b3d"
+end
+
+function voxelibre_compat.format_textures(mesh_name, base_texture)
+	if is_armor_mesh(mesh_name) then
+		return {base_texture, "blank.png", "blank.png"}
+	end
+	return {base_texture}
+end
+
+function voxelibre_compat.get_player_skin(player)
+	if not voxelibre_compat.is_voxelibre or not player or not player:is_player() then
+		return nil
+	end
+
+	if mcl_skins and mcl_skins.player_skins and mcl_skins.compile_skin then
+		local skin = mcl_skins.player_skins[player]
+		if skin then
+			local slim_arms = skin.slim_arms
+			if skin.simple_skins_id and mcl_skins.texture_to_simple_skin then
+				local simple = mcl_skins.texture_to_simple_skin[skin.simple_skins_id]
+				if simple then
+					slim_arms = simple.slim_arms
+				end
+			end
+			local texture = mcl_skins.compile_skin(skin)
+			if type(texture) == "string" and texture ~= "" then
+				return {texture = texture, slim_arms = slim_arms}
+			end
+		end
+	end
+
+	if mcl_player and mcl_player.player_get_skin then
+		local texture = mcl_player.player_get_skin(player)
+		if type(texture) == "string" and texture ~= "" then
+			return {texture = texture}
+		end
+	end
+
+	return nil
 end
 
 -- Get the appropriate skin texture information for villagers

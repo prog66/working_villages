@@ -1,5 +1,5 @@
 minetest.register_tool("working_villages:commanding_sceptre", {
-	description = "villager commanding sceptre",
+	description = "sceptre de commande",
 	inventory_image = "working_villages_commanding_sceptre.png",
 	on_use = function(itemstack, user, pointed_thing)
 		if (pointed_thing.type == "object") then
@@ -16,15 +16,17 @@ minetest.register_tool("working_villages:commanding_sceptre", {
 			if job ~= nil then
 				if luaentity.pause then
 					luaentity:set_pause(false)
+					luaentity.pause_auto = nil
 					if type(job.on_resume)=="function" then
 						job.on_resume(luaentity)
 					end
-					luaentity:set_displayed_action("active")
-					luaentity:set_state_info("I'm continuing my job.")
+					luaentity:set_displayed_action("actif")
+					luaentity:set_state_info("Je reprends mon travail.")
 				else
 					luaentity:set_pause(true)
-					luaentity:set_displayed_action("waiting")
-					luaentity:set_state_info("I was asked to wait here.")
+					luaentity.pause_auto = false
+					luaentity:set_displayed_action("attend")
+					luaentity:set_state_info("On m'a demande d'attendre ici.")
 					if type(job.on_pause)=="function" then
 						job.on_pause(luaentity)
 					end
