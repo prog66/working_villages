@@ -37,6 +37,7 @@ working_villages.require("groups")
 --content
 working_villages.require("forms")
 working_villages.require("talking")
+working_villages.require("guard_forms")
 --TODO: instead use the building sign mod when it is ready
 working_villages.require("building")
 working_villages.require("storage")
