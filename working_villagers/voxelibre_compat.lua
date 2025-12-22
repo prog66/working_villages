@@ -193,7 +193,8 @@ function voxelibre_compat.get_player_mesh()
 	if not has_model_provider then
 		minetest.log("warning", "[working_villages] character.b3d model provider not found. " ..
 			"For VoxeLibre, install mcl_player mod. For minetest_game, install default mod. " ..
-			"Villagers may not display correctly.")
+			"Villagers may not display correctly. " ..
+			"See working_villages/models/README.md for more information.")
 	end
 	
 	return "character.b3d"
