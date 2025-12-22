@@ -161,6 +161,8 @@ working_villages.register_job("working_villages:job_builder", {
 
 		self:count_timer("builder:search")
 		if self:timer_exceeded("builder:search",20) then
+			-- Reset chest interaction flag so builder can get materials again
+			self.job_data.manipulated_chest = false
 			local marker = get_active_marker(self)
 			if marker == nil then
 			 self:set_state_info("Je cherche un chantier proche.\nJe n'en ai pas trouve la derniere fois.")

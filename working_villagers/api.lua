@@ -1154,7 +1154,7 @@ do
     initial_properties = {
       hp_max		    = 1,
       visual		    = "wielditem",
-      visual_size	  = {x = 0.025, y = 0.025},
+      visual_size	  = {x = 0.25, y = 0.25},
       collisionbox	= {0, 0, 0, 0, 0, 0},
       physical	    = false,
       textures	    = {"air"},
@@ -1168,7 +1168,7 @@ do
     initial_properties = {
       hp_max		    = 1,
       visual		    = "wielditem",
-      visual_size	  = {x = 0.035, y = 0.035},
+      visual_size	  = {x = 0.3, y = 0.3},
       collisionbox	= {0, 0, 0, 0, 0, 0},
       physical	    = false,
       textures	    = {"air"},
