@@ -152,12 +152,12 @@ The farmer job now:
 ## Dependencies
 
 ### minetest_game
-- Required: None (all optional now)
-- Optional: `default`, `doors`, `beds`, `farming`
+- Required: None (all optional)
+- Optional: `default` (provides character.b3d model), `doors`, `beds`, `farming`
 
 ### VoxeLibre
 - Required: None (all optional)
-- Optional: `mcl_core`, `mcl_doors`, `mcl_beds`, `mcl_chests`, `mcl_farming`, `mcl_torches`
+- Optional: `mcl_core`, `mcl_player` (provides character.b3d model), `mcl_doors`, `mcl_beds`, `mcl_chests`, `mcl_farming`, `mcl_torches`
 
 The mod uses `modpath` checks to determine which mods are loaded and adapts accordingly.
 

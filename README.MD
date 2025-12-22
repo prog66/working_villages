@@ -165,12 +165,12 @@ doors can be used by the villagers that's why there is a dependency
 working_villages is compatible with both **minetest_game** and **VoxeLibre** (formerly MineClone2):
 
 #### For minetest_game:
-- Required: `default`
-- Optional: `doors`, `beds`, `farming`
+- Required: None
+- Optional: `default` (provides character.b3d model), `doors`, `beds`, `farming`
 
 #### For VoxeLibre:
-- Required: `mcl_core`
-- Optional: `mcl_doors`, `mcl_beds`, `mcl_chests`, `mcl_farming`, `mcl_torches`
+- Required: None
+- Optional: `mcl_core`, `mcl_player` (provides character.b3d model), `mcl_doors`, `mcl_beds`, `mcl_chests`, `mcl_farming`, `mcl_torches`
 
 The mod automatically detects which game is running and adapts its behavior accordingly. All features work seamlessly in both environments.
 
