@@ -1578,10 +1578,8 @@ function working_villages.register_villager(product_name, def)
           local job = working_villages.registered_jobs[job_name]
           if type(job.on_start)=="function" then
             job.on_start(self)
-            if type(job.jobfunc)=="function" then
-              self.job_thread = coroutine.create(job.jobfunc)
-            end
-          elseif type(job.jobfunc)=="function" then
+          end
+          if type(job.jobfunc)=="function" then
             self.job_thread = coroutine.create(job.jobfunc)
           end
           self:set_displayed_action("actif")
@@ -1641,10 +1639,8 @@ function working_villages.register_villager(product_name, def)
           if to_list == "job" then
             if type(job.on_start)=="function" then
               job.on_start(self)
-              if type(job.jobfunc)=="function" then
-                self.job_thread = coroutine.create(job.jobfunc)
-              end
-            elseif type(job.jobfunc)=="function" then
+            end
+            if type(job.jobfunc)=="function" then
               self.job_thread = coroutine.create(job.jobfunc)
             end
           elseif from_list == "job" then
@@ -1762,10 +1758,8 @@ function working_villages.register_villager(product_name, def)
     if job ~= nil then
       if type(job.on_start)=="function" then
         job.on_start(self)
-        if type(job.jobfunc)=="function" then
-          self.job_thread = coroutine.create(job.jobfunc)
-        end
-      elseif type(job.jobfunc)=="function" then
+      end
+      if type(job.jobfunc)=="function" then
         self.job_thread = coroutine.create(job.jobfunc)
       end
       if self.pause then
