@@ -19,33 +19,33 @@ local experiment_interval = tonumber(minetest.settings:get("working_villages_lea
 
 -- Learning mode messages
 local explore_messages = {
-	"Je decouvre ce lieu interessant.",
-	"Je me demande ce qu'il y a par la.",
-	"C'est fascinant de voir tout ca.",
+	"Je découvre ce lieu intéressant.",
+	"Je me demande ce qu'il y a par là.",
+	"C'est fascinant de voir tout ça.",
 	"Je n'avais jamais vu cet endroit avant.",
-	"Il y a tant a apprendre ici.",
+	"Il y a tant à apprendre ici.",
 }
 
 local social_messages = {
 	"Bonjour ! Comment allez-vous ?",
-	"Vous avez fait quelque chose d'interessant aujourd'hui ?",
+	"Vous avez fait quelque chose d'intéressant aujourd'hui ?",
 	"Je suis en train d'apprendre de nouvelles choses.",
 	"Que pensez-vous de ce village ?",
-	"Je cherche a apprendre un metier. Avez-vous des conseils ?",
+	"Je cherche à apprendre un métier. Avez-vous des conseils ?",
 }
 
 local thinking_messages = {
-	"Hmm, je me demande comment ca marche...",
-	"Peut-etre que je devrais essayer ca.",
-	"Je reflechis a ce que je pourrais faire.",
-	"Il y a surement quelque chose d'utile a apprendre ici.",
+	"Hmm, je me demande comment ça marche...",
+	"Peut-être que je devrais essayer ça.",
+	"Je réfléchis à ce que je pourrais faire.",
+	"Il y a sûrement quelque chose d'utile à apprendre ici.",
 }
 
 local player_question_messages = {
 	"Ai-je bien fait ?",
 	"Qu'en pensez-vous ?",
-	"Est-ce que c'etait correct ?",
-	"Devrais-je continuer comme ca ?",
+	"Est-ce que c'était correct ?",
+	"Devrais-je continuer comme ça ?",
 }
 
 --[[
@@ -163,7 +163,7 @@ local function do_experimentation(self)
 			local range = {x = 5, y = 2, z = 5}
 			if self:collect_nearest_item_by_condition(function() return true end, range) then
 				self:set_displayed_action("apprentissage")
-				self:set_state_info("J'apprends a ramasser des objets.")
+				self:set_state_info("J'apprends à ramasser des objets.")
 				
 				-- Ask player for validation occasionally
 				if math.random(100) < 50 then
@@ -199,8 +199,8 @@ local function do_idle_thinking(self)
 	self:count_timer("learner:think")
 	
 	if self:timer_exceeded("learner:think", 80) then
-		self:set_displayed_action("reflexion")
-		self:set_state_info("Je reflechis a ce que je pourrais apprendre.")
+		self:set_displayed_action("réflexion")
+		self:set_state_info("Je réfléchis à ce que je pourrais apprendre.")
 		
 		-- Change direction occasionally to appear alive
 		if math.random(100) < 60 then
@@ -254,7 +254,7 @@ working_villages.register_job("working_villages:job_apprenant", {
 	description      = "apprenant (working_villages)",
 	long_description = "Je suis en mode apprentissage. J'explore les environs, je parle aux autres villageois et aux joueurs, " ..
 		"et j'essaie d'apprendre de nouvelles choses. Je pourrais vous demander si ce que je fais est bien. " ..
-		"Donnez-moi un metier pour que je puisse devenir utile au village !",
+		"Donnez-moi un métier pour que je puisse devenir utile au village !",
 	inventory_image  = "default_paper.png^working_villages_question.png",
 	jobfunc = learner_jobfunc,
 })

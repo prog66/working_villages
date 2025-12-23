@@ -33,8 +33,8 @@ forms.register_text_page("working_villages:learning_status",
 		local messages = {
 			"J'explore le monde et j'apprends de nouvelles choses chaque jour.",
 			"Je parle avec les autres villageois pour comprendre comment fonctionne notre village.",
-			"J'essaie differentes activites pour voir ce que je pourrais faire.",
-			"Je cherche encore ma voie. Peut-etre avez-vous un metier pour moi ?",
+			"J'essaie différentes activités pour voir ce que je pourrais faire.",
+			"Je cherche encore ma voie. Peut-être avez-vous un métier pour moi ?",
 		}
 		return messages[math.random(#messages)]
 	end)
@@ -49,8 +49,8 @@ forms.register_text_page("working_villages:encouragement",
 		if not job or job.description ~= "apprenant (working_villages)" then
 			return "Merci pour l'encouragement !"
 		end
-		return "Merci beaucoup ! Vos encouragements m'aident a apprendre. " ..
-			"Un jour, j'espere devenir aussi competent que les autres villageois !"
+		return "Merci beaucoup ! Vos encouragements m'aident à apprendre. " ..
+			"Un jour, j'espère devenir aussi compétent que les autres villageois !"
 	end)
 
 forms.put_link("working_villages:talking_menu", "working_villages:encouragement",

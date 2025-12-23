@@ -38,7 +38,7 @@ local function empty_jobfunc(self)
 	self:count_timer("empty:idle")
 	if self:timer_exceeded("empty:idle", 100) then
 		self:set_displayed_action("inactif")
-		self:set_state_info("Je n'ai pas de metier. Donnez-moi un travail a faire.")
+		self:set_state_info("Je n'ai pas de métier. Donnez-moi un travail à faire.")
 		self:change_direction_randomly()
 	end
 end
