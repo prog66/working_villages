@@ -320,6 +320,8 @@ working_villages.register_job("working_villages:job_builder", {
 					if chest_ok or placed_canon == nname or placed == nname or placed == nnode.name then
 						meta:set_int("index",meta:get_int("index")+1)
 					else
+						-- Reset chest flag to allow getting materials from chest on next iteration
+						self.job_data.manipulated_chest = false
 						local msg = ("constructeur a %s a eu des difficultés avec %s, il reste en attente"):format(
 							minetest.pos_to_string(self.object:get_pos()), nname)
 						if self.owner_name then
