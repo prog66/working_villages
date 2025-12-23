@@ -85,6 +85,20 @@ Je peux aussi couper une maison par erreur, ne m'en veux pas.\
 Quand je trouve un jeune arbre, je le plante pres d'un endroit lumineux. "..
 "Je pratique une coupe durable et je gagne de l'experience.",
 	inventory_image  = "default_paper.png^working_villages_woodcutter.png",
+	capabilities = {
+		tree_cutting = true,
+		auto_replanting = true,
+		sustainable_forestry = true,
+		experience_gain = true,
+		sapling_detection = true,
+	},
+	on_start = function(self)
+		-- Notify player about woodcutter capabilities
+		self:notify_job_feature(
+			"Foresterie durable",
+			"Coupe les arbres et replante automatiquement. Gagne de l'expérience."
+		)
+	end,
 	jobfunc = function(self)
 		self:handle_night()
 		self:handle_chest(take_func, put_func)

@@ -114,6 +114,20 @@ working_villages.register_job("working_villages:job_miner", {
 		"Je collecte des mineraux utiles et j'aide a creuser pour la construction. "..
 		"J'ai besoin d'une pioche et je pose des torches pour eclairer.",
 	inventory_image = "default_paper.png^working_villages_miner.png",
+	capabilities = {
+		mining = true,
+		ore_detection = true,
+		torch_placement = true,
+		auto_item_collection = true,
+		underground_navigation = true,
+	},
+	on_start = function(self)
+		-- Notify player about miner capabilities
+		self:notify_job_feature(
+			"Minage automatique",
+			"Mine pierre et minerais, pose des torches, collecte automatiquement les items minés"
+		)
+	end,
 	jobfunc = function(self)
 		self:handle_night()
 		self:handle_chest(take_func, put_func)

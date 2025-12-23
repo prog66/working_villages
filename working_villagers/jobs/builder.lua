@@ -161,6 +161,20 @@ working_villages.register_job("working_villages:job_builder", {
 "Je cherche aussi dans un rayon configurable. "..
 "J'ignore les chantiers en pause.",
 	inventory_image  = "default_paper.png^working_villages_builder.png",
+	capabilities = {
+		construction = true,
+		blueprint_reading = true,
+		material_management = true,
+		experience_gain = true,
+		blueprint_learning = true,
+	},
+	on_start = function(self)
+		-- Notify player about builder capabilities
+		self:notify_job_feature(
+			"Construction et apprentissage",
+			"Construit selon les plans, gagne de l'expérience, apprend de nouveaux plans"
+		)
+	end,
 	jobfunc = function(self)
 		self:handle_night()
 		self:handle_job_pos()

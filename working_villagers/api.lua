@@ -327,19 +327,44 @@ function working_villages.villager:atack(target)
     self:set_state_info("Je poursuis un ennemi.")
     self:change_direction(target_pos)
     self:handle_obstacles(true)
+    -- Use WALK animation while chasing
+    self:set_animation(working_villages.animation_frames.WALK)
     return true
   end
 
   self:count_timer("guard:attack")
   if not self:timer_exceeded("guard:attack", 10) then
+    -- Keep standing animation when waiting for attack cooldown
+    if dist <= 2.5 then
+      self:set_animation(working_villages.animation_frames.STAND)
+    end
     return true
   end
 
+  -- Face the target before attacking
+  self:change_direction(target_pos)
+  
+  -- Smooth attack animation sequence
   local dir = vector.direction(self_pos, target_pos)
   local damage = get_attack_damage(self:get_wield_item_stack())
-  target:punch(self.object, 1.0, {full_punch_interval = 1.0, damage_groups = {fleshy = damage}}, dir)
+  
+  -- Start attack animation
   self:set_animation(working_villages.animation_frames.MINE)
-  coroutine.yield()
+  
+  -- Brief pause for animation wind-up (about 0.15 seconds)
+  for _ = 1, 3 do
+    coroutine.yield()
+  end
+  
+  -- Execute the punch at mid-animation
+  target:punch(self.object, 1.0, {full_punch_interval = 1.0, damage_groups = {fleshy = damage}}, dir)
+  
+  -- Continue animation for follow-through (about 0.15 seconds)
+  for _ = 1, 3 do
+    coroutine.yield()
+  end
+  
+  -- Return to standing animation
   self:set_animation(working_villages.animation_frames.STAND)
   return true
 end
@@ -724,6 +749,38 @@ function working_villages.villager:notify_owner(message)
   else
     minetest.log("action", "[working_villages] %s: %s", self.inventory_name, message)
   end
+end
+
+-- Job feature notification system
+-- Notifies the player about new job features and updates
+function working_villages.villager:notify_job_feature(feature_name, feature_description)
+  local job = self:get_job()
+  if not job then
+    return
+  end
+  
+  local message = string.format(
+    "[%s] 🆕 Nouvelle fonctionnalité: %s - %s",
+    job.description or "Villageois",
+    feature_name,
+    feature_description
+  )
+  
+  self:notify_owner(message)
+end
+
+-- Get job-specific data or capabilities
+function working_villages.villager:get_job_capability(capability_name)
+  local job = self:get_job()
+  if not job or not job.capabilities then
+    return nil
+  end
+  return job.capabilities[capability_name]
+end
+
+-- Check if villager has a specific job capability
+function working_villages.villager:has_job_capability(capability_name)
+  return self:get_job_capability(capability_name) ~= nil
 end
 
 function working_villages.villager:apply_owner_visuals()
@@ -1198,7 +1255,8 @@ do
 
       if luaentity and working_villages.is_villager(luaentity.name) then
         local bone = select_wield_bone(obj)
-        self.object:set_attach(obj, bone, {x = 0.065, y = 0.50, z = -0.15}, {x = -45, y = 0, z = 0})
+        -- Improved position: moved forward and rotated to appear in hand naturally
+        self.object:set_attach(obj, bone, {x = 0.0, y = 0.35, z = 0.25}, {x = -90, y = 45, z = 0})
         self.object:set_properties{textures={"working_villages:dummy_empty_craftitem"}}
         return
       end
@@ -1294,6 +1352,62 @@ do
     on_step       = on_step_head,
     itemname      = "",
   })
+
+  -- Armor display entities for visual feedback
+  local function create_armor_entity(slot_name, bone_name, pos_offset, size)
+    local function on_activate_armor(self)
+      local all_objects = minetest.get_objects_inside_radius(self.object:get_pos(), 0.1)
+      for _, obj in ipairs(all_objects) do
+        local luaentity = obj:get_luaentity()
+        if luaentity and working_villages.is_villager(luaentity.name) then
+          self.object:set_attach(obj, bone_name, pos_offset, {x = 0, y = 0, z = 0})
+          self.object:set_properties{textures={"working_villages:dummy_empty_craftitem"}}
+          return
+        end
+      end
+    end
+
+    local function on_step_armor(self)
+      local all_objects = minetest.get_objects_inside_radius(self.object:get_pos(), 0.1)
+      for _, obj in ipairs(all_objects) do
+        local luaentity = obj:get_luaentity()
+        if working_villages.is_villager(luaentity.name) then
+          local stack = luaentity:get_armor_stack(slot_name)
+          if stack:get_name() ~= self.itemname then
+            if stack:is_empty() then
+              self.itemname = ""
+              self.object:set_properties{textures={"working_villages:dummy_empty_craftitem"}}
+            else
+              self.itemname = stack:get_name()
+              self.object:set_properties{textures={self.itemname}}
+            end
+          end
+          return
+        end
+      end
+      self.object:remove()
+    end
+
+    minetest.register_entity("working_villages:dummy_armor_" .. slot_name, {
+      initial_properties = {
+        hp_max		    = 1,
+        visual		    = "wielditem",
+        visual_size	  = size,
+        collisionbox	= {0, 0, 0, 0, 0, 0},
+        physical	    = false,
+        textures	    = {"air"},
+      },
+      on_activate	  = on_activate_armor,
+      on_step       = on_step_armor,
+      itemname      = "",
+    })
+  end
+
+  -- Register armor entities for each slot
+  create_armor_entity("head", "Head", {x = 0, y = 0.70, z = 0}, {x = 0.3, y = 0.3})
+  create_armor_entity("torso", "Body", {x = 0, y = 0.35, z = 0}, {x = 0.4, y = 0.4})
+  create_armor_entity("legs", "Body", {x = 0, y = -0.15, z = 0}, {x = 0.35, y = 0.35})
+  create_armor_entity("feet", "Body", {x = 0, y = -0.55, z = 0}, {x = 0.3, y = 0.3})
 end
 
 ---------------------------------------------------------------------
@@ -1312,6 +1426,31 @@ local function ensure_dummy_head(self)
   minetest.add_entity(pos, "working_villages:dummy_head")
 end
 
+local function ensure_dummy_armor(self)
+  local armor_slots = {"head", "torso", "legs", "feet"}
+  local pos = self.object:get_pos()
+  
+  for _, slot in ipairs(armor_slots) do
+    local entity_name = "working_villages:dummy_armor_" .. slot
+    local found = false
+    
+    local all_objects = minetest.get_objects_inside_radius(pos, 0.5)
+    for _, obj in ipairs(all_objects) do
+      local luaentity = obj:get_luaentity()
+      if luaentity and luaentity.name == entity_name then
+        if obj.get_attach and obj:get_attach() == self.object then
+          found = true
+          break
+        end
+      end
+    end
+    
+    if not found then
+      minetest.add_entity(pos, entity_name)
+    end
+  end
+end
+
 local function ensure_dummy_item(self)
   local pos = self.object:get_pos()
   local all_objects = minetest.get_objects_inside_radius(pos, 0.5)
@@ -1320,12 +1459,14 @@ local function ensure_dummy_item(self)
     if luaentity and luaentity.name == "working_villages:dummy_item" then
       if obj.get_attach and obj:get_attach() == self.object then
         ensure_dummy_head(self)
+        ensure_dummy_armor(self)
         return
       end
     end
   end
   minetest.add_entity(pos, "working_villages:dummy_item")
   ensure_dummy_head(self)
+  ensure_dummy_armor(self)
 end
 
 working_villages.job_inv = minetest.create_detached_inventory("working_villages:job_inv", {
