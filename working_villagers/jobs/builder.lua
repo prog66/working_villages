@@ -128,12 +128,14 @@ local function builder_take_from_chest(self, stack)
 end
 
 local function builder_put_to_chest(self, stack)
-	-- Store all items in the chest to free up inventory space
+	-- Store building materials (registered nodes) in the chest to free up inventory space
 	-- The builder will take what it needs when needed
 	if stack == nil or stack:is_empty() then
 		return false
 	end
-	return true
+	-- Only store items that are registered nodes (building materials)
+	local def = minetest.registered_nodes[stack:get_name()]
+	return def ~= nil
 end
 
 local function get_active_marker(self)
