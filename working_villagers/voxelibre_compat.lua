@@ -22,6 +22,8 @@ local function mesh_available(mod_name, relative_path)
 end
 
 local function is_armor_mesh(mesh_name)
+	-- Check if the mesh is a VoxeLibre armor mesh
+	-- VoxeLibre uses mcl_armor_character meshes that have built-in armor texture layers
 	return mesh_name == "mcl_armor_character.b3d" or
 		mesh_name == "mcl_armor_character_female.b3d"
 end
@@ -244,6 +246,8 @@ end
 
 -- Get the appropriate player model mesh for the current game.
 -- VoxeLibre typically uses the mcl_armor_character meshes, while minetest_game uses character.b3d.
+-- Note: VoxeLibre's mcl_armor_character mesh has built-in armor texture layers (3 texture slots),
+-- but this mod uses PNG armor display via dummy entities instead for cross-game compatibility.
 function voxelibre_compat.get_player_mesh(slim_arms)
 	if voxelibre_compat.is_voxelibre then
 		if slim_arms and mesh_available("mcl_armor", "models/mcl_armor_character_female.b3d") then
@@ -263,6 +267,17 @@ function voxelibre_compat.get_player_mesh(slim_arms)
 	return "character.b3d"
 end
 
+--[[
+  Format textures array for the given mesh.
+  
+  VoxeLibre armor meshes expect 3 texture slots: base_texture, armor_texture, wielditem_texture.
+  For PNG armor display compatibility, we fill unused slots with "blank.png".
+  The actual armor is displayed via dummy entities attached to bones, not via mesh textures.
+  
+  @param mesh_name string - Name of the mesh file
+  @param base_texture string - Base skin texture
+  @return table - Properly formatted textures array
+]]--
 function voxelibre_compat.format_textures(mesh_name, base_texture)
 	if is_armor_mesh(mesh_name) then
 		return {base_texture, "blank.png", "blank.png"}

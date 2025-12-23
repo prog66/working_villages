@@ -132,6 +132,63 @@ Retourne le nom de l'inventaire du villageois.
 
 **Retour:** `string`
 
+### Armure
+
+Les villageois peuvent équiper des armures dans 4 emplacements : tête, torse, jambes, et pieds. L'armure est affichée visuellement sur le villageois en utilisant des entités PNG attachées aux os du squelette. Compatible avec minetest_game (3d_armor) et VoxeLibre (mcl_armor).
+
+#### self:get_armor_stack(slot)
+
+Obtient l'objet d'armure dans un emplacement spécifique.
+
+**Paramètres:**
+- `slot` (string): Nom de l'emplacement ("head", "torso", "legs", ou "feet")
+
+**Retour:** `ItemStack` - L'armure dans cet emplacement
+
+**Exemple:**
+```lua
+local helmet = self:get_armor_stack("head")
+if not helmet:is_empty() then
+    minetest.log("Villager wearing: " .. helmet:get_name())
+end
+```
+
+#### self:set_armor_stack(slot, stack)
+
+Définit l'objet d'armure dans un emplacement spécifique.
+
+**Paramètres:**
+- `slot` (string): Nom de l'emplacement ("head", "torso", "legs", ou "feet")
+- `stack` (ItemStack): L'armure à équiper
+
+**Exemple:**
+```lua
+-- Équiper un casque en acier
+self:set_armor_stack("head", ItemStack("3d_armor:helmet_steel"))
+```
+
+#### self:get_head_item_stack()
+
+Obtient le casque/armure de tête. Raccourci pour `get_armor_stack("head")`.
+
+**Retour:** `ItemStack`
+
+#### self:set_head_item_stack(stack)
+
+Définit le casque/armure de tête. Raccourci pour `set_armor_stack("head", stack)`.
+
+**Paramètres:**
+- `stack` (ItemStack): Le casque à équiper
+
+**Notes sur l'armure:**
+- L'armure est affichée via des entités PNG attachées aux os du modèle
+- Les emplacements acceptent uniquement les objets avec les groupes appropriés :
+  - `armor_head` pour l'emplacement tête
+  - `armor_torso` pour l'emplacement torse
+  - `armor_legs` pour l'emplacement jambes
+  - `armor_feet` pour l'emplacement pieds
+- Compatible avec les deux systèmes d'armure (minetest_game et VoxeLibre)
+
 ### Jobs
 
 #### self:get_job_name()

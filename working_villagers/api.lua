@@ -553,6 +553,21 @@ function working_villages.villager:set_wield_item_stack(stack)
   inv:set_stack("wield_item", 1, stack)
 end
 
+--[[
+  Armor API Functions
+  
+  These functions manage armor equipment on villagers.
+  Armor is displayed using PNG textures via dummy entities attached to villager bones.
+  Compatible with both minetest_game and VoxeLibre armor systems.
+  
+  Armor slots: head, torso, legs, feet
+  Each slot accepts items with the corresponding armor group:
+  - head: armor_head (helmets)
+  - torso: armor_torso (chestplates)
+  - legs: armor_legs (leggings)
+  - feet: armor_feet (boots)
+]]--
+
 local function ensure_slot_name(slot)
   if slot == "head" or slot == "torso" or slot == "legs" or slot == "feet" then
     return slot
@@ -560,22 +575,48 @@ local function ensure_slot_name(slot)
   error("invalid armor slot: " .. tostring(slot))
 end
 
+--[[
+  Get the armor stack in a specific slot.
+  
+  @param slot string - Armor slot name ("head", "torso", "legs", or "feet")
+  @return ItemStack - The armor item in that slot
+  @usage local helmet = self:get_armor_stack("head")
+]]--
 function working_villages.villager:get_armor_stack(slot)
   local inv = self:get_inventory()
   local slot_name = ensure_slot_name(slot)
   return inv:get_stack(slot_name, 1)
 end
 
+--[[
+  Set the armor stack in a specific slot.
+  
+  @param slot string - Armor slot name ("head", "torso", "legs", or "feet")
+  @param stack ItemStack - The armor item to place in the slot
+  @usage self:set_armor_stack("head", ItemStack("default:steel_helmet"))
+]]--
 function working_villages.villager:set_armor_stack(slot, stack)
   local inv = self:get_inventory()
   local slot_name = ensure_slot_name(slot)
   inv:set_stack(slot_name, 1, stack)
 end
 
+--[[
+  Get the helmet/head item.
+  Convenience wrapper for get_armor_stack("head").
+  
+  @return ItemStack - The head armor item
+]]--
 function working_villages.villager:get_head_item_stack()
   return self:get_armor_stack("head")
 end
 
+--[[
+  Set the helmet/head item.
+  Convenience wrapper for set_armor_stack("head", stack).
+  
+  @param stack ItemStack - The head armor to equip
+]]--
 function working_villages.villager:set_head_item_stack(stack)
   self:set_armor_stack("head", stack)
 end
@@ -1214,11 +1255,23 @@ do
   })
 
   -- Configuration for item and armor display positioning
+  -- These values control how items and armor appear when attached to villager bones
   local WIELD_ITEM_POSITION = {x = 0.0, y = 0.35, z = 0.25}
   local WIELD_ITEM_ROTATION = {x = -90, y = 45, z = 0}
   local HEAD_POSITION = {x = 0, y = 0.70, z = 0}
   
-  -- Armor slot configuration: bone name, position offset, and visual size
+  --[[
+    Armor slot configuration: bone name, position offset, and visual size
+    
+    This table defines how armor pieces are displayed on villagers:
+    - bone: The skeleton bone to attach the armor entity to
+    - position: Offset from the bone position for proper placement
+    - size: Visual scale of the armor piece
+    
+    Armor is displayed using PNG textures of the armor items via dummy entities.
+    The dummy entities show the inventory image/wield image of armor items.
+    This works in both minetest_game (with 3d_armor) and VoxeLibre (with mcl_armor).
+  ]]--
   local ARMOR_SLOT_CONFIG = {
     head = {bone = "Head", position = {x = 0, y = 0.70, z = 0}, size = {x = 0.3, y = 0.3}},
     torso = {bone = "Body", position = {x = 0, y = 0.35, z = 0}, size = {x = 0.4, y = 0.4}},

@@ -167,4 +167,46 @@ blueprints.register("garden", {
 	},
 })
 
-minetest.log("action", "[blueprints] Registered " .. 8 .. " default blueprints")
+-- Minimal house (beginner) - only bed and door, no chest
+blueprints.register("minimal_house", {
+	category = blueprints.CATEGORY.HOUSE,
+	difficulty = blueprints.DIFFICULTY.BEGINNER,
+	description = "Une maison minimaliste avec seulement un lit et une porte",
+	schematic_file = "minimal_house.we",
+	improvements = {
+		{
+			type = "add_decoration",
+			description = "Ajouter une fenêtre",
+			nodes = {},
+		},
+		{
+			type = "replace_nodes",
+			description = "Améliorer les murs en pierre",
+			from = compat.get_item("default:wood"),
+			to = compat.get_item("default:stone"),
+		},
+	},
+})
+
+-- Minimal shelter (beginner) - very simple structure with only bed and door
+blueprints.register("minimal_shelter", {
+	category = blueprints.CATEGORY.HOUSE,
+	difficulty = blueprints.DIFFICULTY.BEGINNER,
+	description = "Un abri très simple avec juste un lit et une porte",
+	schematic_file = "minimal_shelter.we",
+	improvements = {
+		{
+			type = "replace_nodes",
+			description = "Renforcer avec du bois dur",
+			from = compat.get_item("default:wood"),
+			to = compat.get_item("default:junglewood"),
+		},
+		{
+			type = "add_decoration",
+			description = "Ajouter un éclairage basique",
+			nodes = {},
+		},
+	},
+})
+
+minetest.log("action", "[blueprints] Registered " .. 10 .. " default blueprints")

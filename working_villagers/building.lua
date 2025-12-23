@@ -1,5 +1,5 @@
 --TODO: replace with building_sign mod
-local SCHEMS = {"simple_hut.we", "fancy_hut.we", "[custom house]"}
+local SCHEMS = {"simple_hut.we", "fancy_hut.we", "minimal_house.we", "minimal_shelter.we", "[custom house]"}
 local DEFAULT_NODE = {name="air"}
 
 local function out_of_limit(pos)

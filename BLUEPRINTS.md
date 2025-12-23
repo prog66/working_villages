@@ -193,11 +193,13 @@ Adds decorative elements:
 
 ## Default Blueprints
 
-The system comes with 8 default blueprints:
+The system comes with 10 default blueprints:
 
 ### Houses
 - **simple_house**: Basic wooden shelter (Beginner)
 - **fancy_house**: Multi-room dwelling (Intermediate)
+- **minimal_house**: Minimalist house with only bed and door, no chest (Beginner)
+- **minimal_shelter**: Very simple shelter with just bed and door (Beginner)
 
 ### Farms
 - **farm_plot**: Small farming area (Beginner)
