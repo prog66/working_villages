@@ -127,6 +127,17 @@ local function builder_take_from_chest(self, stack)
 	return def ~= nil
 end
 
+local function builder_put_to_chest(self, stack)
+	-- Store building materials (registered nodes) in the chest to free up inventory space
+	-- The builder will take what it needs when needed
+	if stack == nil or stack:is_empty() then
+		return false
+	end
+	-- Only store items that are registered nodes (building materials)
+	local def = minetest.registered_nodes[stack:get_name()]
+	return def ~= nil
+end
+
 local function get_active_marker(self)
 	local marker = self:get_job_data("builder_marker")
 	if marker and find_building(marker) then
@@ -153,7 +164,7 @@ working_villages.register_job("working_villages:job_builder", {
 	jobfunc = function(self)
 		self:handle_night()
 		self:handle_job_pos()
-		self:handle_chest(builder_take_from_chest)
+		self:handle_chest(builder_take_from_chest, builder_put_to_chest)
 
 		if self.job_data.experiment_state == nil and attempt_experiment(self) then
 			return
@@ -248,7 +259,8 @@ working_villages.register_job("working_villages:job_builder", {
 						else
 							print(msg)
 						end
-						-- should later be intelligent enough to use his own or any other chest
+						-- Reset chest interaction to allow storing items in the chest
+						self.job_data.manipulated_chest = false
 						self:set_state_info("J'attends d'avoir de la place dans mon inventaire.")
 						return co_command.pause, "attente de place inventaire"
 					end
@@ -271,7 +283,8 @@ working_villages.register_job("working_villages:job_builder", {
               else
                print(msg)
               end
-              -- should later be intelligent enough to use his own or any other chest
+              -- Reset chest interaction to allow storing items in the chest
+              self.job_data.manipulated_chest = false
               self:set_state_info("J'attends d'avoir de la place dans mon inventaire.")
               return co_command.pause, "attente de place inventaire"
 				    end
@@ -284,6 +297,8 @@ working_villages.register_job("working_villages:job_builder", {
 						has_material = true
 					else
 						self:set_state_info("Je n'ai plus de place dans mon inventaire.")
+						-- Reset chest interaction to allow storing items in the chest
+						self.job_data.manipulated_chest = false
 						return co_command.pause, "inventaire plein"
 					end
 				end
