@@ -102,6 +102,20 @@ working_villages.register_job("working_villages:job_blacksmith", {
 		"je repare les outils abimes et j'aide a construire en metal. "..
 		"J'ai besoin d'un four pour bien travailler.",
 	inventory_image = "default_paper.png^working_villages_blacksmith.png",
+	capabilities = {
+		metalworking = true,
+		tool_repair = true,
+		ore_smelting = true,
+		furnace_operation = true,
+		metal_crafting = true,
+	},
+	on_start = function(self)
+		-- Notify player about blacksmith capabilities
+		self:notify_job_feature(
+			"Travail du métal",
+			"Répare les outils, fond les minerais en lingots, travaille avec les fours"
+		)
+	end,
 	jobfunc = function(self)
 		self:handle_night()
 		self:handle_chest(take_func, put_func)

@@ -77,6 +77,19 @@ working_villages.register_job("working_villages:job_guard", {
 	description      = "garde (working_villages)",
 	long_description = "Je monte la garde et je repousse les ennemis.",
 	inventory_image  = "default_paper.png^memorandum_letters.png", --TODO: sword/bow/shield
+	capabilities = {
+		combat = true,
+		auto_equip_weapon = true,
+		patrol_modes = {"stationary", "escort", "patrol", "wandering"},
+		threat_detection_range = 20,
+	},
+	on_start = function(self)
+		-- Notify player about guard capabilities
+		self:notify_job_feature(
+			"Modes de garde",
+			"Stationnaire, escorte, patrouille ou errant. Détection automatique d'ennemis à 20 blocs."
+		)
+	end,
 	jobfunc = function(self)
 		if self.pause then
 			coroutine.yield()

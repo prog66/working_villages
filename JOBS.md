@@ -2,10 +2,65 @@
 
 This document describes the new specialized jobs added to the working_villages mod.
 
+## Recent Visual and Gameplay Improvements (v2.0)
+
+### Visual Enhancements
+
+#### Item Display
+- **Improved Hand Positioning**: Items now appear naturally in the villager's hand rather than in the arm
+- **Better Rotation**: Items are held at a realistic angle (-90° pitch, 45° yaw)
+- **Natural Appearance**: Tools, weapons, and items look more natural when wielded
+
+#### Armor Display
+- **Visible Armor**: Equipped armor is now visually displayed on villagers
+- **Full Armor Support**: Helmet, chestplate, leggings, and boots are all visible
+- **Dynamic Updates**: Armor display updates automatically when equipment changes
+- **Protection Feedback**: Players can now see the protection level of their villagers at a glance
+
+#### Combat Animations
+- **Fluid Attack Animations**: Guards no longer freeze during attacks
+- **Smooth Transitions**: Better transitions between walking, standing, and attacking
+- **Chase Animation**: Walking animation plays while pursuing enemies
+- **Attack Sequence**: Wind-up, strike, and follow-through animations for natural combat
+
+### Job Capability System
+
+All jobs now have a capability system that provides:
+- **Unique Abilities**: Each job has specific capabilities that define what they can do
+- **In-Game Notifications**: Players receive notifications when villagers gain new job features
+- **Capability Checking**: Jobs can query their own capabilities programmatically
+- **Feature Discovery**: Players are informed about job features when assigning new roles
+
+#### Using Job Capabilities
+```lua
+-- Check if a villager has a specific capability
+if self:has_job_capability("combat") then
+  -- Do combat-related actions
+end
+
+-- Get detailed capability information
+local capability = self:get_job_capability("threat_detection_range")
+```
+
+#### Notification System
+When villagers start a new job, they notify their owner about their capabilities:
+- **Guard**: Notified about combat modes and threat detection
+- **Miner**: Notified about mining, ore detection, and torch placement
+- **Farmer**: Notified about harvesting, replanting, and farmland preparation
+- **Blacksmith**: Notified about metalworking, tool repair, and smelting
+- **Builder**: Notified about construction, blueprint reading, and learning
+- **Woodcutter**: Notified about tree cutting, replanting, and sustainable forestry
+
 ## Guard Job (Garde)
 
 ### Overview
 The guard is a protective villager that patrols areas, stands watch, or escorts players. Guards automatically defend against hostile entities and can be configured for different operational modes.
+
+### Job Capabilities
+- **combat**: Engages in combat with hostile entities
+- **auto_equip_weapon**: Automatically equips the best available weapon
+- **patrol_modes**: Supports stationary, escort, patrol, and wandering modes
+- **threat_detection_range**: Detects enemies within 20 blocks
 
 ### Capabilities
 
@@ -118,6 +173,13 @@ Given through the job change interface in the villager's inventory.
 ### Overview
 The blacksmith is a specialized villager that works with metal and tools. They collect metal ores, smelt them, repair damaged tools, and contribute to the village's metalworking needs.
 
+### Job Capabilities
+- **metalworking**: Can work with metals and forge items
+- **tool_repair**: Repairs damaged tools in inventory
+- **ore_smelting**: Can smelt ores into ingots using furnaces
+- **furnace_operation**: Knows how to use and operate furnaces
+- **metal_crafting**: Can craft metal-based items
+
 ### Capabilities
 
 1. **Metal Collection**
@@ -177,6 +239,13 @@ Automatically mapped to VoxeLibre equivalents through the compatibility layer.
 
 ### Overview
 The miner is a specialized villager that excavates stone and ores from the ground. They help gather building materials and valuable minerals while exploring underground areas.
+
+### Job Capabilities
+- **mining**: Can mine stone and ore blocks
+- **ore_detection**: Identifies valuable ores automatically
+- **torch_placement**: Places torches in dark areas for illumination
+- **auto_item_collection**: Automatically picks up dropped items from mining
+- **underground_navigation**: Can navigate underground environments safely
 
 ### Capabilities
 
@@ -394,6 +463,115 @@ Currently, the jobs use hardcoded settings. Future versions may include:
 3. **Builder** uses materials to construct buildings
 4. **Farmer** provides food for all villagers
 5. **Woodcutter** supplies wood for construction
+
+---
+
+## Farmer Job
+
+### Overview
+The farmer is a specialized villager that manages crops, harvests plants, and replants seeds. They ensure a steady food supply for the village and can expand farmland over time.
+
+### Job Capabilities
+- **farming**: Manages crop growth and harvesting
+- **auto_replanting**: Automatically replants crops after harvest
+- **farmland_preparation**: Can prepare new farmland with hoes
+- **auto_harvest**: Harvests fully grown crops automatically
+- **crop_recognition**: Recognizes all farming mod crops
+
+### Features
+
+1. **Crop Management**
+   - Automatically harvests fully grown crops
+   - Replants seeds immediately after harvest
+   - Recognizes growth stages for various crops
+   - Compatible with both minetest_game farming and VoxeLibre mcl_farming
+
+2. **Farmland Expansion**
+   - Can prepare new farmland with hoes
+   - Expands existing farm areas over time
+   - Maintains soil hydration near water
+
+3. **Experience System**
+   - Gains experience through harvesting
+   - Can learn advanced farm blueprints
+   - Improves efficiency with experience
+
+### Requirements
+- Hoe (wood, stone, or steel) - created automatically if needed
+- Seeds in inventory for replanting
+
+---
+
+## Builder Job
+
+### Overview
+The builder is a construction specialist who reads blueprints, gathers materials, and constructs buildings according to plans. They are essential for village expansion.
+
+### Job Capabilities
+- **construction**: Can place blocks according to blueprints
+- **blueprint_reading**: Reads and follows construction plans
+- **material_management**: Manages construction materials efficiently
+- **experience_gain**: Gains experience from construction
+- **blueprint_learning**: Can learn new blueprint patterns
+
+### Features
+
+1. **Blueprint Construction**
+   - Follows building markers with construction plans
+   - Places blocks according to blueprint specifications
+   - Handles doors, beds, and special blocks correctly
+   - Works on multiple buildings in sequence
+
+2. **Material Management**
+   - Checks inventory for required materials
+   - Retrieves materials from nearby chests
+   - Deposits excess materials after completion
+
+3. **Experience System**
+   - Gains 1 XP per block placed
+   - Learns new blueprints at experience milestones
+   - Can construct increasingly complex structures
+
+### Requirements
+- Building marker with active construction plan
+- Construction materials in inventory or nearby chest
+
+---
+
+## Woodcutter Job
+
+### Overview
+The woodcutter manages forests by cutting trees and replanting saplings. They provide a sustainable source of wood for construction and fuel.
+
+### Job Capabilities
+- **tree_cutting**: Can cut down trees of various types
+- **auto_replanting**: Automatically plants saplings after cutting
+- **sustainable_forestry**: Practices sustainable tree management
+- **experience_gain**: Gains experience from forestry work
+- **sapling_detection**: Finds suitable locations for planting
+
+### Features
+
+1. **Tree Management**
+   - Cuts down mature trees
+   - Collects all wood blocks from trees
+   - Works with all tree types (oak, pine, jungle, etc.)
+   - Compatible with both minetest_game and VoxeLibre trees
+
+2. **Reforestation**
+   - Automatically plants saplings after cutting
+   - Finds suitable planting locations
+   - Ensures forests remain sustainable
+   - Plants saplings in well-lit areas
+
+3. **Experience System**
+   - Gains experience from tree cutting
+   - Improves efficiency over time
+   - Can learn forestry-related blueprints
+
+### Requirements
+- Axe (any tier) - helps with cutting speed
+- Saplings automatically collected from tree leaves
 
 ---
 

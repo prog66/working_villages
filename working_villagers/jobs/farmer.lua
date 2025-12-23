@@ -150,6 +150,20 @@ working_villages.register_job("working_villages:job_farmer", {
 		"Je peux aussi preparer de nouvelles terres et gagner de l'experience en recoltant. "..
 		"Avec l'experience, j'apprends a faire de meilleures fermes.",
 	inventory_image	= "default_paper.png^working_villages_farmer.png",
+	capabilities = {
+		farming = true,
+		auto_replanting = true,
+		farmland_preparation = true,
+		auto_harvest = true,
+		crop_recognition = true,
+	},
+	on_start = function(self)
+		-- Notify player about farmer capabilities
+		self:notify_job_feature(
+			"Agriculture automatique",
+			"Récolte et replante automatiquement. Prépare les terres. Gagne de l'expérience."
+		)
+	end,
 	jobfunc = function(self)
 		self:handle_night()
 		self:handle_chest(take_func, put_func)

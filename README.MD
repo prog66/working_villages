@@ -17,6 +17,17 @@ The plan is to make villagers build up their own villages.
 ## implemented Features
 no crafting recipes yet (you will have to use creative)
 features:
+* **Visual and Animation Improvements** (NEW! v2.0)
+  * Items now appear naturally in villagers' hands instead of in the arm
+  * Equipped armor is now visually displayed on villagers (helmet, chestplate, leggings, boots)
+  * Fluid combat animations for guards - no more freezing during attacks
+  * Smooth transitions between walking, standing, and attacking
+  * Better item rotation and positioning for a more natural appearance
+* **Job Capability System** (NEW! v2.0)
+  * Each job now has defined capabilities (combat, mining, farming, etc.)
+  * In-game notifications when villagers gain new job features
+  * Players are informed about job abilities when assigning roles
+  * Improved job specialization and unique features per profession
 * **Learning Mode for Idle Villagers** (NEW!)
   * Villagers without a job automatically enter learning mode
   * They explore the environment and discover new places
