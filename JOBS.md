@@ -688,25 +688,34 @@ The follower stays close to the nearest player, following them wherever they go.
 
 ### Torcher (Porteur de torches)
 
-**Job Capabilities:**
-- torch_placement, light_detection, player_following, automatic_lighting
+### Job Capabilities
+- **torch_placement**: Can place torches automatically
+- **light_detection**: Detects dark areas (light level ≤ 5)
+- **player_following**: Follows the nearest player
+- **automatic_lighting**: Lights up areas automatically
 
-**Features:**
-- Follows nearest player
+### Features
+- Follows nearest player within 10 blocks
 - Automatically places torches in dark areas (light level ≤ 5)
 - Requests more torches when inventory is empty
 - Active day and night
+- Useful for cave exploration and nighttime activities
+
+---
 
 ### Snow Clearer (Déneigeur)
 
-**Job Capabilities:**
-- snow_removal, area_clearing, testing_utility
+### Job Capabilities
+- **snow_removal**: Removes snow blocks from the area
+- **area_clearing**: Clears areas systematically
+- **testing_utility**: Primarily designed for testing purposes
 
-**Features:**
+### Features
 - Removes snow blocks from the area
-- 10 block search radius
-- Primarily used for testing
-- Simple but effective
+- 10 block search radius (x, y, z)
+- Primarily used for testing and development
+- Simple but effective for clearing snowy areas
+- Returns home at night if home is set
 
 ---
 
