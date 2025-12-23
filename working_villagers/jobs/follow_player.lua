@@ -51,6 +51,19 @@ working_villages.register_job("working_villages:job_folow_player", {
   description      = "suiveur (working_villages)",
   long_description = "Je te suis ou que tu ailles.",
   inventory_image  = "default_paper.png^memorandum_letters.png",
+  capabilities = {
+    player_following = true,
+    proximity_detection = true,
+    auto_navigation = true,
+    obstacle_avoidance = true,
+  },
+  on_start = function(self)
+    -- Notify player about follower capabilities
+    self:notify_job_feature(
+      "Suiveur fidèle",
+      "Te suit partout automatiquement, évite les obstacles"
+    )
+  end,
   jobfunc = function(v)
     while (v.pause) do
       coroutine.yield()

@@ -54,6 +54,19 @@ working_villages.register_job("working_villages:job_torcher", {
 	description      = "porteur de torches (working_villages)",
 	long_description = "Je suis le joueur le plus proche et j'eclaire le chemin avec des torches.",
 	inventory_image  = "default_paper.png^working_villages_torcher.png",
+	capabilities = {
+		torch_placement = true,
+		light_detection = true,
+		player_following = true,
+		automatic_lighting = true,
+	},
+	on_start = function(self)
+		-- Notify player about torcher capabilities
+		self:notify_job_feature(
+			"Porteur de torches",
+			"Suit le joueur et éclaire automatiquement les zones sombres"
+		)
+	end,
 	jobfunc = function(self)
 		while (self.pause) do
 			coroutine.yield()

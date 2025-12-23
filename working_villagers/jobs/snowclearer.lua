@@ -10,6 +10,18 @@ Mon travail sert surtout aux tests, pas a recolter.\
 Ce metier semble inutile.\
 Je le fais quand meme.",
 	inventory_image  = "default_paper.png^memorandum_letters.png",
+	capabilities = {
+		snow_removal = true,
+		area_clearing = true,
+		testing_utility = true,
+	},
+	on_start = function(self)
+		-- Notify player about snow clearer capabilities
+		self:notify_job_feature(
+			"Déneigeur",
+			"Dégage la neige automatiquement (métier de test)"
+		)
+	end,
 	jobfunc = function(self)
 		self:handle_night()
 		self:handle_job_pos()
