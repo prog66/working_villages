@@ -73,6 +73,8 @@ working_villages.require("jobs/blacksmith")
 working_villages.require("jobs/miner")
 -- autonomous job
 working_villages.require("jobs/autonomous")
+-- learner job (for villagers without a profession)
+working_villages.require("jobs/learner")
 --testing jobs
 working_villages.require("jobs/torcher")
 working_villages.require("jobs/snowclearer")

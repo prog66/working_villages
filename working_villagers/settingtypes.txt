@@ -36,6 +36,21 @@ working_villages_autonomous_chat_interval (autonomous chat interval) int 30
 #    Radius (nodes) used for autonomous exploration.
 working_villages_autonomous_explore_radius (autonomous explore radius) int 10
 
+[learner]
+
+#    Enables learning mode for villagers without a job.
+#    When enabled, idle villagers will explore, socialize, and experiment.
+working_villages_enable_learning_mode (enable learning mode) bool true
+
+#    Radius (nodes) for learner exploration.
+working_villages_learner_explore_radius (learner explore radius) int 15
+
+#    Range (nodes) for finding social interaction targets.
+working_villages_learner_social_range (learner social range) int 10
+
+#    Interval (seconds) between experimentation attempts.
+working_villages_learner_experiment_interval (learner experiment interval) int 120
+
 [builder]
 
 #    Builders get missing materials automatically.
