@@ -1213,6 +1213,19 @@ do
     wield_image = "working_villages_dummy_empty_craftitem.png",
   })
 
+  -- Configuration for item and armor display positioning
+  local WIELD_ITEM_POSITION = {x = 0.0, y = 0.35, z = 0.25}
+  local WIELD_ITEM_ROTATION = {x = -90, y = 45, z = 0}
+  local HEAD_POSITION = {x = 0, y = 0.70, z = 0}
+  
+  -- Armor slot configuration: bone name, position offset, and visual size
+  local ARMOR_SLOT_CONFIG = {
+    head = {bone = "Head", position = {x = 0, y = 0.70, z = 0}, size = {x = 0.3, y = 0.3}},
+    torso = {bone = "Body", position = {x = 0, y = 0.35, z = 0}, size = {x = 0.4, y = 0.4}},
+    legs = {bone = "Body", position = {x = 0, y = -0.15, z = 0}, size = {x = 0.35, y = 0.35}},
+    feet = {bone = "Body", position = {x = 0, y = -0.55, z = 0}, size = {x = 0.3, y = 0.3}},
+  }
+
   local function select_wield_bone(obj)
     if obj.get_bone_override then
       local bone_override = obj:get_bone_override("Arm_Right")
@@ -1256,7 +1269,7 @@ do
       if luaentity and working_villages.is_villager(luaentity.name) then
         local bone = select_wield_bone(obj)
         -- Improved position: moved forward and rotated to appear in hand naturally
-        self.object:set_attach(obj, bone, {x = 0.0, y = 0.35, z = 0.25}, {x = -90, y = 45, z = 0})
+        self.object:set_attach(obj, bone, WIELD_ITEM_POSITION, WIELD_ITEM_ROTATION)
         self.object:set_properties{textures={"working_villages:dummy_empty_craftitem"}}
         return
       end
@@ -1295,7 +1308,7 @@ do
 
       if luaentity and working_villages.is_villager(luaentity.name) then
         local bone = select_head_bone(obj)
-        self.object:set_attach(obj, bone, {x = 0, y = 0.70, z = 0}, {x = 0, y = 0, z = 0})
+        self.object:set_attach(obj, bone, HEAD_POSITION, {x = 0, y = 0, z = 0})
         self.object:set_properties{textures={"working_villages:dummy_empty_craftitem"}}
         return
       end
@@ -1403,11 +1416,10 @@ do
     })
   end
 
-  -- Register armor entities for each slot
-  create_armor_entity("head", "Head", {x = 0, y = 0.70, z = 0}, {x = 0.3, y = 0.3})
-  create_armor_entity("torso", "Body", {x = 0, y = 0.35, z = 0}, {x = 0.4, y = 0.4})
-  create_armor_entity("legs", "Body", {x = 0, y = -0.15, z = 0}, {x = 0.35, y = 0.35})
-  create_armor_entity("feet", "Body", {x = 0, y = -0.55, z = 0}, {x = 0.3, y = 0.3})
+  -- Register armor entities for each slot using configuration
+  for slot_name, config in pairs(ARMOR_SLOT_CONFIG) do
+    create_armor_entity(slot_name, config.bone, config.position, config.size)
+  end
 end
 
 ---------------------------------------------------------------------
