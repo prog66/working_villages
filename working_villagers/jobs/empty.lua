@@ -17,15 +17,20 @@ local function empty_jobfunc(self)
 				-- Get the villager's inventory
 				local inv = self:get_inventory()
 				if inv then
-					-- Create a learner job item
+					-- Note: Direct inventory manipulation is the standard way to change jobs
+					-- The villager system will detect the new job on the next step
 					local learner_item = ItemStack("working_villages:job_apprenant")
-					-- Set it as the new job
-					inv:set_stack("job", 1, learner_item)
-					-- Clear the timer
-					self:set_timer("empty:check_learning", 0)
-					-- Announce the transition
-					self:set_state_info("Je vais maintenant apprendre de nouvelles choses !")
-					return
+					local old_stack = inv:get_stack("job", 1)
+					
+					-- Only transition if we still have an empty job (safety check)
+					if old_stack:get_name() == "working_villages:job_empty" then
+						inv:set_stack("job", 1, learner_item)
+						-- Clear the timer
+						self:set_timer("empty:check_learning", 0)
+						-- Announce the transition
+						self:set_state_info("Je vais maintenant apprendre de nouvelles choses !")
+						return
+					end
 				end
 			end
 		end

@@ -82,6 +82,27 @@ local function find_social_target(self)
 end
 
 --[[
+  Utility function to extract position from different object types
+]]--
+local function get_target_position(target)
+	if not target then
+		return nil
+	end
+	
+	-- Try direct get_pos method (player objects)
+	if type(target.get_pos) == "function" then
+		return target:get_pos()
+	end
+	
+	-- Try object.get_pos method (entity objects)
+	if type(target.object) == "table" and type(target.object.get_pos) == "function" then
+		return target.object:get_pos()
+	end
+	
+	return nil
+end
+
+--[[
   Make the villager explore the environment
 ]]--
 local function do_exploration(self)
@@ -127,13 +148,7 @@ local function do_social_interaction(self)
 			self:say(message, 45)
 			
 			-- Move closer to the target if it's not too far
-			local target_pos
-			if type(target.get_pos) == "function" then
-				target_pos = target:get_pos()
-			elseif type(target.object) == "table" and type(target.object.get_pos) == "function" then
-				target_pos = target.object:get_pos()
-			end
-			
+			local target_pos = get_target_position(target)
 			if target_pos then
 				local my_pos = self.object:get_pos()
 				local distance = vector.distance(my_pos, target_pos)
@@ -159,9 +174,27 @@ local function do_experimentation(self)
 		local my_pos = self.object:get_pos()
 		
 		-- Try to pick up nearby items (learning to gather)
+		-- Only collect basic, safe items like food, plants, and common materials
 		if math.random(100) < 40 then
 			local range = {x = 5, y = 2, z = 5}
-			if self:collect_nearest_item_by_condition(function() return true end, range) then
+			local function is_safe_item(item)
+				if not item then return false end
+				local item_name = item:get_name()
+				-- Only collect natural/common items, not tools or special items
+				if minetest.get_item_group(item_name, "food") > 0 then return true end
+				if minetest.get_item_group(item_name, "flora") > 0 then return true end
+				if minetest.get_item_group(item_name, "sapling") > 0 then return true end
+				if item_name:match("^default:") and (
+					item_name:match("wood$") or 
+					item_name:match("leaves$") or 
+					item_name:match("stick$") or
+					item_name:match("dirt") or
+					item_name:match("stone$")
+				) then return true end
+				return false
+			end
+			
+			if self:collect_nearest_item_by_condition(is_safe_item, range) then
 				self:set_displayed_action("apprentissage")
 				self:set_state_info("J'apprends à ramasser des objets.")
 				
@@ -224,8 +257,9 @@ local function learner_jobfunc(self)
 	-- Set AI state to IDLE (since we're not working a job)
 	ai_behavior.state_machine.set_state(self, ai_behavior.STATES.IDLE)
 	
-	-- Periodic memory cleanup
-	if math.random(100) < 5 then
+	-- Periodic memory cleanup using timer (every 10 minutes)
+	self:count_timer("learner:memory_cleanup")
+	if self:timer_exceeded("learner:memory_cleanup", 600) then
 		ai_behavior.cleanup_memory(self)
 	end
 	
