@@ -12,10 +12,21 @@
 local func = working_villages.require("jobs/util")
 local ai_behavior = working_villages.ai_behavior
 
--- Configuration
-local explore_radius = tonumber(minetest.settings:get("working_villages_learner_explore_radius")) or 15
-local social_range = tonumber(minetest.settings:get("working_villages_learner_social_range")) or 10
-local experiment_interval = tonumber(minetest.settings:get("working_villages_learner_experiment_interval")) or 120
+-- Job name constant for reference
+local LEARNER_JOB_NAME = "working_villages:job_apprenant"
+
+-- Configuration - loaded dynamically to support runtime changes
+local function get_explore_radius()
+	return tonumber(minetest.settings:get("working_villages_learner_explore_radius")) or 15
+end
+
+local function get_social_range()
+	return tonumber(minetest.settings:get("working_villages_learner_social_range")) or 10
+end
+
+local function get_experiment_interval()
+	return tonumber(minetest.settings:get("working_villages_learner_experiment_interval")) or 120
+end
 
 -- Learning mode messages
 local explore_messages = {
@@ -53,8 +64,9 @@ local player_question_messages = {
 ]]--
 local function pick_explore_target(self)
 	local base = vector.round(self.object:get_pos())
-	local dx = math.random(-explore_radius, explore_radius)
-	local dz = math.random(-explore_radius, explore_radius)
+	local radius = get_explore_radius()
+	local dx = math.random(-radius, radius)
+	local dz = math.random(-radius, radius)
 	local pos = {x = base.x + dx, y = base.y + 2, z = base.z + dz}
 	local ground = func.find_ground_below(pos)
 	return ground or base
@@ -65,15 +77,16 @@ end
 ]]--
 local function find_social_target(self)
 	local pos = self.object:get_pos()
+	local range = get_social_range()
 	
 	-- First check for other villagers
-	local villagers = ai_behavior.patterns.find_nearby_workers(self, social_range)
+	local villagers = ai_behavior.patterns.find_nearby_workers(self, range)
 	if #villagers > 0 then
 		return villagers[math.random(#villagers)]
 	end
 	
 	-- Then check for players
-	local player, distance, _ = self:get_nearest_player(social_range)
+	local player, distance, _ = self:get_nearest_player(range)
 	if player then
 		return player
 	end
@@ -152,7 +165,8 @@ local function do_social_interaction(self)
 			if target_pos then
 				local my_pos = self.object:get_pos()
 				local distance = vector.distance(my_pos, target_pos)
-				if distance > 2 and distance < social_range then
+				local range = get_social_range()
+				if distance > 2 and distance < range then
 					self:go_to(target_pos)
 				end
 			end
@@ -170,7 +184,8 @@ end
 local function do_experimentation(self)
 	self:count_timer("learner:experiment")
 	
-	if self:timer_exceeded("learner:experiment", experiment_interval) then
+	local interval = get_experiment_interval()
+	if self:timer_exceeded("learner:experiment", interval) then
 		local my_pos = self.object:get_pos()
 		
 		-- Try to pick up nearby items (learning to gather)
@@ -184,13 +199,12 @@ local function do_experimentation(self)
 				if minetest.get_item_group(item_name, "food") > 0 then return true end
 				if minetest.get_item_group(item_name, "flora") > 0 then return true end
 				if minetest.get_item_group(item_name, "sapling") > 0 then return true end
-				if item_name:match("^default:") and (
-					item_name:match("wood$") or 
-					item_name:match("leaves$") or 
-					item_name:match("stick$") or
-					item_name:match("dirt") or
-					item_name:match("stone$")
-				) then return true end
+				-- Only accept specific default items to avoid collecting precious/special items
+				if item_name == "default:wood" then return true end
+				if item_name == "default:stick" then return true end
+				if item_name == "default:dirt" then return true end
+				if item_name == "default:stone" then return true end
+				if item_name:match("^default:.*_leaves$") then return true end
 				return false
 			end
 			
@@ -284,7 +298,7 @@ local function learner_jobfunc(self)
 end
 
 -- Register the learner job
-working_villages.register_job("working_villages:job_apprenant", {
+working_villages.register_job(LEARNER_JOB_NAME, {
 	description      = "apprenant (working_villages)",
 	long_description = "Je suis en mode apprentissage. J'explore les environs, je parle aux autres villageois et aux joueurs, " ..
 		"et j'essaie d'apprendre de nouvelles choses. Je pourrais vous demander si ce que je fais est bien. " ..
@@ -293,10 +307,13 @@ working_villages.register_job("working_villages:job_apprenant", {
 	jobfunc = learner_jobfunc,
 })
 
+-- Export the job name for use in other modules
+working_villages.LEARNER_JOB_NAME = LEARNER_JOB_NAME
+
 -- Craft recipe for learner job
 -- Made from empty job + book (representing learning/education)
 minetest.register_craft{
-	output = "working_villages:job_apprenant",
+	output = LEARNER_JOB_NAME,
 	recipe = {
 		{"working_villages:job_empty", working_villages.voxelibre_compat.get_item("default:book")},
 	},

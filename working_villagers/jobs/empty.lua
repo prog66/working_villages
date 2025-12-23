@@ -12,14 +12,17 @@ local function empty_jobfunc(self)
 		self:count_timer("empty:check_learning")
 		
 		if self:timer_exceeded("empty:check_learning", 50) then
+			-- Use the exported constant if available, otherwise fall back to string
+			local learner_job_name = working_villages.LEARNER_JOB_NAME or "working_villages:job_apprenant"
+			
 			-- Check if learner job is available
-			if working_villages.registered_jobs["working_villages:job_apprenant"] then
+			if working_villages.registered_jobs[learner_job_name] then
 				-- Get the villager's inventory
 				local inv = self:get_inventory()
 				if inv then
 					-- Note: Direct inventory manipulation is the standard way to change jobs
 					-- The villager system will detect the new job on the next step
-					local learner_item = ItemStack("working_villages:job_apprenant")
+					local learner_item = ItemStack(learner_job_name)
 					local old_stack = inv:get_stack("job", 1)
 					
 					-- Only transition if we still have an empty job (safety check)
