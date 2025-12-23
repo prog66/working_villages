@@ -194,7 +194,7 @@ local function do_experimentation(self)
 			local range = {x = 5, y = 2, z = 5}
 			local function is_safe_item(item)
 				if not item then return false end
-				local item_name = item:get_name()
+				local item_name = item.name
 				-- Only collect natural/common items, not tools or special items
 				if minetest.get_item_group(item_name, "food") > 0 then return true end
 				if minetest.get_item_group(item_name, "flora") > 0 then return true end
