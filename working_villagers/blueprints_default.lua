@@ -176,12 +176,12 @@ blueprints.register("minimal_house", {
 	improvements = {
 		{
 			type = "add_decoration",
-			description = "Ajouter une fenetre",
+			description = "Ajouter une fenêtre",
 			nodes = {},
 		},
 		{
 			type = "replace_nodes",
-			description = "Ameliorer les murs en pierre",
+			description = "Améliorer les murs en pierre",
 			from = compat.get_item("default:wood"),
 			to = compat.get_item("default:stone"),
 		},
@@ -192,7 +192,7 @@ blueprints.register("minimal_house", {
 blueprints.register("minimal_shelter", {
 	category = blueprints.CATEGORY.HOUSE,
 	difficulty = blueprints.DIFFICULTY.BEGINNER,
-	description = "Un abri tres simple avec juste un lit et une porte",
+	description = "Un abri très simple avec juste un lit et une porte",
 	schematic_file = "minimal_shelter.we",
 	improvements = {
 		{
@@ -203,7 +203,7 @@ blueprints.register("minimal_shelter", {
 		},
 		{
 			type = "add_decoration",
-			description = "Ajouter un eclairage basique",
+			description = "Ajouter un éclairage basique",
 			nodes = {},
 		},
 	},
