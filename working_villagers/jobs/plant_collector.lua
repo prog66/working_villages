@@ -74,6 +74,20 @@ working_villages.register_job("working_villages:job_herbcollector", {
 	description      = "cueilleur (working_villages)",
 	long_description = "Je cherche toutes sortes de plantes et je les ramasse.",
 	inventory_image  = "default_paper.png^working_villages_herb_collector.png",
+	capabilities = {
+		plant_gathering = true,
+		flora_recognition = true,
+		sustainable_harvesting = true,
+		mushroom_collection = true,
+		cactus_handling = true,
+	},
+	on_start = function(self)
+		-- Notify player about plant collector capabilities
+		self:notify_job_feature(
+			"Cueillette de plantes",
+			"Collecte plantes, champignons, cactus et papyrus. Récolte durable."
+		)
+	end,
 	jobfunc = function(self)
 		self:handle_night()
 		self:handle_chest(nil, put_func)

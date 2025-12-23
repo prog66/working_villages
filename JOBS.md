@@ -599,6 +599,126 @@ Both new jobs are fully compatible with:
 
 ---
 
+## Plant Collector Job (Cueilleur)
+
+### Overview
+The plant collector gathers plants, flowers, mushrooms, and other flora from the environment. They help maintain a supply of natural materials.
+
+### Job Capabilities
+- **plant_gathering**: Collects various plants and flora
+- **flora_recognition**: Identifies different plant types
+- **sustainable_harvesting**: Harvests without damaging ecosystems
+- **mushroom_collection**: Specializes in collecting mushrooms
+- **cactus_handling**: Can safely collect cactus and papyrus
+
+### Features
+- Collects apples, cactus, papyrus, mushrooms, and flowers
+- Only harvests top parts of growing plants (sustainable)
+- 10 block search radius
+- Returns items to chests automatically
+
+---
+
+## Learner Job (Apprenant)
+
+### Overview
+The learner job is for villagers without a profession. They explore, socialize, and experiment to bring life to the village.
+
+### Job Capabilities
+- **exploration**: Explores the surrounding environment
+- **social_interaction**: Talks to other villagers and players
+- **experimentation**: Experiments with simple tasks
+- **learning**: Learns by observing and trying
+- **environmental_awareness**: Discovers new places
+
+### Features
+- Automatically assigned to idle villagers (configurable)
+- Explores within 15 blocks
+- Socializes with others within 10 blocks
+- Collects safe items (food, plants, basic materials)
+- Asks players for validation on actions
+- Makes villages feel more alive and immersive
+
+---
+
+## Autonomous Job (Autonome)
+
+### Overview
+The autonomous worker is a jack-of-all-trades who handles multiple tasks independently. Perfect for self-sufficient villagers.
+
+### Job Capabilities
+- **multi_tasking**: Can perform various different tasks
+- **autonomous_harvesting**: Harvests crops automatically
+- **tree_cutting**: Cuts down trees
+- **item_collection**: Picks up items from the ground
+- **exploration**: Explores the area autonomously
+- **self_sufficiency**: Works independently without supervision
+
+### Features
+- Harvests crops and replants automatically
+- Cuts trees when found
+- Collects items within 6 block radius
+- Explores within 10 blocks
+- Keeps tools and useful items, stores rest in chests
+- Occasionally socializes to avoid spam
+
+---
+
+## Follower Job (Suiveur)
+
+### Overview
+The follower stays close to the nearest player, following them wherever they go.
+
+### Job Capabilities
+- **player_following**: Follows players automatically
+- **proximity_detection**: Detects nearby players
+- **auto_navigation**: Navigates automatically to follow
+- **obstacle_avoidance**: Avoids and overcomes obstacles
+
+### Features
+- Follows nearest player within 10 blocks
+- Maintains 3 block distance
+- Handles obstacles by jumping
+- Swims upward in liquids
+- Active day and night
+
+---
+
+## Utility Jobs
+
+### Torcher (Porteur de torches)
+
+### Job Capabilities
+- **torch_placement**: Can place torches automatically
+- **light_detection**: Detects dark areas (light level ≤ 5)
+- **player_following**: Follows the nearest player
+- **automatic_lighting**: Lights up areas automatically
+
+### Features
+- Follows nearest player within 10 blocks
+- Automatically places torches in dark areas (light level ≤ 5)
+- Requests more torches when inventory is empty
+- Active day and night
+- Useful for cave exploration and nighttime activities
+
+---
+
+### Snow Clearer (Déneigeur)
+
+### Job Capabilities
+- **snow_removal**: Removes snow blocks from the area
+- **area_clearing**: Clears areas systematically
+- **testing_utility**: Primarily designed for testing purposes
+
+### Features
+- Removes snow blocks from the area
+- 10 block search radius (x, y, z)
+- Primarily used for testing and development
+- Simple but effective for clearing snowy areas
+- Returns home at night if home is set
+
+---
+
 ## Credits
 
 These jobs extend the working_villages mod with new capabilities while maintaining compatibility with existing systems and following the established code patterns.

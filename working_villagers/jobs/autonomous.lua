@@ -133,6 +133,21 @@ working_villages.register_job("working_villages:job_autonome", {
 	long_description = "Je fais un peu de tout : j'explore, je recolte, je coupe du bois et je ramasse ce qui traine. " ..
 		"Je travaille seul et je m'arrete pour discuter, sans spam.",
 	inventory_image  = "default_paper.png^working_villages_builder.png",
+	capabilities = {
+		multi_tasking = true,
+		autonomous_harvesting = true,
+		tree_cutting = true,
+		item_collection = true,
+		exploration = true,
+		self_sufficiency = true,
+	},
+	on_start = function(self)
+		-- Notify player about autonomous capabilities
+		self:notify_job_feature(
+			"Travailleur polyvalent",
+			"Récolte, coupe du bois, explore et ramasse des objets de façon autonome"
+		)
+	end,
 	jobfunc = function(self)
 		self:handle_night()
 		self:handle_chest(take_func, put_func)

@@ -304,6 +304,20 @@ working_villages.register_job(LEARNER_JOB_NAME, {
 		"et j'essaie d'apprendre de nouvelles choses. Je pourrais vous demander si ce que je fais est bien. " ..
 		"Donnez-moi un métier pour que je puisse devenir utile au village !",
 	inventory_image  = "default_paper.png^working_villages_question.png",
+	capabilities = {
+		exploration = true,
+		social_interaction = true,
+		experimentation = true,
+		learning = true,
+		environmental_awareness = true,
+	},
+	on_start = function(self)
+		-- Notify player about learner capabilities
+		self:notify_job_feature(
+			"Mode apprentissage",
+			"Explore, socialise et apprend. Donnez-lui un vrai métier quand il sera prêt !"
+		)
+	end,
 	jobfunc = learner_jobfunc,
 })
 
