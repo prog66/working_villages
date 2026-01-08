@@ -39,6 +39,7 @@ globals = {
 	-- modpack mods
 	"building_sign",
 	"working_villages",
+	"mcl_skins",
 	-- submodule mods
 	"modutil",
 	"LuaVenusCompiler"
