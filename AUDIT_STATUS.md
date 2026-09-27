@@ -1,7 +1,10 @@
 # Audit factuel et statut de validation
 
-Relevé mis à jour le 27 août 2026 (`2026-08-27`) dans
-`C:\Users\yanne\Desktop\working_villages`.
+Relevé mis à jour le 27 septembre 2026 (`2026-09-27`) dans
+`C:\Users\yanne\Desktop\working_villages`. La section précédente de ce
+document datait du 27 août par erreur d'en-tête alors que son contenu
+(alpha.7, run v12/v17-v19) était déjà celui du 27 septembre ; seul l'en-tête
+a été corrigé ici, le contenu technique n'a pas changé.
 
 ## Verdict actuel
 
@@ -381,11 +384,12 @@ dans VoxeLibre ou `minetest_game`.
 9. Mesurer les performances et la stabilité avec une population plafonnée sur
    une session longue, sauvegarde/rechargement et déchargement de zones.
 
-## État Git exact du worktree
+## État Git exact du worktree (avant les commits du 27 septembre, voir plus bas)
 
 Ce relevé inclut du travail antérieur appartenant à l'utilisateur et aux autres
 itérations. Il ne signifie pas que les fichiers listés ont été créés ou
-modifiés par un seul intervenant. Aucun nettoyage, commit ou push n'a été fait.
+modifiés par un seul intervenant. Ceci est l'état constaté en début de
+session, avant les commits décrits juste après ce bloc.
 
 ```text
  M .github/workflows/luacheck.yml
@@ -518,3 +522,35 @@ modifiés par un seul intervenant. Aucun nettoyage, commit ou push n'a été fai
 ?? working_villagers/textures/working_villages_pixel.png
 ?? working_villagers/village_registry.lua
 ```
+
+Le 27 septembre 2026, tout ce qui précède a été committé sur `master` en
+trois commits distincts après `8eb12c2` :
+
+1. documentation et audit (`README`, `ROADMAP`, `CHANGELOG.md`,
+   `AUDIT_STATUS.md`, `INSTALLATION.md`, `DEPLOYMENT.md`, etc.) ;
+2. harnais de test headless, spécifications autonomes et workflows CI
+   (`.github/workflows/standalone-tests.yml`, `luacheck.yml`, `tools/`) ;
+3. le code du mod lui-même (tous les nouveaux modules et métiers modifiés).
+
+Une quatrième opération — la suppression de `building_sign/`,
+`working_villagers/deprecated.lua` et
+`.github/workflows/tidy_luacheck.yml` — reste **non committée**. L'agent qui
+a produit ces trois commits n'avait pas l'autorisation d'exécuter un commit
+supprimant des fichiers suivis (classé comme destruction locale
+potentiellement irréversible par son environnement), même si un `git
+revert` la défait sans perte de données. Le worktree contient donc encore
+ces suppressions à l'état de modifications non indexées ; c'est à
+l'utilisateur de committer ce nettoyage s'il le souhaite.
+
+Aucun push vers `origin` n'a été effectué.
+
+### Tentative de validation outillage (27 septembre 2026)
+
+Une tentative d'installation d'un interpréteur Lua via Chocolatey a échoué
+faute de droits administrateur sur cette machine. Aucun binaire Luanti ou
+Minetest n'a été trouvé dans cet environnement (seuls des répertoires de
+données d'exécutions passées, produites par un autre outil, existent sous
+`~/.codex` et `~/AppData/Roaming/Minetest`). Le lint Luacheck et les tests
+moteur réels restent donc impossibles à exécuter localement dans cet
+environnement précis ; ceci ne change rien au statut décrit plus haut, qui
+reposait déjà sur des exécutions antérieures faites ailleurs.
