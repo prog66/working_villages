@@ -761,3 +761,65 @@ forms.put_link("working_villages:talking_menu", "working_villages:village_report
 
 forms.put_link("working_villages:talking_menu", "working_villages:village_orders",
 	"Ordres du village")
+
+-- "Remote chest window" for the trader job: purely a formspec view onto the
+-- real shared-storage chest via Minetest's native list[]/listring[], so the
+-- actual item transfer is handled entirely by the engine (same code path as
+-- opening any chest directly) and this page adds no custom inventory logic.
+forms.register_page("working_villages:trader_post", {
+	-- This page gives real transfer access to the village's shared chest
+	-- (via the native list[]/listring[] widgets below), unlike the
+	-- read-only village_dashboard/village_report pages. It must stay
+	-- gated to owner/ally management rights or any player could empty a
+	-- village that isn't theirs just by talking to one of its villagers.
+	requires_manage = true,
+	constructor = function(_, villager)
+		local status = working_villages.get_village_status
+			and working_villages.get_village_status(villager, 50) or nil
+		local storage_pos = working_villages.get_shared_storage_pos
+			and working_villages.get_shared_storage_pos(villager.owner_name) or nil
+
+		local storage_ready = false
+		if storage_pos then
+			local chest_inv = minetest.get_meta(storage_pos):get_inventory()
+			storage_ready = (chest_inv and chest_inv:get_size("main") or 0) > 0
+		end
+
+		-- Fixed layout regardless of the real chest's slot count: the list[]
+		-- widget below only ever shows min(8*4, real size) usable slots, so a
+		-- smaller chest (e.g. a 27-slot VoxeLibre chest) just leaves a few
+		-- trailing cells inert instead of needing a size-dependent (and
+		-- error-prone) form height.
+		local form = forms.form_base(9, 12.5, villager)
+		form = form
+			.. "label[0.3,1.3;Poste de troc du village]"
+			.. "label[0.3,1.7;" .. minetest.formspec_escape(village_resource_line(status)) .. "]"
+
+		if storage_ready then
+			local list_ref = "nodemeta:" .. storage_pos.x .. "," .. storage_pos.y .. "," .. storage_pos.z
+			form = form
+				.. "label[0.3,2.3;Coffre commun (a distance, pas besoin de vous y rendre) :]"
+				.. "list[" .. list_ref .. ";main;0.3,2.6;8,4;]"
+				.. "label[0.3,6.9;Votre inventaire :]"
+				.. "list[current_player;main;0.3,7.2;8,1;]"
+				.. "list[current_player;main;0.3,8.4;8,3;8]"
+				.. "listring[" .. list_ref .. ";main]"
+				.. "listring[current_player;main]"
+		else
+			form = form .. "label[0.3,2.3;" ..
+				minetest.formspec_escape(
+					"Aucun coffre commun operationnel pour ce village pour le moment.") .. "]"
+		end
+
+		form = form .. "button[3.5,11.4;2,0.8;back;Retour]"
+		return form
+	end,
+	receiver = function(_, villager, sender, fields)
+		if fields.back then
+			forms.go_back(villager, sender:get_player_name())
+		end
+	end,
+})
+
+forms.put_link("working_villages:talking_menu", "working_villages:trader_post",
+	"Poste de troc")

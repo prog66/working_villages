@@ -171,6 +171,7 @@ so recipe coverage is still incomplete.
   * **cook** (shared-storage and furnace workflow) - NEW!
   * **blacksmith** (works with metal, repairs tools, smelts ores) - NEW!
   * **miner** (mines stone and ores, places torches underground) - NEW!
+  * **trader** (mans the trading post; remote read/write access to the shared chest via its talk menu, gated to owner/allies) - NEW!
   * woodcutter/lumberjack (cutting trees and planting saplings)
   * farmer (harvests and replants crops)
   * plant collector (collecting all sort of fauna to produce dyes etc.)

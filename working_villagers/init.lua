@@ -131,6 +131,7 @@ working_villages.require("jobs/cook")
 -- new specialized jobs
 working_villages.require("jobs/blacksmith")
 working_villages.require("jobs/miner")
+working_villages.require("jobs/trader")
 -- autonomous job
 working_villages.require("jobs/autonomous")
 -- learner job (for villagers without a profession)

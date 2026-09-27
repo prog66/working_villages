@@ -143,8 +143,9 @@ réelles.
 - `communication.lua`, `collaborative_tasks.lua`, `permissions.lua`,
   `access.lua` : collaboration et propriété.
 - Les métiers chargés sont constructeur, suiveur, garde, collecteur, fermier,
-  bûcheron, cuisinier, forgeron, mineur, autonome, apprenant, éclaireur à
-  torches et déneigeur.
+  bûcheron, cuisinier, forgeron, mineur, marchand, autonome, apprenant,
+  éclaireur à torches et déneigeur. Le marchand (27/09/2026) n'a encore
+  aucune preuve de test autonome ni moteur ; voir JOBS.md.
 
 ### Historiques, morts ou faiblement reliés
 

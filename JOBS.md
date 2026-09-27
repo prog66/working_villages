@@ -719,6 +719,53 @@ The follower stays close to the nearest player, following them wherever they go.
 
 ---
 
+## Trader Job (Marchand)
+
+Added 2026-09-27 (0.13.0-alpha.9). Unlike every other job above, the
+trader does not gather, build, craft or fight. It exists to make the
+village's shared storage easy to help from a distance.
+
+### Overview
+The trader mans the village's trading post. Its only distinctive behavior
+is a "Poste de troc" (trading post) entry in its talk menu (right-click,
+no sceptre needed) that opens a remote window onto the real shared-storage
+chest, alongside your own inventory, using Minetest's native
+`list[]`/`listring[]` widgets — the same mechanism as opening any chest
+directly. The engine handles the actual item transfer; this job adds no
+custom inventory-mutation code.
+
+### Job Capabilities
+- **trading_post**: Exposes the remote shared-chest window from its talk
+  menu
+
+### Features
+- Mostly stationary: idles near its post, returns home at night like other
+  jobs (`handle_night`), does not path to resources or a work site
+- Talk menu shows a one-line village resource summary (food/wood/ore/tools)
+  above the chest window
+- If the village has no shared chest yet, shows an explanatory message
+  instead of an empty/broken widget
+- **Access control**: the chest window (`working_villages:trader_post`) is
+  gated by `requires_manage`, exactly like the villager inventory and job
+  change pages — only the owner or an explicit ally can actually move
+  items, even though the "Poste de troc" link itself is visible to anyone
+  who talks to the villager. A stranger who clicks it gets an access-denied
+  message, not the chest.
+
+### Requirements
+- No tools, weapons or armor
+- No craft recipe yet (consistent with most other profession items; see
+  README.MD "Features represented in the current code")
+
+### Status
+Code-level only: it has not been exercised against a real Luanti server in
+this environment (no engine or Lua interpreter was available while writing
+it — see AUDIT_STATUS.md). The design deliberately avoids custom transfer
+logic specifically so that its correctness rests on Minetest's own,
+already-battle-tested chest-widget code rather than new code written here.
+
+---
+
 ## Credits
 
 These jobs extend the working_villages mod with new capabilities while maintaining compatibility with existing systems and following the established code patterns.

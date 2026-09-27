@@ -579,36 +579,32 @@ Paramètres pour ajuster le gameplay :
   validation manuelle complète de ces flux et de l'économie autonome de bout
   en bout (protocole dans `VALIDATION_CHECKLIST.md`)
 
-## Prochain metier envisage : marchand (working_villages:job_trader)
+## Nouveau metier : marchand (working_villages:job_trader)
 
-Note de conception ajoutee le 27/09/2026, pas encore implementee. Objectif :
-un metier qui fait avancer le village sans ajouter de risque de duplication
-ou de comportement autonome non teste.
+Note de conception ajoutee le 27/09/2026 ; implementee le meme jour, au
+niveau code uniquement (voir statut plus bas).
 
 - **Pourquoi celui-la** : `minetest_game` (le jeu par defaut) n'a ni animaux
   ni peche, ce qui elimine berger/pecheur comme choix a parite entre les
-  deux jeux cibles. Un poste fixe de troc pres du coffre commun, declenche
-  par clic joueur (formspec), evite le risque de navigation autonome mal
-  testee : la seule logique nouvelle est un echange d'inventaire, deja un
-  pattern eprouve (`inventory_access.lua`, `crafting.lua`).
-- **Portee minimale prevue** : le marchand reste pres du coffre commun
-  (reutilise le meme pattern d'ancrage que le forgeron pres du four). Un
-  clic joueur ouvre un formspec listant quelques echanges fixes (ex :
-  bois brut -> planches, minerai -> lingot bonus) tires du surplus reel du
-  coffre du village, jamais de ressource inventee.
-- **Point d'attention prioritaire** : toute la logique d'echange doit passer
-  par un seul point de validation atomique (verifier les deux cotes de
-  l'echange avant de toucher un seul inventaire, comme le fait deja
-  `crafting.lua:ensure_item_internal`) pour eviter exactement le type de
-  bug de duplication que ce depot traque activement (voir
-  `AUDIT_STATUS.md`, "absence de duplication").
-- **Pourquoi pas fait tout de suite** : ce depot n'a pas d'interpreteur Lua
-  ni de moteur Luanti disponibles dans cet environnement d'agent pour le
-  moment ; livrer un nouveau metier avec de la vraie manipulation
-  d'inventaire sans le faire tourner une seule fois serait contraire a la
-  rigueur du reste de ce document. Prevu pour une iteration dediee, avec
-  une spec autonome (`tests/trader_spec.lua`) couvrant l'atomicite de
-  l'echange avant tout code moteur.
+  deux jeux cibles.
+- **Choix final, plus sur que la conception initiale** : la premiere version
+  de cette note envisageait une table d'echanges fixes (bois -> planches,
+  etc.) avec une logique de validation atomique ecrite a la main. En la
+  concevant, une option strictement plus sure est apparue : au lieu d'ecrire
+  du nouveau code de transfert d'inventaire, la page `working_villages:trader_post`
+  affiche simplement le vrai coffre commun via les widgets natifs
+  `list[]`/`listring[]` de Minetest, exactement comme n'importe quel coffre
+  ouvert directement. Le moteur gere alors tout le transfert ; aucune
+  logique de duplication/atomicite a auditer n'a ete introduite ici.
+- **Garde-fou verifie avant commit** : la page est gardee par
+  `requires_manage = true` (comme `inv_gui`/`job_change`/`data_change`) ;
+  sans ce garde-fou, n'importe quel joueur aurait pu vider le coffre commun
+  d'un village etranger en parlant a un seul de ses villageois.
+- **Statut** : code ecrit, relu ligne a ligne a la main (toujours aucun
+  interpreteur Lua ni moteur Luanti disponible dans cet environnement
+  d'agent), mais **jamais execute**. Aucun `STANDALONE_SPEC_OK` ni test
+  moteur ne couvre ce metier pour l'instant ; voir [JOBS.md](JOBS.md) pour
+  le detail.
 
 ## Contributions
 

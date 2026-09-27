@@ -2,7 +2,37 @@
 
 ## 0.13.0-alpha.9 - 2026-09-27 (en cours)
 
-Suite de la revue de code automatisee, poursuivie sur la file d'attente de
+### Nouveau metier : marchand
+
+`working_villages:job_trader` mane un poste de troc. Contrairement aux
+autres metiers, il ne recolte, ne construit ni ne combat rien ; sa seule
+fonction est un lien "Poste de troc" dans son menu de discussion qui ouvre
+une fenetre a distance sur le vrai coffre commun du village, via les
+widgets natifs `list[]`/`listring[]` de Minetest — le moteur gere lui-meme
+le transfert d'objets, exactement comme pour n'importe quel coffre ouvert
+directement. Ce choix de conception est deliberement conservateur :
+puisqu'aucun interpreteur Lua ni moteur Luanti n'etait disponible pour
+tester ce code, la logique de transfert repose entierement sur le widget
+de coffre deja eprouve du moteur plutot que sur du nouveau code de
+manipulation d'inventaire ecrit ici.
+
+Points d'attention traites pendant l'implementation :
+- La page `working_villages:trader_post` a ete gardee par
+  `requires_manage = true` avant tout commit — sans ce garde-fou, n'importe
+  quel joueur aurait pu vider le coffre commun d'un village qui n'est pas
+  le sien en parlant a un seul de ses villageois, exactement la classe de
+  faille corrigee plus haut pour le tableau du village.
+- La mise en page du formulaire utilise une grille de coffre fixe (8x4)
+  et des positions absolues plutot qu'une hauteur calculee dynamiquement
+  a partir de la taille reelle du coffre (27 emplacements sous VoxeLibre
+  contre 32 sous minetest_game) : un premier calcul dynamique aurait
+  depasse la hauteur du formulaire dans le pire cas.
+- Voir [JOBS.md](JOBS.md) pour le detail complet et le niveau de preuve
+  (code uniquement, aucun test moteur).
+
+### Suite de la revue de code
+
+Poursuite de la revue automatisee sur la file d'attente de
 pistes laissees par alpha.8.
 
 ### Corrections
