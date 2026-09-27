@@ -1,7 +1,12 @@
 # minetest mod working_villages
-[![luacheck][luacheck badge]][luacheck workflow]  
+
 This mod adds Villagers performing work.
 The plan is to make villagers build up their own villages.
+
+Current local release: **0.13.0-alpha.7**. It is an auditable development
+package, not a stable or ContentDB release. See [DEPLOYMENT.md](DEPLOYMENT.md)
+for the verified archive/install workflow and [AUDIT_STATUS.md](AUDIT_STATUS.md)
+for the remaining gameplay gates.
 
 [working_villages forum page](https://forum.minetest.net/viewtopic.php?f=9&t=17429)
 
@@ -14,40 +19,80 @@ The plan is to make villagers build up their own villages.
 * jobs
   * miner, farmer, woodcutter and many more
 
-## implemented Features
-no crafting recipes yet (you will have to use creative)
-features:
-* **Visual and Animation Improvements** (NEW! v2.0)
-  * Items now appear naturally in villagers' hands instead of in the arm
-  * Equipped armor is now visually displayed on villagers (helmet, chestplate, leggings, boots)
-  * Fluid combat animations for guards - no more freezing during attacks
-  * Smooth transitions between walking, standing, and attacking
-  * Better item rotation and positioning for a more natural appearance
+## Features represented in the current code
+
+The default `working_villages_gameplay_mode` is `survival`: villager crafting,
+placement, digging and industry are intended to consume real resources.
+`creative_test` is a separate development mode which permits only the
+explicitly enabled testing shortcuts. Results obtained with those shortcuts do
+not validate the survival economy.
+
+Six direct recipes are currently registered: the commanding sceptre, the
+empty job sheet, the learner job sheet, the straw bundle, the agricultural bed
+and cooked flatbread. Most profession items do not have a direct craft recipe,
+so recipe coverage is still incomplete.
+
+* **Visual and Animation Systems** (v2.0 code; client rendering still requires manual validation)
+  * Hand-item positioning and equipment-display handling are present
+  * Guard attack/walk/idle transition handling is present
 * **Job Capability System** (NEW! v2.0)
-  * Each job now has defined capabilities (combat, mining, farming, etc.)
-  * In-game notifications when villagers gain new job features
-  * Players are informed about job abilities when assigning roles
-  * Improved job specialization and unique features per profession
+  * Capability metadata and notification hooks are available to professions
+  * Several jobs declare specializations such as combat, mining, farming, crafting or furnace use
 * **Learning Mode for Idle Villagers** (NEW!)
   * Villagers without a job automatically enter learning mode
   * They explore the environment and discover new places
   * They socialize with other villagers and players
   * They experiment with simple tasks (gathering items, observing)
   * They ask players for validation on what they learn
-  * Makes the village feel more alive and immersive
+  * The resulting pacing and usefulness still need a manual playtest
   * Can be disabled with: `working_villages_enable_learning_mode = false`
   * Settings: `working_villages_learner_explore_radius`, `working_villages_learner_social_range`, `working_villages_learner_experiment_interval`
 * **Initial Villager Spawn** (NEW!)
-  * When spawning is enabled, 5 NPCs spawn at world spawn on server start
-  * Includes: woodcutter, farmer, herb collector, builder, and one unemployed villager
-  * NPCs are self-employed and can be commanded by any player with a commanding sceptre
+  * When spawning is enabled, 5 NPCs spawn near the world spawn anchor
+  * The fixed initial roles are woodcutter, farmer, autonomous, miner, and builder
+  * Owner resolution prefers a persisted owner, then the requester of an explicitly forced manual spawn, then `working_villages_initial_village_owner`, and finally the first connected player. Public self-employed ownership is used only when no other owner is available and `working_villages_self_employed_public = true`
   * Enable with: `working_villages_enable_spawn = true` in minetest.conf or world settings
-  * Spawn occurs once per world, 5 seconds after first server start with spawning enabled
+  * Spawn occurs once per world, using `static_spawnpoint` when configured, otherwise the first joining player's spawn position
+  * Manual recovery command: `/wv_spawn5` near your player position. A player with the `server` privilege may use it in either mode; a non-admin may use it only in `creative_test` while carrying a commanding sceptre
+* **Shared Village Storage**
+  * Villagers take and deposit items in the registered shared-storage chest network, not in arbitrary nearby chests
+  * Use `/wv_storage_set here` near a chest to define or move the village shared chest
+  * Use `/wv_storage_show` to verify the current shared chest and `/wv_storage_clear` to reset it
+  * Villagers now scan all marked shared chests around that anchor and retry logistics more frequently
+* **Missing-tool fallback (alpha.3)**
+  * Miners, woodcutters and builders equip a carried tool before using it
+  * They check shared storage, try resource-accounted crafting, then issue one identified request without changing profession
+  * While waiting, they collect real nearby supplies or visibly patrol instead of remaining motionless
+  * Farmers, guards and autonomous villagers now avoid delayed or duplicate supply requests after a server restart
+* **Safe emergency navigation (alpha.4)**
+  * A non-guard under threat follows an isolated, persistent escape path without yielding from the engine callback
+  * Emergency navigation no longer overwrites a suspended profession path and resumes normal movement when danger ends
+  * Callback-driven maintenance placement keeps protection and inventory accounting without an illegal coroutine yield
+* **Public-server survivability (alpha.6)**
+  * Villagers have twice their historical maximum health by default and take half incoming damage after armor and shield reductions
+  * Damage is decided before Luanti applies it, so a fatal hit can no longer remove the entity before armor is accounted for
+  * A ten-second activation shield prevents deaths while AI and mapblocks resume; fed villagers regenerate slowly after twenty safe seconds
+  * Direct player damage defaults to `owner_only`; strangers cannot grief villagers, while `protection_bypass` administrators retain control
+  * Any accepted hit triggers danger immediately, and villagers at or below half health retreat; this includes guards
+  * Every value is configurable in `settingtypes.txt`; set `working_villages_player_damage_mode = none` for fully protected public NPCs
+* **Deterministic farming and safe construction (alpha.7)**
+  * New plots keep a persistent crop plan instead of changing crop with inventory pickup order; server owners can choose `uniform`, deterministic `rows`, or legacy `available`
+  * Harvested plants are replanted only with their matching seed, and missing planned seed is retried before a deliberate replan
+  * Autonomous sites use a deterministic ring search and reject the complete footprint when its foundation is uneven, wet, protected, occupied, inaccessible, or too close to another marker
+  * Blueprint interiors now contain explicit air-clearing steps; harmless vegetation is removed physically before walls are placed, while solid or liquid obstructions pause the site
+  * The builder that opens a site reserves it immediately, and workers already at their job/crop target skip pointless path searches
+  * Site validation has a node-work budget so large blueprints cannot multiply an unbounded terrain scan in one decision
+* **Targeted P0 autonomy evidence (alpha.5)**
+  * A physical supplier-to-requester delivery moved real cargo between two villagers, with exact conservation and restart recovery in both supported games
+  * A real farmer acquired a natural seed, tilled soil and sowed it in both profiles; the complete mature-crop harvest/replant/deposit loop remains open
+  * A real miner started empty, consumed exactly three cobbles and two sticks from shared storage, crafted a capable pickaxe, mined one registered iron ore, travelled more than ten nodes and deposited the exact drop in both profiles
+  * Blacksmith output and builder consumption have deterministic protection against partial-deposit loss, duplicate output and incapable tools; these are safety contracts, not complete profession playthroughs
+  * The two-phase five-villager harness now counts terrain, inventories, furnaces, deliveries and construction across a restart, but no terminal full-economy verdict has yet been obtained
 * **Blueprint Learning System**
   * Villagers can learn construction blueprints
   * Progressive skill system with experience points
   * Blueprint improvements - upgrade structures over time
-  * 8 default blueprints (houses, farms, workshops, infrastructure)
+  * 12 blueprint definitions are registered (houses, farms, workshops, infrastructure and decoration); end-to-end construction of every definition is not yet validated
   * See [BLUEPRINTS.md](BLUEPRINTS.md) for details
 * building markers
   * for building houses and saving the houses details
@@ -68,7 +113,10 @@ features:
   * jobs can be changed in the inventory by clicking change job
   * in the job change form the jobs can be changed by replacing the current job by one of the jobs below (shift+click possible)
 * **registered jobs:**
+  * **empty** (idle job item; can hand over to learning mode when enabled)
   * **learner/apprentice** (learning mode for villagers without a job - explores, socializes, experiments) - NEW!
+  * **autonomous** (bootstrap, resource collection and exploration logic) - NEW!
+  * **cook** (shared-storage and furnace workflow) - NEW!
   * **blacksmith** (works with metal, repairs tools, smelts ores) - NEW!
   * **miner** (mines stone and ores, places torches underground) - NEW!
   * woodcutter/lumberjack (cutting trees and planting saplings)
@@ -81,21 +129,25 @@ features:
   * snowclearer (clearing snow away)
   * torcher (following player and placing torches in the dark, night active)
 
-for developing jobs, villagers, etc. read [api.md](api.MD)  
+for developing jobs, villagers, etc. read [api.md](working_villagers/api.MD)
 for new job details see [JOBS.md](JOBS.md)  
 for blueprint system see [BLUEPRINTS.md](BLUEPRINTS.md)
 
 ## Documentation
 
-📚 **Complete documentation is available:**
+The documentation set currently includes:
 
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed system architecture and component overview
-- **[API_REFERENCE.md](API_REFERENCE.md)** - Complete API reference for developers
+- **[API_REFERENCE.md](API_REFERENCE.md)** - Maintained public API reference for developers
 - **[ROADMAP.md](ROADMAP.md)** - Future features and development roadmap
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute and coding standards
 - **[BLUEPRINTS.md](BLUEPRINTS.md)** - Blueprint learning system documentation
 - **[JOBS.md](JOBS.md)** - Detailed job system documentation
-- **[api.MD](api.MD)** - Original API documentation
+- **[INSTALLATION.md](INSTALLATION.md)** - Supported-game installation and first checks
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Reproducible local alpha packaging and deployment
+- **[AUDIT_STATUS.md](AUDIT_STATUS.md)** - Evidence matrix and known blockers
+- **[VALIDATION_CHECKLIST.md](VALIDATION_CHECKLIST.md)** - Manual gameplay protocol
+- **[api.MD](working_villagers/api.MD)** - Original API documentation
 
 ## For Developers
 
@@ -105,7 +157,7 @@ The mod now includes advanced systems for easier development:
 - Task priority system for intelligent decision-making
 - State machine for villager states
 - Memory system for learning and remembering locations
-- See `jobs/EXAMPLE_enhanced_plant_collector.lua` for usage
+- See the [enhanced plant-collector example](working_villagers/jobs/EXAMPLE_enhanced_plant_collector.lua) for usage; it is not loaded by default
 
 ### 🔧 Job Patterns (`job_patterns.lua`)
 - Reusable patterns for common job tasks
@@ -118,43 +170,56 @@ The mod now includes advanced systems for easier development:
 1. Read [ARCHITECTURE.md](ARCHITECTURE.md) to understand the system
 2. Check [API_REFERENCE.md](API_REFERENCE.md) for available functions
 3. Look at [CONTRIBUTING.md](CONTRIBUTING.md) for coding standards
-4. See `jobs/EXAMPLE_enhanced_plant_collector.lua` for a complete example
+4. See the [enhanced plant-collector example](working_villagers/jobs/EXAMPLE_enhanced_plant_collector.lua); it is not loaded by default
 5. Review [ROADMAP.md](ROADMAP.md) for planned features
 
-## VoxeLibre Compatibility
-This mod fully supports VoxeLibre (Minecraft-like game for Minetest). The following adaptations have been made:
+## Game compatibility
 
-### Automatic Detection
-The mod automatically detects whether it's running on minetest_game or VoxeLibre and adapts all functionality accordingly.
+The runtime detects VoxeLibre through `mcl_core` and Minetest Game through
+`default`. Unsupported games fail with an explicit startup error. Item, node,
+door, bed, chest, furnace, farming, tool, and food differences are routed
+through the compatibility layer where the current code needs them.
 
-### Block/Item Mapping
-- Doors: `doors:*` → `mcl_doors:*`
+The current automated evidence uses Luanti 5.17.0. Headless disposable-world
+tests have loaded the mod, exercised mappings and storage, performed exact
+container/furnace transfers, checked initial-spawn persistence, exercised
+targeted home/door scenarios and completed targeted physical-delivery, farmer
+and miner paths with both VoxeLibre and the official Minetest Game. The full
+targeted VoxeLibre runs used an isolated disposable game copy
+whose `vl_hudbars` dependency metadata was patched to work around a game-side
+load-order failure. The same metadata fix now lets the locally installed
+VoxeLibre 0.92.1 pass the strict core harness, but this is still not proof from
+an untouched VoxeLibre installation. No connected client playthrough, complete
+five-villager economic chain, or verdict about playability has yet been
+observed in either game. See
+[AUDIT_STATUS.md](AUDIT_STATUS.md) for the proof matrix and remaining gates.
+
+### Examples of explicit block/item mappings
+- Wood door states: `doors:door_wood_a` / `doors:door_wood_c` → matching `mcl_doors:*` states
 - Chests: `default:chest` → `mcl_chests:chest`
 - Torches: `default:torch` → `mcl_torches:torch`
-- Basic blocks: `default:*` → `mcl_core:*`
-- Plants: `default:papyrus` → `mcl_core:reeds`, etc.
+- Basic examples: `default:stone` → `mcl_core:stone`, `default:cobble` → `mcl_core:cobble`
+- Plant example: `default:papyrus` → `mcl_core:reeds`
 
-### Farming System
-Both the minetest_game `farming` mod and VoxeLibre `mcl_farming` are supported:
-- Farmer job works with crops from either system
-- Plant growth stages are handled automatically
-- Replanting logic adapts to the active farming system
+### Farming system
 
-### Villager Behavior
-All villager jobs work seamlessly in VoxeLibre:
-- Woodcutter: Uses VoxeLibre tree/sapling groups
-- Farmer: Harvests and plants VoxeLibre crops
-- Builder: Places VoxeLibre blocks and doors, gains experience
-- Blacksmith: Works with VoxeLibre metals and tools
-- Miner: Mines VoxeLibre stone and ores
-- Torcher: Places VoxeLibre torches
-- Plant collector: Collects VoxeLibre plants
+The code contains crop mappings, growth-stage detection, harvest and replant
+branches for the Minetest Game `farming` mod and VoxeLibre `mcl_farming`.
+Mappings have automated coverage; a complete farmer harvest/replant cycle has
+not yet been manually validated in either profile.
 
-### Complex Porting Points
-1. **Door handling**: VoxeLibre uses different door node names and states. The compatibility layer handles both formats.
-2. **Bed colors**: VoxeLibre has 16 colored beds vs single bed type in minetest_game. All colors are supported.
+### Villager behavior represented in code
+
+The compatibility layer supplies active-game item and node candidates to the
+woodcutter, farmer, builder, blacksmith, miner, torcher and plant collector.
+This describes routing present in the source, not proof that each profession
+can complete its full gameplay loop in both games.
+
+### Important porting points
+1. **Door handling**: VoxeLibre uses different door node names and states. Targeted headless door scenarios pass in both profiles, but real player/villager traversal still needs manual validation.
+2. **Bed colors**: VoxeLibre has colored beds while Minetest Game has one base type; the registered color mappings are enumerated in the compatibility layer.
 3. **Farming stages**: Different growth stage systems between farming mods are abstracted.
-4. **Optional dependencies**: Both game dependencies are marked optional to support both environments.
+4. **Optional dependencies**: game mods are declared optional so one package can load after whichever supported game provides them.
 
 ## screenshots
 ![Screenshot 1](screenshot.png)
@@ -163,55 +228,49 @@ All villager jobs work seamlessly in VoxeLibre:
 ![Screenshot 4](screenshot.4.png)
 
 ## Submodules
-Currently working_villages only has the modutil portable submodule.
-It is needed to be able to run without the modutil mod.  
-This means you can either download the modutil mod and enable it or get the submodule:
 
-When cloning add "--recursive" option to clone including all submodules:
-```
-git clone --recursive https://github.com/theFox6/working_villages.git
-```
-
-If one of the submodule folders is empty use:
-```
-git submodule update --init
-```
-This will clone all missing submodules.
+The repository still contains historical Git metadata for `modutil`, but the
+current runtime uses the maintained local `working_villagers/loader.lua`.
+Neither the external `modutil` mod nor its portable submodule is required to
+start the current code.
 
 ## Dependencies
-working_villages needs modutil to load utilities it can also use modutil portable though  
-doors can be used by the villagers that's why there is a dependency
+
+Install the `working_villagers` source directory as a mod named
+`working_villages`, then enable it in either VoxeLibre or Minetest Game. Game
+modules such as doors, beds, farming, chests, furnaces, and tools are optional
+dependencies in `mod.conf` so Luanti orders them before this mod when present.
+The exact clean-install procedure and known test boundaries are documented in
+[INSTALLATION.md](INSTALLATION.md).
 
 ### Game Compatibility
-working_villages is compatible with both **minetest_game** and **VoxeLibre** (formerly MineClone2):
+The code targets both **Minetest Game** and **VoxeLibre** (formerly MineClone2):
 
-#### For minetest_game:
-- Required: None
-- Optional: `default` (provides character.b3d model), `doors`, `beds`, `farming`
+#### For Minetest Game:
+- Profile anchor: `default`
+- Used when available: `player_api`, `doors`, `beds`, `farming`, `flowers`
 
 #### For VoxeLibre:
-- Required: None
-- Optional: `mcl_core`, `mcl_player` (provides character.b3d model), `mcl_doors`, `mcl_beds`, `mcl_chests`, `mcl_farming`, `mcl_torches`
+- Profile anchor: `mcl_core`
+- Used when available: the declared `mcl_*` door, bed, chest, farming,
+  furnace, tool, inventory, armor, mob, and sound modules
 
-The mod automatically detects which game is running and adapts its behavior accordingly. All features work seamlessly in both environments.
-
-## missing modutil
-If you clone the mod you either need to **install and activate the modutil mod** or you need to **[clone it recursively](#cloning)**.  
-If modutil is not present you will get the following error:
-`.minetest/mods/working_villages/modutil/portable.lua: No such file or directory`
+Automated engine coverage exists for both profiles. Manual validation of every
+job, door traversal, bed use, combat, and the full survival economy remains
+required before describing either profile as fully compatible.
 
 ## cloning
-When cloning first add "--recursive" option to clone including all submodules:
-```
-git clone --recursive https://github.com/theFox6/working_villages.git
-```
-else the submodule folders will be empty.
 
-If one of the submodule folders is empty use:
+An ordinary clone contains all files required by the current runtime:
+```
+git clone https://github.com/theFox6/working_villages.git
+```
+
+Contributors who specifically need the repository's historical submodule
+checkout may additionally run:
 ```
 git submodule update --init
 ```
-This will clone all missing submodules.
 
 To pull all changes in the repo including changes in the submodules use:
 ```
@@ -228,6 +287,3 @@ Exceptions to the above:
 * the letters texture is from the Memorandum mod
 * the sign textures and the base of the torcher job texture are from the default mod in minetest_game and from Gambit: CC BY-SA 3.0
 * horsetail texture as base for the herb collectors job texture from Mossmanikin's Ferns: CC-By-SA 3.0
-
-[luacheck badge]: https://github.com/theFox6/working_villages/workflows/luacheck/badge.svg
-[luacheck workflow]: https://github.com/theFox6/working_villages/actions?query=workflow%3Aluacheck

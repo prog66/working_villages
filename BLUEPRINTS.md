@@ -193,7 +193,7 @@ Adds decorative elements:
 
 ## Default Blueprints
 
-The system comes with 10 default blueprints:
+The system registers 12 default blueprints:
 
 ### Houses
 - **simple_house**: Basic wooden shelter (Beginner)
@@ -209,8 +209,10 @@ The system comes with 10 default blueprints:
 - **blacksmith_forge**: Specialized smithing area (Advanced)
 
 ### Infrastructure
+- **mine_entrance**: Covered entrance for starting village mining (Beginner)
 - **town_square**: Central gathering area (Advanced)
 - **watchtower**: Defensive structure (Intermediate)
+- **castle_fortress**: Stone fortress for village defense (Expert)
 
 ### Decoration
 - **garden**: Decorative landscaping (Beginner)

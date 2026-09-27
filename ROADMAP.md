@@ -4,26 +4,159 @@
 
 Transformer les villages de Minetest en communautés vivantes et autonomes où les villageois travaillent, interagissent et construisent ensemble.
 
+## Etat de la branche (2026-08-27)
+
+### Limite des preuves actuelles
+
+- Le code et des scénarios automatisés sur serveur Luanti 5.17.0 headless ont
+  été vérifiés avec les profils VoxeLibre et Minetest Game, notamment pour le
+  chargement/rechargement, le spawn, le foyer, les inventaires et les portes.
+- Les scénarios VoxeLibre complets ont utilisé une copie jetable isolée dont la
+  métadonnée de dépendance de `vl_hudbars` a été corrigée pour contourner un
+  problème d'ordre de chargement du jeu. L'installation locale 0.92.1 passe
+  aussi le harnais principal après la même correction, mais une installation
+  intacte n'a donc toujours pas été validée.
+- Aucun parcours avec client graphique, aucun cycle métier complet et aucune
+  économie autonome de bout en bout n'ont été joués manuellement dans l'un ou
+  l'autre jeu.
+- Le scénario headless v12 part d'un monde VoxeLibre neuf et conserve cinq PNJ
+  au moins 273 secondes. Il atteint le coffre commun, cinq outils, 31 arbres,
+  des cultures semées et mûres, une récolte et des échanges physiques. Il ne
+  confirme encore ni minerai/dépôt, ni four, ni chantier, ni reprise après
+  redémarrage.
+- Les essais v17 et v18 sont des échecs diagnostiques sans verdict terminal ;
+  v19 est préparé mais n'a pas encore été exécuté.
+- Dans ce document, « intégré » signifie que le chemin existe dans le code.
+  Cela ne signifie pas que le comportement est équilibré, agréable à jouer ou
+  compatible de bout en bout.
+- Le mode par défaut est `survival`. `creative_test` ouvre seulement des
+  raccourcis explicites de développement et ne constitue pas une preuve de
+  l'économie de survie.
+- Les six recettes directes enregistrées concernent le sceptre de commande, la
+  fiche de métier vide, la fiche d'apprenant, la botte de paille, le lit
+  agricole et le pain plat. La couverture des recettes de professions reste
+  incomplète.
+- Douze plans par défaut sont réellement enregistrés ; toute ancienne mention
+  de dix plans est obsolète.
+
+### Ajouts récents intégrés
+
+- Couche de compatibilité VoxeLibre/Minetest Game centralisée via `compat/vl.lua`, avec tests headless ciblés sur les deux profils
+- Systèmes de besoins, mémoire persistante, permissions et HUD permanent branchés sur la boucle de vie des villageois
+- Enrichissement des métiers `builder`, `blacksmith`, `guard`, `farmer`, `woodcutter`, `miner` et ajout du métier `cook`
+- Moteur de craft partagé : lecture des recettes enregistrées, sous-recettes, résolution des groupes d'items et comptabilité du coffre commun ; les cycles métiers complets restent à jouer
+- Logique de bootstrap : commande de redéfinition du coffre partagé, cache synchronisé, tentative de pose du premier coffre par l'autonome et claim autour de ce coffre
+- Phase bootstrap explicite pour le debut du village : bois -> coffre commun -> nourriture -> outils/artisanat -> defense -> premier chantier
+- Builder réaffecté en soutien logistique avant la phase build : ravitaillement du coffre, collecte ciblée, coupe de bois et récolte d'appoint
+- Gestion persistante des propriétaires et des villages `self_employed` ; le groupe initial exact est woodcutter, farmer, autonomous, miner et builder
+- Pilotage du village via dialogues : rapport, priorité stratégique, niveau de notifications, prochain chantier forcé et phase bootstrap visible
+- Sceptre de commande enrichi : accès direct au pilotage du village et bouton `Mode IA` pour relancer craft, entraide et réévaluation immédiate des jobs
+- Commandes d'exploitation/admin : `wv_spawn5`, `wv_storage_show`, `wv_blacksmith_order`, `wv_blacksmith_output`, `wv_building_cleanup`, `villager_experiment`
+- Spawn initial durci : chargement de zone, recherche d'une vraie surface, et annulation du spawn si aucune position valide n'est trouvée
+- Reprise des jobs durcie : `on_start` rejoué lors de la recréation d'un thread de métier pour éviter les jobs partiellement réinitialisés
+- Chemins de survie ajoutés pour les non-gardes : armement d'urgence, recherche d'abri et fuite/repli ; le vrai `on_step` de retraite passe le harnais moteur alpha.4 dans les deux profils, mais son efficacité contre les mobs natifs reste non mesurée en partie
+- Builder renforcé en contexte dangereux : priorisation des abris d'urgence, cadence autonome plus rapide et préparation des matériaux par lots
+- Branchements aux inventaires de fours pour le forgeron et le cuisinier, avec comptabilité/callbacks testés de façon ciblée ; cycle métier complet non joué
+- Maisons construites auto-configurées quand possible : détection du lit et d'un accès exploitable au marqueur de maison en fin de chantier
+- Woodcutter remis sur la couche de protection propriétaire pour éviter les coupes en zones protégées
+- Builder et miner moins bruyants : suppression des `print` bruts restants, pauses explicites sur étapes/filons inaccessibles et états d'attente plus lisibles
+- Coffres pré-vérifiés avant navigation, avec attente vide adaptative de deux à
+  quatre secondes ; un objet utile injecté dans la régression est repris sous
+  quatre secondes et les messages d'action ne sont émis que pour un échange réel
+- Mineur capable de convertir le bois partagé en pioche en bois à coût exact,
+  puis d'extraire et déposer un vrai minerai dans les deux profils
+- Fermier capable d'obtenir une graine naturelle, de labourer et de semer dans
+  les deux profils ; le run v12 atteint aussi la maturité et une récolte
+- Livraison physique vers un demandeur mobile, proximité obligatoire, reprise
+  du rendez-vous après redémarrage et recontrôle sans duplication dans les deux
+  profils
+- Anti-encastrement conservateur : cache sûr revalidé dès le premier callback,
+  sinon recherche locale après trois callbacks, sans extraire un mineur d'une
+  cavité praticable
+- Registre persistant des chantiers avec migration par scan borné unique, puis
+  chemin rapide validé sur 250 consultations de rayon 50
+- Seize spécifications autonomes passées dans les deux profils, complétées par
+  les tests moteur de compatibilité, de registre et de vraies recettes minerai
+
 ## Objectifs à court terme (Version 0.x - Actuelle)
 
-### ✅ Complété
+### ✅ Présent dans le code ou couvert par un test ciblé
 
 - [x] Système de base des villageois
-- [x] Multiples métiers fonctionnels (farmer, builder, woodcutter, etc.)
+- [x] Enregistrement et chargement de multiples métiers (fonctionnement de bout en bout encore à valider)
 - [x] Système de blueprints avec apprentissage
-- [x] Compatibilité VoxeLibre complète
+- [x] Détection et couche de compatibilité pour VoxeLibre et Minetest Game
 - [x] Métiers spécialisés (blacksmith, miner)
 - [x] Système d'expérience
 - [x] Gestion des coffres et inventaires
-- [x] Pathfinding fonctionnel
+- [x] Appels de pathfinding et traitement des échecs terminaux branchés
 - [x] Protection des zones
+- [x] Communication inter-villageois et tâches collaboratives
+- [x] Job cuisinier et chemin de cuisson communautaire présents dans le code
+- [x] HUD villageois, mémoire persistante et demandes d'autorisation
+- [x] Craft partagé avec sous-recettes et comptabilité ciblée du coffre commun
+- [x] Logique d'amorçage : rôle autonome initial, coffre commun réinitialisable et claim centré sur le coffre
+- [x] Début de village coordonné par phases bootstrap avant ouverture du premier chantier autonome
+- [x] Pilotage du village via rapports, priorités, notifications et ordres de chantier
+- [x] Spawn initial de 5 PNJ avec relance admin et sécurité anti-spawn sous terre
+- [x] Résilience des jobs avec reprise automatique après erreur
+- [x] Repli d'urgence, abris et armement minimal pour les villageois non-combattants
+- [x] Accès aux inventaires de four et logique d'auto-configuration des maisons, avec tests ciblés mais sans cycle métier manuel complet
 
 ### 🔄 En cours
 
 - [ ] Documentation complète de l'API
+  - [ ] Chapitre compat VoxeLibre : mapping nodes/objets (portes, lits colorés, coffres, agriculture)
+  - [ ] Pages métiers : comportements spécifiques VoxeLibre (guard/miner/blacksmith avec `mcl_*`)
+  - [ ] Guides d'extension : détection VoxeLibre/minetest_game et usage des helpers de compat
+- [ ] Stabilisation et validation du spawn
+  - [x] Recherche de surface et chargement de zone présents ; création/persistance testées sur serveur headless
+  - [ ] Validation manuelle en mondes plats et vallonnés, séparément dans VoxeLibre intact et Minetest Game
+  - [ ] Revoir le spawn ABM (arbres/herbes) pour limiter les cas de grottes ouvertes
 - [ ] Refactorisation du code dupliqué
+  - [ ] Mutualiser les helpers de compat (portes, lits, torches, farming) dans un module unique
+  - [ ] Factoriser les schémas de jobs qui varient entre VoxeLibre et minetest_game
+  - [ ] Centraliser les conversions d'items (default ↔ mcl) pour éviter les branches locales
 - [ ] Amélioration des performances
-- [ ] Tests unitaires
+  - [ ] Profiling ciblé en environnement VoxeLibre (mondes mcl_* plus denses, pathfinding différent)
+  - [ ] Mise en cache des résolutions de nodes compatibles (ex : lookup portes/torches)
+  - [ ] Réduction des scans de sol pour les cultures VoxeLibre (stages de croissance plus nombreux)
+- [ ] Couverture automatisée et manuelle complète
+  - [x] Couverture ciblée des helpers de compatibilité, de la persistance, des timers et de la comptabilité d'inventaire
+  - [ ] Tests de jobs majeurs en mode VoxeLibre (farmer, builder, miner, blacksmith)
+  - [x] Régression headless de création et persistance du spawn initial
+  - [ ] Validation manuelle de la relance `/wv_spawn5`
+- [x] Détection et démarrage headless des profils VoxeLibre et Minetest Game
+- [x] Livraison physique ciblée entre deux PNJ, avec conservation exacte et reprise après redémarrage, dans les deux profils
+- [x] Fermier ciblé : graine naturelle, labour et semis dans les deux profils
+- [x] Mineur ciblé : ressources comptées, pioche capable, vrai minerai et dépôt dans les deux profils
+- [x] Livraison ciblée à demandeur mobile : pas de transfert à distance,
+  reprise après redémarrage et absence de duplication au recontrôle
+- [x] Cadence de coffre vide : aucun trajet/manipulation sur 221 décisions et
+  reprise d'un objet utile injecté dans le test sous quatre secondes
+- [x] Registre de chantier : migration ancienne bornée, transitions/destruction
+  synchronisées et 250 consultations sur le chemin rapide
+- [x] Recettes moteur du fer et de l'or vérifiées dans les deux profils
+- [ ] Run village complet v12 : coffre, cinq outils, 31 arbres, semis, maturité,
+  une récolte et échanges atteints ; minerai/dépôt, four, chantier et phase 2
+  après redémarrage restent ouverts
+- [ ] Chaînes terminales de chaque métier et village complet avec client connecté
+
+### Plan de dev VoxeLibre (actionnable)
+
+- [x] Compat unifiée
+  - [x] Module `working_villagers/compat/vl.lua` : mappings explicites `default:*` ↔ `mcl_*`, portes/lits/torches/coffres/farming, chargé par le loader local sans dépendance d'exécution à `modutil`
+  - [x] API utilitaires : `compat.get_node(name)`, `compat.get_item(name)`, `compat.get_growth_stage(node)`, `compat.is_door(node)`, `compat.bed_meta(node)`
+- [ ] Intégration jobs
+  - [x] Adapter les jobs farmer, builder, miner, blacksmith pour appeler `compat.*` (retrait des branches locales `if mcl_core then ...`)
+  - [ ] Ajouter un test manuel rapide (world VoxeLibre) pour chaque job : placer node cible, vérifier action, logger résultat
+- [ ] Détection et réglages
+  - [x] Centraliser la détection VoxeLibre/minetest_game dans `init.lua` et exposer `working_villages.game_profile`
+  - [ ] Paramétrer les valeurs spécifiques VoxeLibre (vitesse de croissance, toolcaps) dans `settings.lua`
+- [x] Tests automatisés ciblés
+  - [x] Scénarios headless de chargement, mappings, stockage et inventaires sur les deux profils
+  - [x] Test de détection automatique de `game_profile`
+  - [ ] Scénarios métiers complets et jeu avec client connecté
 
 ## Phase 1 : Amélioration de l'IA et des comportements (v1.0)
 
@@ -40,6 +173,8 @@ Les villageois ont des besoins qui influencent leur comportement :
 - **Repos** : Besoin de sommeil la nuit
 - **Outils** : Besoin d'outils appropriés pour leur métier
 - **Matériaux** : Besoin de matériaux pour travailler
+
+*Statut : implémenté (module `working_villagers/needs.lua`, suivi/decay exécuté dans `on_step`).*
 
 **Implémentation** :
 ```lua
@@ -66,15 +201,12 @@ Améliorer la prise de décision avec un système de priorités :
 
 **Implémentation** :
 ```lua
--- Nouveau fichier : working_villagers/ai_decision.lua
-function ai_decision.evaluate_tasks(villager, available_tasks)
-    -- Score chaque tâche selon :
-    -- - Urgence des besoins
-    -- - Distance
-    -- - Compétence du villageois
-    -- - Priorité du village
-end
+-- Fichier : working_villagers/ai_decision.lua
+ai_decision.apply(self)
+-- Score les besoins (faim, énergie, outils, matériaux) et pose un hint d'action prioritaire
 ```
+
+*Statut : en place (évaluation des besoins + hints d'action, non bloquant).*
 
 #### 1.3 Mémoire et apprentissage
 **Priorité : Moyenne**
@@ -95,10 +227,14 @@ working_villages.memory = {
 }
 ```
 
+*Statut : implémenté (module `working_villagers/memory.lua`, sérialisation dans `api.lua`, nettoyage périodique dans `on_step`).*
+*Ajout : HUD permanent (besoins + apprentissages) et workflow d'autorisations pour expérimentations/édition de plans.*
+
 ### Livrables Phase 1
-- [ ] Module de gestion des besoins
-- [ ] Système de décision par priorité
-- [ ] Mémoire persistante des villageois
+- [x] Module de gestion des besoins
+- [x] Système de décision par priorité (hints basés sur besoins)
+- [x] Mémoire persistante des villageois
+- [x] HUD apprentissage + demandes d'autorisation
 - [ ] Documentation API étendue
 - [ ] Tests de comportement
 
@@ -132,6 +268,8 @@ end
 - Builder manque de matériaux → demande au woodcutter
 - Guard voit un danger → alerte tous les villageois
 
+*Statut : implémenté (communication.lua + messages miner/builder/guard, HUD affiche le compteur).*
+
 #### 2.2 Travail collaboratif
 **Priorité : Haute**
 
@@ -151,6 +289,8 @@ function collaborative_tasks.register_task(name, definition)
 end
 ```
 
+*Statut : implémenté (collaborative_tasks.lua + tâches large_building, danger_response, resource_delivery).*
+
 #### 2.3 Structures sociales
 **Priorité : Moyenne**
 
@@ -164,10 +304,12 @@ Hiérarchie et organisation du village :
 - Transmission des connaissances
 - Progression naturelle des villageois
 
+*Statut : partiel (pilotage du village, focus stratégique et niveau de notifications disponibles ; hiérarchie explicite chef/maîtres/apprentis encore à implémenter).*
+
 ### Livrables Phase 2
-- [ ] Module de communication inter-villageois
-- [ ] Système de tâches collaboratives
-- [ ] Au moins 3 tâches collaboratives implémentées
+- [x] Module de communication inter-villageois
+- [x] Système de tâches collaboratives
+- [x] Au moins 3 tâches collaboratives implémentées
 - [ ] Structure sociale basique
 - [ ] Tests d'interaction
 
@@ -246,6 +388,8 @@ function village_planning.find_build_location(blueprint, village_center)
 end
 ```
 
+*Statut : partiellement implémenté dans le builder autonome (évaluation simple de l'état du village, choix de blueprint, ordre de chantier forcé par le joueur), mais le module dédié reste à extraire et formaliser.*
+
 #### 4.2 Gestion des ressources
 **Priorité : Haute**
 
@@ -264,8 +408,10 @@ Villages qui grandissent naturellement :
 - Infrastructure qui s'améliore
 
 ### Livrables Phase 4
-- [ ] Module de planification
-- [ ] Gestion des ressources collectives
+- [x] Heuristiques initiales de planification et choix autonome de blueprint
+- [ ] Module de planification dédié et isolé
+- [x] Registre de stockage partagé et comptabilité ciblée des transferts
+- [ ] Distribution autonome des ressources validée de bout en bout
 - [ ] Système de niveaux de village
 - [ ] Au moins 5 nouveaux blueprints avancés
 - [ ] Tests de construction autonome
@@ -386,6 +532,53 @@ Paramètres pour ajuster le gameplay :
 - Événements intéressants et variés
 - Relations entre villages fonctionnelles
 
+## Étapes de stabilisation
+
+### Compatibilité des jeux
+- [x] Centraliser les mappings dans `compat/vl.lua` et retirer les principales branches locales `if mcl_core` des jobs
+- [x] Charger le mod sur serveur headless avec les profils VoxeLibre et Minetest Game
+- [ ] Refaire le test VoxeLibre sur une installation intacte, sans correctif local de métadonnées du jeu
+- [ ] Compléter la documentation des mappings et limites propres aux métiers
+- [ ] Jouer les scénarios farmer/builder/miner/blacksmith/cook dans chaque jeu avec un client connecté
+
+### Release 0.11 : IA et besoins (beta)
+- [x] Prototyper `needs.lua` (faim/énergie/outils) et brancher la décroissance de stats sur le tick IA
+- [x] Activer `ai_decision.lua` dans la boucle de vie des villageois avec hints d'action
+- [ ] Ajouter des compteurs de perf (ticks IA, appels pathfinding) pour mesurer l'impact
+
+### Release 0.12 : stabilisation serveurs
+- [ ] Profiling charge (serveur dédié VoxeLibre) et plan d'optimisation cible (pathfinding, caches)
+- [x] Pack de tests automatisés ciblés et définition de workflow présents
+- [ ] Observer une exécution CI réelle de ces tests et ajouter des régressions de cycles métiers
+- [ ] Notes de release et checklist migration pour les mondes existants
+
+### Release 0.13 : stabilisation du village autonome
+- [x] Spawn initial avec recherche de surface et persistance vérifiée en headless
+- [ ] `/wv_spawn5` validé manuellement dans les deux modes d'autorisation
+- [x] Rapport du village, priorités stratégiques et ordre de chantier via dialogues
+- [x] Commandes forgeron et nettoyage de chantiers invalides
+- [x] Moteur de craft partagé et comptabilité ciblée des transferts/objets exacts
+- [x] Redéfinition du coffre partagé et logique de pose autonome du premier coffre
+- [x] Séquence de bootstrap villageois utilisée par l'auto-affectation, l'autonome et le builder, avec builder en soutien logistique avant construction
+- [x] Rapport du village enrichi avec phase bootstrap, état du coffre commun et totaux disponibles
+- [x] Contrôle persistant et coordination intelligente pour les villages `self_employed` via le sceptre de commande
+- [x] Logiques de survie d'urgence, four du forgeron/cuisinier et auto-configuration de maison présentes dans le code
+- [x] Nettoyage des branches bruyantes builder/miner avec gestion explicite des positions inaccessibles et attentes d'inventaire/matériaux
+- [x] Plan de culture persistant (`uniform`/`rows`) et replantation fidèle à la culture récoltée
+- [x] Recherche déterministe d'un terrain plat, sec, accessible et non protégé sur toute l'emprise du plan
+- [x] Dégagement explicite du volume intérieur et réservation immédiate du chantier par son constructeur
+- [x] Harnais physique ciblé alpha.7 réussi dans les deux profils pour semis déterministe, refus du premier terrain invalide et dégagement intérieur réel
+- [x] Harnais strict de village complet à cinq PNJ, comptabilité globale et reprise en deux phases créé
+- [x] Progression v12 observée en monde VoxeLibre neuf jusqu'à cinq PNJ stables
+  au moins 273 s, coffre, cinq outils, 31 arbres, maturité et une récolte
+- [x] Échecs diagnostiques v17 et v18 consignés sans les présenter comme des
+  validations terminales
+- [ ] Exécuter v19 et obtenir un verdict terminal reproductible
+- [ ] Verdict terminal de ce harnais dans les deux profils
+- [ ] Session graphique réelle de 30 à 60 minutes dans chaque jeu, puis
+  validation manuelle complète de ces flux et de l'économie autonome de bout
+  en bout (protocole dans `VALIDATION_CHECKLIST.md`)
+
 ## Contributions
 
 Nous accueillons les contributions sur tous ces aspects. Consultez [CONTRIBUTING.md](CONTRIBUTING.md) pour commencer.
@@ -431,5 +624,5 @@ Vos retours sont essentiels ! Partagez vos idées :
 
 ---
 
-*Dernière mise à jour : 2025-12-21*
-*Version du document : 1.0*
+*Dernière mise à jour : 2026-09-27*
+*Version du document : 1.3*

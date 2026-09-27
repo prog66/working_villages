@@ -137,10 +137,10 @@ Système d'apprentissage et de gestion des plans de construction :
 
 #### blueprints_default.lua
 Plans de construction par défaut :
-- simple_house, fancy_house
+- simple_house, fancy_house, minimal_house, minimal_shelter
 - farm_plot
 - workshop, blacksmith_forge
-- town_square, watchtower
+- mine_entrance, town_square, watchtower, castle_fortress
 - garden
 
 #### blueprint_construction.lua
@@ -245,18 +245,22 @@ L'expérience permet :
 
 ## Système de timers
 
-Les villageois utilisent des timers pour espacer leurs actions :
+Les villageois utilisent des timers en pas logiques pour espacer leurs actions.
+Le pas vaut 0,1 seconde par défaut et est calculé depuis `dtime`, donc le rythme
+reste indépendant du FPS serveur :
 ```lua
 self:count_timer("job:action")
 if self:timer_exceeded("job:action", 20) then
-    -- Action à effectuer tous les 20 ticks
+    -- Action environ toutes les 2 secondes avec le pas par défaut
 end
 ```
 
 Timers communs :
-- `search` : Recherche de cibles (20 ticks)
-- `change_dir` : Changement de direction (60 ticks)
-- `chest_search` : Recherche de coffres (40 ticks)
+- `search` : Recherche de cibles (20 pas logiques)
+- `change_dir` : Changement de direction (60 pas logiques)
+- `chest_search` : Recherche de coffres (40 pas logiques)
+
+Les options documentées en secondes utilisent `self:seconds_exceeded(...)`.
 
 ## Gestion de la protection
 
@@ -280,9 +284,9 @@ Cela garantit que les villageois ne peuvent pas modifier des zones protégées p
 
 ### Ajouter un nouveau blueprint
 
-1. Utiliser `working_villages.blueprints.register_blueprint()`
-2. Définir la structure, difficulté, catégorie
-3. Ajouter les données de construction
+1. Utiliser `working_villages.blueprints.register()`
+2. Définir la catégorie, la difficulté et la description
+3. Fournir `nodes` ou un `schematic_file`, puis les améliorations éventuelles
 
 ### Ajouter une nouvelle compatibilité
 

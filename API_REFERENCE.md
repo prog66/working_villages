@@ -291,7 +291,11 @@ Trouve le joueur le plus proche.
 
 #### self:count_timer(name)
 
-Incrémente un timer nommé.
+Incrémente un timer nommé en pas logiques historiques. Pendant `on_step`, le
+temps moteur est normalisé selon `working_villages_timer_step_seconds` (0,1 s
+par défaut), ce qui conserve le rythme des métiers indépendamment du FPS
+serveur. Un seuil de 20 représente donc environ 2 secondes avec le réglage par
+défaut.
 
 **Paramètres:**
 - `name` (string): Nom du timer
@@ -302,7 +306,7 @@ Vérifie si un timer a dépassé un seuil et le réinitialise.
 
 **Paramètres:**
 - `name` (string): Nom du timer
-- `threshold` (number): Seuil en ticks
+- `threshold` (number): Seuil en pas logiques
 
 **Retour:** `boolean` - `true` si dépassé
 
@@ -310,9 +314,16 @@ Vérifie si un timer a dépassé un seuil et le réinitialise.
 ```lua
 self:count_timer("search")
 if self:timer_exceeded("search", 20) then
-    -- Effectuer une recherche toutes les 20 ticks
+    -- Environ toutes les 2 secondes avec le réglage par défaut
 end
 ```
+
+#### self:seconds_exceeded(name, seconds)
+
+Vérifie et réinitialise un timer à partir d'une durée exprimée explicitement
+en secondes. Utiliser cette variante pour les réglages utilisateur documentés
+en secondes ; conserver `timer_exceeded` pour les seuils historiques des
+métiers.
 
 ### Gestion standard
 
@@ -359,7 +370,7 @@ Gère les obstacles et évite de rester bloqué.
 
 ## Système de blueprints
 
-### working_villages.blueprints.register_blueprint(name, definition)
+### working_villages.blueprints.register(name, definition)
 
 Enregistre un nouveau blueprint.
 
@@ -367,21 +378,18 @@ Enregistre un nouveau blueprint.
 - `name` (string): Nom unique du blueprint
 - `definition` (table): Définition du blueprint
 
-**Structure de definition:**
+**Structure de définition:**
 ```lua
 {
-    display_name = string,          -- Nom affiché
-    description = string,           -- Description
-    category = string,              -- "House", "Farm", "Workshop", "Infrastructure", "Decoration"
-    difficulty = number,            -- 1-5 (Beginner à Master)
-    structure = {
-        size = {x, y, z},           -- Taille de la structure
-        center_offset = {x, y, z},  -- Offset du centre
-        nodes = {                   -- Liste des nodes
-            {pos = {x, y, z}, node = {name = string, param2 = number}},
-            -- ...
-        }
-    }
+    description = string,
+    category = working_villages.blueprints.CATEGORY.HOUSE,
+    difficulty = working_villages.blueprints.DIFFICULTY.BEGINNER,
+    nodes = {                       -- Liste de nœuds, facultative si schematic_file est fourni
+        {pos = {x = 0, y = 0, z = 0}, node = {name = "default:stone", param2 = 0}},
+        -- ...
+    },
+    schematic_file = string,        -- Fichier .we facultatif
+    improvements = {},              -- Améliorations facultatives
 }
 ```
 
@@ -407,15 +415,24 @@ Récupère l'expérience d'un villageois.
 
 **Retour:** `number` - Quantité d'expérience
 
-### working_villages.blueprints.can_learn(inv_name, blueprint_name)
+### working_villages.blueprints.has_learned(inv_name, blueprint_name)
 
-Vérifie si un villageois peut apprendre un blueprint.
+Vérifie si un villageois a déjà appris un blueprint.
 
 **Paramètres:**
 - `inv_name` (string): Nom de l'inventaire
 - `blueprint_name` (string): Nom du blueprint
 
-**Retour:** `boolean, string` - Peut apprendre, raison si non
+**Retour:** `boolean` - `true` si le blueprint est déjà appris
+
+Il n'existe pas de fonction `can_learn`. Pour connaître les plans actuellement
+accessibles, utiliser `working_villages.blueprints.get_available_to_learn(inv_name)`
+et vérifier la présence de `blueprint_name` dans la table retournée. Pour tenter
+l'apprentissage et obtenir une raison en cas d'échec, utiliser :
+
+```lua
+local success, message = working_villages.blueprints.teach(inv_name, blueprint_name)
+```
 
 ## Patterns de jobs
 
@@ -642,23 +659,28 @@ Module `working_villages.voxelibre_compat` pour support multi-jeu.
 Obtient le nom d'item approprié pour le jeu actuel.
 
 **Paramètres:**
-- `item_name` (string): Nom de base (ex: "torch")
+- `item_name` (string): Identifiant source complet (ex: `"default:torch"`)
 
 **Retour:** `string` - Nom d'item adapté
 
 **Exemple:**
 ```lua
-local torch = compat.get_torch()  -- "default:torch" ou "mcl_torches:torch"
+local torch = compat.get_item("default:torch")
 ```
 
 ### Fonctions utilitaires
 
-- `get_torch()` - Obtient l'item torche
-- `get_chest()` - Obtient l'item coffre
-- `get_door(type)` - Obtient un type de porte
-- `get_bed(color)` - Obtient un lit (avec couleur pour VoxeLibre)
-- `is_door(name)` - Vérifie si c'est une porte
-- `is_bed(name)` - Vérifie si c'est un lit
+- `get_torch_items()` - Retourne `{wall = nom, floor = nom}` pour les deux variantes de torche
+- `get_chest_items()` - Retourne la liste des nœuds de coffre reconnus
+- `get_door_item()` - Retourne une porte en bois adaptée au profil actif
+- `get_door_items()` - Retourne la liste des nœuds de porte reconnus
+- `get_bed_items()` - Retourne `{top = {...}, bottom = {...}}` pour les lits reconnus
+- `is_door(name)` - Vérifie si le nom correspond à une porte complète
+- `bed_meta(name)` - Retourne les métadonnées de paire du lit, ou `nil` si le nom n'est pas reconnu
+- `is_bed_top(name)` - Vérifie si le nom correspond à la partie haute d'un lit
+
+Il n'existe pas de fonction générique `is_bed(name)` ni de fonction
+`get_bed(color)` dans l'API actuelle.
 
 ## Positions échouées
 

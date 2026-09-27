@@ -172,10 +172,12 @@ end
 Avant de committer, exécutez :
 
 ```bash
-luacheck working_villagers/
+git ls-files -z '*.lua' ':(exclude)working_villagers/modutil/**' \
+  | xargs -0 --no-run-if-empty luacheck --config .luacheckrc
 ```
 
-Configuration dans `.luacheckrc`. Assurez-vous qu'il n'y a pas d'erreurs.
+Cette commande correspond exactement au périmètre du workflow. La configuration
+se trouve dans `.luacheckrc`; aucun fichier Lua suivi ne doit être omis.
 
 ## Architecture
 
@@ -244,20 +246,17 @@ working_villages.register_job("working_villages:job_mon_metier", {
 
 ```lua
 -- Dans blueprints_default.lua ou votre fichier
-working_villages.blueprints.register_blueprint("mon_blueprint", {
-    display_name = "Mon Blueprint",
+working_villages.blueprints.register("mon_blueprint", {
     description = "Description du blueprint",
-    category = "House",  -- House, Farm, Workshop, Infrastructure, Decoration
-    difficulty = 2,      -- 1-5
-    structure = {
-        size = {x = 5, y = 3, z = 5},
-        center_offset = {x = 2, y = 0, z = 2},
-        nodes = {
-            -- Liste des nodes
-            {pos = {x=0, y=0, z=0}, node = {name="default:stone"}},
-            -- ...
-        }
-    }
+    category = working_villages.blueprints.CATEGORY.HOUSE,
+    difficulty = working_villages.blueprints.DIFFICULTY.INTERMEDIATE,
+    nodes = {
+        {pos = {x = 0, y = 0, z = 0}, node = {name = "default:stone"}},
+        -- ...
+    },
+    -- À la place de nodes, un fichier peut être chargé avec :
+    -- schematic_file = "mon_blueprint.we",
+    improvements = {},
 })
 ```
 
@@ -269,8 +268,8 @@ Toujours utiliser le système de compatibilité pour les items :
 local compat = working_villages.voxelibre_compat
 
 -- ✅ BON : Utilise la compatibilité
-local torch = compat.get_torch()
-local chest = compat.get_chest()
+local torch = compat.get_torch_items().floor
+local chest_candidates = compat.get_chest_items()
 
 -- ❌ ÉVITER : Hardcoder les noms
 local torch = "default:torch"  -- Ne fonctionne pas avec VoxeLibre !
