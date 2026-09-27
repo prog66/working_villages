@@ -172,7 +172,14 @@ function forms.show_formspec(villager, formname, playername)
 	local page = registered_forms[formname]
 	if page == nil then
 		log.warning("page %s not registered", formname)
-		page = registered_forms["working_villages:talking_menu"]
+		-- Fall back to the talking menu, and rename formname to match it: the
+		-- form is about to be shown under "<formname>_<inv_name>", and every
+		-- button on it is routed back by on_player_receive_fields matching
+		-- that same prefix against registered_forms. Showing the fallback
+		-- page's content under the original, unregistered formname left every
+		-- button on it a dead end (no page ever matched on submit).
+		formname = "working_villages:talking_menu"
+		page = registered_forms[formname]
 		if page == nil then
 			show_form_error(player_name, formname, "Erreur : formulaire introuvable.")
 			return false

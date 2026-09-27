@@ -2,6 +2,20 @@
 
 ## 0.13.0-alpha.9 - 2026-09-27 (en cours)
 
+### Menu perime = impasse silencieuse
+
+Quand `forms.show_formspec` recevait un nom de formulaire non enregistre,
+elle affichait bien le menu de discussion en secours, mais sous le nom
+d'origine (non enregistre) au lieu du vrai nom du menu. Tous les boutons de
+ce formulaire de secours devenaient alors une impasse silencieuse : le
+gestionnaire de reception de champs cherche une correspondance exacte par
+prefixe dans les pages enregistrees, ne la trouve jamais pour un nom
+bidon, et n'appelle donc jamais aucun `receiver`. Corrige en renommant
+`formname` vers `"working_villages:talking_menu"` en meme temps que la
+page de secours est choisie. Piste pre-existante, pas introduite par cette
+session ; aucun appelant actuel connu ne declenche ce chemin, mais le
+correctif est sans risque et rend le code defensif reellement correct.
+
 ### Deduplication de helpers de construction
 
 `parse_schematic_content` (parseur de fichier .we) etait definie a
