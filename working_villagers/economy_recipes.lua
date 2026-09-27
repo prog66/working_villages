@@ -27,8 +27,10 @@ local grain_candidates = profile.is_voxelibre and {
 }
 
 economy.grain = first_registered(grain_candidates)
+-- Only the bottom half is ever placed/crafted here: both supported games
+-- auto-place the matching top half from it, so there is no recipe use for
+-- a separate bed_top item reference.
 economy.bed_bottom = compat and compat.get_item("beds:bed_bottom") or nil
-economy.bed_top = compat and compat.get_item("beds:bed_top") or nil
 
 if not economy.grain
 		or not economy.bed_bottom

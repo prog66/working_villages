@@ -10,6 +10,58 @@ for the remaining gameplay gates.
 
 [working_villages forum page](https://forum.minetest.net/viewtopic.php?f=9&t=17429)
 
+## Quick start: how to actually play this
+
+The rest of this document is a detailed, hedged technical/audit reference.
+This section is the short version for someone who just installed the mod
+and wants to see villagers doing things.
+
+1. **Install** it as described in [INSTALLATION.md](INSTALLATION.md), then
+   set `working_villages_enable_spawn = true` in your world/minetest.conf
+   (see [settingtypes.txt](working_villagers/settingtypes.txt) for every
+   other tunable).
+2. **Join the world.** Five villagers spawn near your spawn point on first
+   join: a woodcutter, a farmer, a miner, a builder, and an "autonomous"
+   generalist. If the automatic spawn doesn't trigger, run `/wv_spawn5`
+   near yourself.
+3. **Watch them work.** This is the point of the mod: villagers are meant
+   to run the village *by themselves* — chopping wood, farming, mining,
+   crafting tools, building houses, storing everything in a shared chest —
+   with no player input required. The "autonomous" villager bootstraps the
+   village (places the first shared chest, picks up whatever job is
+   missing) so the other four have somewhere to work from.
+4. **Check the HUD.** Look at your closest owned villager: a small panel
+   appears in the corner of your screen showing that villager's name, job,
+   and needs (hunger/energy/tools/materials). When none of your villagers
+   are nearby, it shows a one-line summary of your whole village instead
+   (population per job).
+5. **Help them go faster if you want to** — you never have to:
+   - Hand a villager tools, food, or building materials directly (they
+     accept real item drops/inventory transfers).
+   - Right-click any villager (bare-handed) to open its talk menu: a
+     village dashboard, priority/strategy controls, and a forced "next
+     building" order.
+   - Craft and use the **commanding sceptre**: left-click a villager to
+     pause/resume it, right-click one while holding the sceptre (if you
+     manage it) to jump straight to its inventory/job-change screen, and
+     use its own use-menu to pilot the whole village (strategic focus,
+     notification level, forced next build) without hunting down every
+     individual villager.
+   - Set/move the shared village chest yourself with `/wv_storage_set here`
+     if you want it somewhere specific before the autonomous villager gets
+     to it.
+6. **Change jobs** any time from a villager's inventory menu ("change
+   job"), or hand it an empty/learner job sheet to make it idle or start
+   learning. See the full job list below and [JOBS.md](JOBS.md) for what
+   each one actually does.
+
+That's the loop: spawn a group, let them run the village on their own pace,
+and step in with direct help (or the sceptre) whenever you want things to
+move faster. Everything below this point gets progressively more detailed
+and more focused on exactly what is and isn't proven to work yet — see
+[AUDIT_STATUS.md](AUDIT_STATUS.md) if you want the unvarnished state of
+testing before relying on this on a real server.
+
 ## Planned Features
 * villages
   * built up by the villagers

@@ -5498,8 +5498,9 @@ function working_villages.villager:is_hunt_target(obj)
   if lname:find("horse") or lname:find("donkey") or lname:find("mule") then
     return false
   end
-  if mcl_mobs and mcl_mobs.registered_mobs then
-    local def = mcl_mobs.registered_mobs[lname]
+  local mobs_api = rawget(_G, "mcl_mobs")
+  if mobs_api and mobs_api.registered_mobs then
+    local def = mobs_api.registered_mobs[lname]
     if def and (def.type == "animal" or def.spawn_class == "passive") then
       return true
     end
