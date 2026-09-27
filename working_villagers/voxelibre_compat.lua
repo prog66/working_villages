@@ -433,18 +433,11 @@ function voxelibre_compat.get_food_items()
 	}
 end
 
-function voxelibre_compat.is_furnace(node_name)
-	if not node_name or node_name == "" then
-		return false
-	end
-	if minetest.get_item_group(node_name, "furnace") > 0 then
-		return true
-	end
-	if voxelibre_compat.is_voxelibre then
-		return string.find(node_name, "mcl_furnaces:", 1, true) ~= nil
-	end
-	return node_name == "default:furnace"
-end
+-- is_furnace is defined in compat/vl.lua, which requires this module and is
+-- always loaded afterward, so a definition here would only ever be a dead,
+-- silently-shadowed copy. compat/vl.lua's version also matches
+-- "default:furnace_active" (the lit furnace state in minetest_game), which
+-- an exact-match version here would have missed.
 
 function voxelibre_compat.get_crafting_table_items()
 	return profile_items(CRAFTING_TABLE_ITEMS)

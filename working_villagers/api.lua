@@ -4172,16 +4172,25 @@ local function is_shield_item(name)
   return minetest.get_item_group(name, "shield") > 0
 end
 
+-- Some armor mods only expose "armor_points"; others (or items with no
+-- dedicated group) fall back to the generic "armor" group. Every score
+-- comparison in this file must use the same fallback on both sides, or
+-- equip_best_armor can judge an already-equipped "armor"-group item as
+-- worthless and swap it out for something worse.
+local function item_armor_points(name)
+  local p = minetest.get_item_group(name, "armor_points")
+  if p == 0 then
+    p = minetest.get_item_group(name, "armor")
+  end
+  return p
+end
+
 local function get_armor_points(self)
   local points = 0
   for _, slot in ipairs({"head", "torso", "legs", "feet"}) do
     local stack = self:get_armor_stack(slot)
     if stack and not stack:is_empty() then
-      local p = minetest.get_item_group(stack:get_name(), "armor_points")
-      if p == 0 then
-        p = minetest.get_item_group(stack:get_name(), "armor")
-      end
-      points = points + (p or 0)
+      points = points + item_armor_points(stack:get_name())
     end
   end
   return points
@@ -4591,8 +4600,7 @@ function working_villages.villager:equip_best_armor()
     local main_list = inv:get_list("main")
     for idx, st in ipairs(main_list) do
       if not st:is_empty() and working_villages.require("util").is_armor_for_slot(slot, st) then
-        local g = minetest.get_item_group(st:get_name(), "armor_points")
-        if g == 0 then g = minetest.get_item_group(st:get_name(), "armor") end
+        local g = item_armor_points(st:get_name())
         if g > best_score then
           best_score = g
           best_index = idx
@@ -4602,7 +4610,7 @@ function working_villages.villager:equip_best_armor()
     if best_index then
       local current = inv:get_stack(slot, 1)
       local best = inv:get_stack("main", best_index)
-      if current:is_empty() or minetest.get_item_group(current:get_name(), "armor_points") < best_score then
+      if current:is_empty() or item_armor_points(current:get_name()) < best_score then
         inv:set_stack("main", best_index, current)
         inv:set_stack(slot, 1, best)
       end

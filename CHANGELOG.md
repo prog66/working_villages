@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.13.0-alpha.9 - 2026-09-27 (en cours)
+
+Suite de la revue de code automatisee, poursuivie sur la file d'attente de
+pistes laissees par alpha.8.
+
+### Corrections
+
+- **Armure retiree sans raison** : `equip_best_armor` comparait la piece
+  deja equipee en ne regardant que le groupe `armor_points`, alors que le
+  score des candidats regardait aussi le groupe `armor` en repli. Une piece
+  deja equipee qui n'utilise que le groupe `armor` (score reel > 0) etait
+  donc lue a tort comme un score de 0, et remplacee par n'importe quel
+  candidat, meme equivalent ou pire. Les deux comparaisons utilisent
+  maintenant le meme calcul de score (`item_armor_points`, aussi
+  reutilise par `get_armor_points`, qui faisait deja le bon calcul).
+- **Index de chantier compte double** : quand un constructeur finissait de
+  degager une serie de cellules d'air en fin de plan (le tableau de noeuds
+  s'epuisait exactement a la fin de la boucle), l'index de progression du
+  marqueur de chantier recevait un `+1` supplementaire en plus de celui
+  deja applique dans la boucle. Sans consequence visible aujourd'hui (le
+  test de fin de chantier utilise `> node_count`), mais aurait fausse toute
+  future logique basee sur l'index exact (pourcentage de progression,
+  comptabilite). Corrige dans `jobs/builder.lua`.
+- **Double definition de `is_furnace`** : `voxelibre_compat.lua` et
+  `compat/vl.lua` definissaient chacun `is_furnace` sur la meme table
+  partagee (`compat/vl.lua` charge `voxelibre_compat` et redefinit dessus).
+  La version de `compat/vl.lua` gagnait toujours silencieusement ; celle de
+  `voxelibre_compat.lua` était non seulement morte mais aussi moins
+  correcte (comparaison stricte `== "default:furnace"`, qui rate
+  `default:furnace_active`, l'etat allume du four dans minetest_game).
+  Version morte retiree, un seul point de verite desormais.
+
 ## 0.13.0-alpha.8 - 2026-09-27
 
 Alpha de revue de code et de lisibilité HUD, lancée en continu (boucle de

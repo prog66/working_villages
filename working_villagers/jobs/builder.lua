@@ -1531,6 +1531,11 @@ working_villages.register_job("working_villages:job_builder", {
 				local index = meta:get_int("index")
 				local nnode = building_on_pos.nodedata and building_on_pos.nodedata[index]
 				local cleared_air = 0
+				-- Tracks whether the loop below already advanced (and persisted) index
+				-- past the end of nodedata. If it did, meta already holds the correct
+				-- value and must not be incremented again below, or the marker index
+				-- ends up two ahead of the last real entry instead of one.
+				local advanced_in_loop = false
 				while nnode and nnode.node do
 					local planned_name = working_villages.buildings.get_registered_nodename(
 						nnode.node.name)
@@ -1541,6 +1546,7 @@ working_villages.register_job("working_villages:job_builder", {
 					record_construction_step(meta, node_count, index, "cleared", "air", 0)
 					index = index + 1
 					meta:set_int("index", index)
+					advanced_in_loop = true
 					nnode = building_on_pos.nodedata[index]
 					cleared_air = cleared_air + 1
 					if cleared_air >= 50 then
@@ -1548,7 +1554,9 @@ working_villages.register_job("working_villages:job_builder", {
 					end
 				end
 				if nnode == nil then
-					meta:set_int("index", meta:get_int("index") + 1)
+					if not advanced_in_loop then
+						meta:set_int("index", meta:get_int("index") + 1)
+					end
 					return
 				end
 				local npos = nnode.pos
