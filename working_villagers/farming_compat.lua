@@ -55,17 +55,13 @@ local minetest_game_demands = {
 	["farming:trellis"] = 99,
 }
 
--- Define plant configurations for VoxeLibre mcl_farming
--- VoxeLibre uses different growth stages (0-7 for most crops)
+-- Define plant configurations for VoxeLibre mcl_farming.
+-- The numbered nodes are growth stages; the unnumbered node is the mature crop.
 local voxelibre_plants = {
-	-- Wheat (7 growth stages)
-	["mcl_farming:wheat_7"]={replant={"mcl_farming:wheat_seeds"}},
-	-- Carrots (7 growth stages)
-	["mcl_farming:carrot_7"]={replant={"mcl_farming:carrot_item"}},
-	-- Potatoes (7 growth stages)  
-	["mcl_farming:potato_7"]={replant={"mcl_farming:potato_item"}},
-	-- Beetroot (7 growth stages)
-	["mcl_farming:beetroot_7"]={replant={"mcl_farming:beetroot_seeds"}},
+	["mcl_farming:wheat"]={replant={"mcl_farming:wheat_seeds"}},
+	["mcl_farming:carrot"]={replant={"mcl_farming:carrot_item"}},
+	["mcl_farming:potato"]={replant={"mcl_farming:potato_item"}},
+	["mcl_farming:beetroot"]={replant={"mcl_farming:beetroot_seeds"}},
 	-- Melon (stem growth)
 	["mcl_farming:melon"]={replant={}}, -- Melons don't replant, just harvest
 	-- Pumpkin (stem growth)

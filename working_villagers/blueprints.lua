@@ -2,20 +2,43 @@
 -- This module allows villagers to learn blueprints and improve their construction skills
 
 local blueprints = {}
+local construction_planner = working_villages.construction_planner
+
+local function parse_schematic_content(content)
+	local data = minetest.deserialize(content)
+	if data then
+		return data
+	end
+	local chunk, err = loadstring(content)
+	if not chunk then
+		return nil, err
+	end
+	local ok, result = pcall(chunk)
+	if ok and type(result) == "table" then
+		return result
+	end
+	return nil, err
+end
 
 local function load_nodes_from_schematic(filename)
 	local nodes = {}
 	if not filename then
 		return nodes
 	end
-	local path = working_villages.modpath .. "/schems/" .. filename
+	local override = minetest.get_worldpath() .. "/working_villages_schems/" .. filename
+	local path = override
 	local input = io.open(path, "r")
 	if not input then
-		minetest.log("warning", "[blueprints] Impossible de charger " .. filename)
-		return nodes
+		path = working_villages.modpath .. "/schems/" .. filename
+		input = io.open(path, "r")
+		if not input then
+			minetest.log("warning", "[blueprints] Impossible de charger " .. filename)
+			return nodes
+		end
 	end
-	local data = minetest.deserialize(input:read("*a"))
+	local content = input:read("*a")
 	io.close(input)
+	local data = parse_schematic_content(content)
 	if not data then
 		minetest.log("warning", "[blueprints] Fichier schem corrompu : " .. filename)
 		return nodes
@@ -27,7 +50,7 @@ local function load_nodes_from_schematic(filename)
 				node_name = working_villages.voxelibre_compat.get_item(node_name)
 			end
 			node_name = working_villages.buildings.get_registered_nodename(node_name)
-			if node_name and node_name ~= "air" and minetest.registered_nodes[node_name] then
+			if node_name and (node_name == "air" or minetest.registered_nodes[node_name]) then
 				table.insert(nodes, {
 					pos = {x = entry.x, y = entry.y, z = entry.z},
 					node = {
@@ -38,6 +61,9 @@ local function load_nodes_from_schematic(filename)
 				})
 			end
 		end
+	end
+	if construction_planner then
+		return construction_planner.prepare_nodes(nodes)
 	end
 	return nodes
 end
@@ -107,6 +133,9 @@ function blueprints.register(name, definition)
 	local nodes = definition.nodes or {}
 	if (#nodes == 0) and definition.schematic_file then
 		nodes = load_nodes_from_schematic(definition.schematic_file)
+	end
+	if #nodes > 0 and construction_planner then
+		nodes = construction_planner.prepare_nodes(nodes)
 	end
 
 	blueprints.registered[name] = {
@@ -200,6 +229,22 @@ function blueprints.teach(inv_name, blueprint_name)
 	
 	minetest.log("action", "[blueprints] Villageois " .. inv_name .. " a appris le plan : " .. blueprint_name)
 	return true, "Plan appris : " .. blueprint_name
+end
+
+-- Force teach a blueprint, ignoring experience requirements
+function blueprints.force_teach(inv_name, blueprint_name)
+	local blueprint = blueprints.get(blueprint_name)
+	if not blueprint then
+		return false, "Plan introuvable : " .. blueprint_name
+	end
+	local data = blueprints.get_villager_data(inv_name)
+	if data.blueprints[blueprint_name] then
+		return true, "Plan deja appris : " .. blueprint_name
+	end
+	data.blueprints[blueprint_name] = 1
+	blueprints.save_learned()
+	minetest.log("action", "[blueprints] Villageois " .. inv_name .. " a appris le plan (force) : " .. blueprint_name)
+	return true, "Plan force : " .. blueprint_name
 end
 
 -- Improve a learned blueprint (level up)

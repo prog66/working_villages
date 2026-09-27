@@ -70,6 +70,7 @@ blueprints.register("workshop", {
 	category = blueprints.CATEGORY.WORKSHOP,
 	difficulty = blueprints.DIFFICULTY.INTERMEDIATE,
 	description = "Un atelier avec stockage",
+	schematic_file = "workshop.we",
 	improvements = {
 		{
 			type = "add_nodes",
@@ -84,11 +85,33 @@ blueprints.register("workshop", {
 	},
 })
 
+-- Mine entrance (beginner)
+blueprints.register("mine_entrance", {
+	category = blueprints.CATEGORY.INFRASTRUCTURE,
+	difficulty = blueprints.DIFFICULTY.BEGINNER,
+	description = "Une entree de mine couverte pour lancer l'extraction du village",
+	schematic_file = "mine_entrance.we",
+	improvements = {
+		{
+			type = "replace_nodes",
+			description = "Renforcer l'entree avec de meilleurs appuis",
+			from = compat.get_item("default:wood"),
+			to = compat.get_item("default:stone"),
+		},
+		{
+			type = "add_decoration",
+			description = "Ajouter plus d'eclairage et de renforts",
+			nodes = {},
+		},
+	},
+})
+
 -- Blacksmith forge (advanced)
 blueprints.register("blacksmith_forge", {
 	category = blueprints.CATEGORY.WORKSHOP,
 	difficulty = blueprints.DIFFICULTY.ADVANCED,
 	description = "Un atelier de forge avec forge et enclume",
+	schematic_file = "blacksmith_forge.we",
 	improvements = {
 		{
 			type = "replace_nodes",
@@ -128,6 +151,7 @@ blueprints.register("watchtower", {
 	category = blueprints.CATEGORY.INFRASTRUCTURE,
 	difficulty = blueprints.DIFFICULTY.INTERMEDIATE,
 	description = "Une tour haute pour proteger le village",
+	schematic_file = "watchtower.we",
 	improvements = {
 		{
 			type = "add_nodes",
@@ -143,6 +167,26 @@ blueprints.register("watchtower", {
 		{
 			type = "add_decoration",
 			description = "Ajouter des torches et cloches d'alerte",
+			nodes = {},
+		},
+	},
+})
+
+-- Castle fortress (expert)
+blueprints.register("castle_fortress", {
+	category = blueprints.CATEGORY.INFRASTRUCTURE,
+	difficulty = blueprints.DIFFICULTY.EXPERT,
+	description = "Un chateau fort en pierre pour defendre le village",
+	schematic_file = "castle_fortress.we",
+	improvements = {
+		{
+			type = "add_decoration",
+			description = "Ajouter des bannieres et lumieres",
+			nodes = {},
+		},
+		{
+			type = "add_nodes",
+			description = "Ajouter une cour interieure amenagee",
 			nodes = {},
 		},
 	},
@@ -209,4 +253,4 @@ blueprints.register("minimal_shelter", {
 	},
 })
 
-minetest.log("action", "[blueprints] Registered " .. 10 .. " default blueprints")
+minetest.log("action", "[blueprints] Registered " .. 12 .. " default blueprints")

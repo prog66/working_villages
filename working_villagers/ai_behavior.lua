@@ -13,6 +13,21 @@
 
 local ai_behavior = {}
 
+local CLOCK_KIND = "gametime_v1"
+
+local function game_time()
+  local now = tonumber(minetest.get_gametime()) or 0
+  return math.max(0, now)
+end
+
+local function elapsed(timestamp, clock_kind, now)
+  timestamp = tonumber(timestamp)
+  if clock_kind ~= CLOCK_KIND or not timestamp or timestamp < 0 or timestamp > now then
+    return nil
+  end
+  return now - timestamp
+end
+
 --[[
   Task priority system.
   
@@ -134,7 +149,8 @@ function ai_behavior.state_machine.set_state(self, new_state, data)
     -- Update state
     self.ai_state = new_state
     self.ai_state_data = data or {}
-    self.ai_state_time = os.clock()
+    self.ai_state_time = game_time()
+    self.ai_state_time_clock = CLOCK_KIND
     
     -- Call entry handler for new state if it exists
     if self.on_enter_state then
@@ -153,7 +169,16 @@ function ai_behavior.state_machine.get_state_duration(self)
   if not self.ai_state_time then
     return 0
   end
-  return os.clock() - self.ai_state_time
+  local now = game_time()
+  local duration = elapsed(self.ai_state_time, self.ai_state_time_clock, now)
+  if not duration then
+    -- Legacy os.clock values and timestamps from a later/rolled-back session
+    -- have no meaningful age on Luanti's game clock. Restart the state TTL.
+    self.ai_state_time = now
+    self.ai_state_time_clock = CLOCK_KIND
+    return 0
+  end
+  return duration
 end
 
 --[[
@@ -172,10 +197,8 @@ ai_behavior.memory = {}
   @param data table - Optional associated data
 ]]--
 function ai_behavior.memory.remember_location(self, category, pos, data)
-  if not self.memory then
-    self.memory = {}
-  end
-  
+  working_villages.memory.ensure(self)
+
   if not self.memory[category] then
     self.memory[category] = {}
   end
@@ -184,7 +207,8 @@ function ai_behavior.memory.remember_location(self, category, pos, data)
   self.memory[category][key] = {
     pos = pos,
     data = data or {},
-    time = os.clock(),
+    time = game_time(),
+    time_clock = CLOCK_KIND,
     visits = (self.memory[category][key] and self.memory[category][key].visits or 0) + 1,
   }
 end
@@ -203,10 +227,11 @@ function ai_behavior.memory.recall_locations(self, category, max_age)
   end
   
   local locations = {}
-  local now = os.clock()
+  local now = game_time()
   
   for _, entry in pairs(self.memory[category]) do
-    if not max_age or (now - entry.time) <= max_age then
+    local age = type(entry) == "table" and elapsed(entry.time, entry.time_clock, now) or nil
+    if not max_age or (age and age <= max_age) then
       table.insert(locations, entry)
     end
   end
@@ -225,11 +250,12 @@ function ai_behavior.memory.forget_old(self, max_age)
     return
   end
   
-  local now = os.clock()
+  local now = game_time()
   
   for category, entries in pairs(self.memory) do
     for key, entry in pairs(entries) do
-      if (now - entry.time) > max_age then
+      local age = type(entry) == "table" and elapsed(entry.time, entry.time_clock, now) or nil
+      if not age or age > max_age then
         entries[key] = nil
       end
     end

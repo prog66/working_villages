@@ -1,18 +1,20 @@
 local func = working_villages.require("jobs/util")
+local compat = working_villages.voxelibre_compat
 
 local herbs = {
   -- more priority definitions
 	names = {
-		[working_villages.voxelibre_compat.get_item("default:apple")]={},
-		[working_villages.voxelibre_compat.get_item("default:cactus")]={collect_only_top=true},
-		[working_villages.voxelibre_compat.get_item("default:papyrus")]={collect_only_top=true},
-		[working_villages.voxelibre_compat.get_item("default:dry_shrub")]={},
-		["flowers:mushroom_brown"]={},
-		["flowers:mushroom_red"]={},
+		[compat.get_item("default:apple")]={},
+		[compat.get_item("default:cactus")]={collect_only_top=true},
+		[compat.get_item("default:papyrus")]={collect_only_top=true},
+		[compat.get_item("default:dry_shrub")]={},
+		[compat.get_item("flowers:mushroom_brown")]={},
+		[compat.get_item("flowers:mushroom_red")]={},
 	},
   -- less priority definitions
 	groups = {
 		["flora"]={},
+		["mushroom"]={},
 	},
 }
 
@@ -66,6 +68,19 @@ end
 
 local searching_range = {x = 10, y = 5, z = 10}
 
+local function reserve_herb_target(self, pos, ttl)
+	if not self.reserve_position then
+		return true
+	end
+	return self:reserve_position("herb_target", pos, ttl or 12)
+end
+
+local function release_herb_target(self, pos)
+	if self.release_reserved_position then
+		self:release_reserved_position("herb_target", pos)
+	end
+end
+
 local function put_func()
   return true;
 end
@@ -89,6 +104,8 @@ working_villages.register_job("working_villages:job_herbcollector", {
 		)
 	end,
 	jobfunc = function(self)
+			if self.equip_best_weapon then self:equip_best_weapon() end
+			if self.equip_best_armor then self:equip_best_armor() end
 		self:handle_night()
 		self:handle_chest(nil, put_func)
 		self:handle_job_pos()
@@ -97,29 +114,54 @@ working_villages.register_job("working_villages:job_herbcollector", {
 		self:count_timer("herbcollector:change_dir")
 		self:count_timer("herbcollector:announce")
 		self:handle_obstacles()
-		if self:timer_exceeded("herbcollector:search",20) then
+		if self:timer_exceeded("herbcollector:search",10) then
 			self:collect_nearest_item_by_condition(herbs.is_herb, searching_range)
-			local target = func.search_surrounding(self.object:get_pos(), find_herb_node, searching_range)
+			local target = func.search_surrounding(self.object:get_pos(), function(pos)
+				if self.is_position_reserved and self:is_position_reserved("herb_target", pos) then
+					return false
+				end
+				if func.is_protected(self, pos) or working_villages.failed_pos_test(pos) then
+					return false
+				end
+				return find_herb_node(pos)
+			end, searching_range)
 			if target ~= nil then
+				if not reserve_herb_target(self, target, 15) then
+					self:set_displayed_action("cherche une autre plante")
+					return
+				end
 				local destination = func.find_adjacent_clear(target)
 				if destination then
 				  destination = func.find_ground_below(destination)
 				end
 				if destination==false then
-					print("failure: no adjacent walkable found")
 					destination = target
 				end
-				self:go_to(destination)
-        --local herb_data = herbs.get_herb(minetest.get_node(target).name);
-        herbs.get_herb(minetest.get_node(target).name);
-				self:dig(target,true)
+				local moved = self:go_to(destination)
+				if not moved then
+					release_herb_target(self, target)
+					working_villages.failed_pos_record(target)
+					self:set_displayed_action("plante inaccessible")
+					return
+				end
+				herbs.get_herb(minetest.get_node(target).name)
+				local dug = self:dig(target,true)
+				release_herb_target(self, target)
+				if not dug then
+					working_villages.failed_pos_record(target)
+					self:set_displayed_action("plante ratee")
+					return
+				end
 				self:set_state_info("Je cueille des plantes.")
 				self:set_displayed_action("cueille des plantes")
 				if self:timer_exceeded("herbcollector:announce", 130) then
 					self:announce_action("Je collecte des plantes pour en faire des colorants et des remedes.")
 				end
+			else
+				self:set_state_info("Je cherche des plantes utiles.")
+				self:set_displayed_action("cherche des plantes")
 			end
-		elseif self:timer_exceeded("herbcollector:change_dir",50) then
+		elseif self:timer_exceeded("herbcollector:change_dir",25) then
 			self:change_direction_randomly()
 		end
 	end,

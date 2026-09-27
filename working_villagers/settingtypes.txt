@@ -10,6 +10,39 @@ working_villages_enable_debug_tools (debug tools) bool false
 #    It helps finding bugs within working villages and within mods using working villages.
 working_villages_enable_debug_checks (debug checks) bool true
 
+[gameplay]
+
+#    Survival keeps the economy resource-bound. creative_test permits explicitly
+#    enabled shortcuts intended for development and sandbox testing.
+working_villages_gameplay_mode (gameplay mode) enum survival survival,creative_test
+
+[villager survival]
+
+#    Multiplies the base maximum health of every villager. Existing villagers
+#    are migrated once while preserving their previous health percentage.
+working_villages_villager_hp_multiplier (villager maximum health multiplier) float 2.0 0.5 10
+
+#    Multiplies incoming damage after equipment armor and shield reductions.
+#    0 makes villagers immune; 1 keeps unscaled damage.
+working_villages_incoming_damage_multiplier (villager incoming damage multiplier) float 0.5 0 5
+
+#    Who may directly damage villagers on a multiplayer server.
+#    protection_bypass always remains authorized for server administration.
+working_villages_player_damage_mode (player damage to villagers) enum owner_only none,owner_only,all
+
+#    Temporary invulnerability after spawn or mapblock activation. This avoids
+#    deaths before AI/pathfinding has resumed on a busy public server.
+working_villages_activation_protection_seconds (activation protection seconds) float 10 0 120
+
+#    Passive recovery per second when fed and outside a danger window.
+working_villages_health_regen_per_second (safe health regeneration per second) float 0.25 0 20
+
+#    Delay after the latest hit before passive recovery may begin.
+working_villages_health_regen_delay_seconds (health regeneration delay seconds) float 20 0 600
+
+#    At or below this health ratio, even guards disengage and seek shelter.
+working_villages_retreat_health_ratio (emergency retreat health ratio) float 0.5 0.05 0.95
+
 [protection]
 #    Controls activity in protected areas.
 #    false: Activity is not allowed in protected areas.
@@ -22,13 +55,65 @@ working_villages_enable_debug_checks (debug checks) bool true
 #            configured using arbitrary player names.
 working_villages_owner_protection (owner protection) string false
 
+#    Enables an internal village claim around the shared chest.
+#    The claim adds to existing protection mods instead of replacing them.
+#    Self-employed villages can be managed with a commanding sceptre only when
+#    public self-employed control is explicitly enabled below.
+working_villages_enable_village_claim (enable village claim) bool true
+
+#    Horizontal radius (nodes) of the internal village claim around the shared chest.
+working_villages_claim_radius (village claim radius) int 12
+
+#    Vertical half-height (nodes) of the internal village claim around the shared chest.
+working_villages_claim_height (village claim height) int 8
+
 [spawning]
 
-#    Enables spawning self-employed working villagers. The villagers that
-#    spawn in will interact with any player who has a command sceptre.
-working_villages_enable_spawn (spawn working villagers) bool false
+#    Enables spawning self-employed working villagers. Public management of
+#    these villagers additionally requires the option below and a command sceptre.
+working_villages_enable_spawn (spawn working villagers) bool true
+
+#    If empty, the first connected player becomes the initial village owner.
+#    self_employed is used only when public control is explicitly enabled.
+working_villages_initial_village_owner (initial village owner) string
+
+#    Allows self-employed villagers to be managed by any player carrying a
+#    commanding sceptre. Disabled by default to prevent multiplayer griefing.
+working_villages_self_employed_public (self-employed villagers are public) bool false
+
+#    Enables ambient ABM spawning in addition to controlled village spawning.
+working_villages_enable_passive_spawn (passive villager spawn) bool false
+
+#    Maximum number of villagers counted inside the configured population radius.
+working_villages_population_limit (villager population limit) int 20 5 200
+
+#    Radius used when enforcing the villager population limit.
+working_villages_population_radius (villager population radius) int 64 16 512
+
+#    Seconds between crash-recovery checkpoints for loaded villagers. A lower
+#    value narrows possible rollback after a process kill but writes more often.
+working_villages_villager_checkpoint_interval (villager checkpoint interval) int 5 1 60
+
+#    Allows a mature village to recruit one new learner when it has a free
+#    valid home and can pay the configured food cost. Population cap applies.
+working_villages_enable_population_growth (autonomous population growth) bool true
+
+#    Minimum delay in seconds between two autonomous recruitments per village.
+working_villages_population_growth_interval (population growth interval) int 600 60 86400
+
+#    Real food items consumed from the shared chest for one new villager.
+working_villages_population_growth_food_cost (population growth food cost) int 16 1 999
 
 [autonomous]
+
+#    Duration in real seconds represented by one historical AI timer step.
+#    The default keeps old job pacing while making it independent of server FPS.
+working_villages_timer_step_seconds (logical AI timer step) float 0.1 0.01 1.0
+
+#    Allows owner-scoped safe autonomous decisions (for example opening a
+#    resource-bound building site) without requiring a formspec confirmation.
+#    Protection and village ownership checks remain active.
+working_villages_auto_approve_autonomous_actions (auto approve autonomous actions) bool true
 
 #    Minimum interval in seconds between villager chat messages.
 working_villages_autonomous_chat_interval (autonomous chat interval) int 30
@@ -53,17 +138,40 @@ working_villages_learner_experiment_interval (learner experiment interval) int 1
 
 [builder]
 
-#    Builders get missing materials automatically.
-working_villages_builder_unlimited_materials (builder unlimited materials) bool true
+#    Builders get missing materials automatically. This legacy shortcut is only
+#    honored when gameplay mode is creative_test.
+working_villages_builder_unlimited_materials (builder unlimited materials) bool false
 
 #    Search radius (nodes) for construction markers.
 working_villages_builder_search_radius (builder search radius) int 30
 
-#    Builders attempt experimental builds when possible.
-working_villages_builder_experiment_mode (builder experiment mode) bool true
+#    Minimum and maximum distance used by the deterministic autonomous site
+#    planner. It accepts only flat, unprotected, dry and accessible volumes.
+working_villages_builder_site_min_radius (builder site minimum radius) int 6 2 64
+working_villages_builder_site_max_radius (builder site maximum radius) int 30 6 128
+
+#    Maximum terrain candidates inspected when opening one autonomous site.
+working_villages_builder_site_attempts (builder site candidate budget) int 96 8 512
+
+#    Builders attempt experimental builds when possible. This potentially
+#    destructive feature is only honored when gameplay mode is creative_test.
+working_villages_builder_experiment_mode (builder experiment mode) bool false
 
 #    Time (seconds) between experimental build attempts.
 working_villages_builder_experiment_interval (builder experiment interval) int 1800
+#    Real seconds between two construction decisions. Physical movement and
+#    placement still take their normal animation time.
+working_villages_builder_step_interval (builder build step interval) float 1 0.2 60
+
+#    Number of identical nodes a builder tries to keep prepared while building.
+working_villages_builder_material_batch_size (builder material batch size) int 4
+
+[farmer]
+
+#    uniform keeps one planned crop for new plots; rows creates deterministic
+#    two-node crop rows; available preserves the old first-available behavior.
+#    Harvested crops are always replanted with their own matching seed.
+working_villages_farmer_crop_strategy (farmer crop layout) enum uniform uniform,rows,available
 
 [guard]
 

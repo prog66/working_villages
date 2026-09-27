@@ -1,4 +1,5 @@
 local wv_util = {}
+local voxelibre_compat = working_villages.voxelibre_compat
 
 local debug_checks = working_villages.setting_enabled("debug_checks",true)
 
@@ -60,6 +61,37 @@ function wv_util.get_eneigbor_offsets(radius,adjacent)
     lb = nb
   end
   return list
+end
+
+-- shared armor check so API can detect slot suitability
+function wv_util.is_armor_for_slot(slot, stack)
+  if not stack or stack:is_empty() then return false end
+  local name = stack:get_name()
+  if slot == "head" then
+    if minetest.get_item_group(name, "armor_head") > 0 then return true end
+  elseif slot == "torso" then
+    if minetest.get_item_group(name, "armor_torso") > 0 then return true end
+  elseif slot == "legs" then
+    if minetest.get_item_group(name, "armor_legs") > 0 then return true end
+  elseif slot == "feet" then
+    if minetest.get_item_group(name, "armor_feet") > 0 then return true end
+  end
+  -- compatibility hints (string matching) for items missing groups in some VoxeLibre forks
+  local hint = {
+    head = {"helmet", "cap", "head"},
+    torso = {"chestplate", "chest", "body"},
+    legs = {"leggings", "leg"},
+    feet = {"boots", "shoe"},
+  }
+  local list = hint[slot]
+  if list then
+    for _, h in ipairs(list) do
+      if name:find(h, 1, true) then
+        return true
+      end
+    end
+  end
+  return false
 end
 
 return wv_util

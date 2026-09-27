@@ -1,6 +1,6 @@
-modutil?
 doors?
 default?
+farming?
 mcl_core?
 mcl_doors?
 mcl_beds?
@@ -8,3 +8,9 @@ mcl_chests?
 mcl_farming?
 mcl_torches?
 mcl_player?
+mcl_tools?
+mcl_shields?
+mcl_crafting_table?
+mcl_inventory?
+mcl_sounds?
+mcl_mobs?

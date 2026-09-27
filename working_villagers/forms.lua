@@ -2,21 +2,134 @@ local forms = {}
 local registered_forms = {}
 local log = working_villages.require("log")
 
+local THEME = {
+	header = "#1b1f29",
+	panel = "#0f131bcc",
+	accent = "#7ec7ff",
+	text = "#e8edf5",
+}
+
+local HEADER_HEIGHT = 1.1
+
 forms.villagers = {}
-function forms.get_villager(inv_name)
-	return forms.villagers[inv_name]
+forms.last_pages = {}
+forms.menu_selection = {}
+
+local function get_player_name(player_or_name)
+	if type(player_or_name) == "string" then
+		return player_or_name ~= "" and player_or_name or nil
+	end
+	if not player_or_name or type(player_or_name.get_player_name) ~= "function" then
+		return nil
+	end
+	local ok, player_name = pcall(player_or_name.get_player_name, player_or_name)
+	if not ok or not player_name or player_name == "" then
+		return nil
+	end
+	return player_name
 end
 
-forms.last_pages = {}
+local function get_inventory_name(villager)
+	if type(villager) ~= "table" then
+		return nil
+	end
+	local inv_name = villager.inventory_name
+	if type(villager.get_inventory_name) == "function" then
+		local ok, value = pcall(villager.get_inventory_name, villager)
+		if ok and value ~= nil then
+			inv_name = value
+		end
+	end
+	if type(inv_name) ~= "string" or inv_name == "" then
+		return nil
+	end
+	return inv_name
+end
+
+local function send_player_message(player_or_name, message)
+	local player_name = get_player_name(player_or_name)
+	if player_name and minetest.chat_send_player then
+		minetest.chat_send_player(player_name, message)
+	end
+end
+
+function forms.is_live_villager(villager, expected_inv_name)
+	local inv_name = get_inventory_name(villager)
+	if not inv_name or (expected_inv_name and inv_name ~= expected_inv_name) then
+		return false
+	end
+	local object = villager.object
+	if not object or type(object.get_luaentity) ~= "function" or type(object.get_pos) ~= "function" then
+		return false
+	end
+	local entity_ok, current_entity = pcall(object.get_luaentity, object)
+	if not entity_ok or current_entity ~= villager then
+		return false
+	end
+	local pos_ok, current_pos = pcall(object.get_pos, object)
+	return pos_ok and current_pos ~= nil
+end
+
+function forms.get_villager(inv_name)
+	if type(inv_name) ~= "string" or inv_name == "" then
+		return nil
+	end
+	local villager = forms.villagers[inv_name]
+	if not forms.is_live_villager(villager, inv_name) then
+		forms.villagers[inv_name] = nil
+		return nil
+	end
+	return villager
+end
+
+function forms.require_manage(villager, player_or_name, notify)
+	if not forms.is_live_villager(villager) then
+		if notify ~= false then
+			send_player_message(player_or_name, "Ce formulaire est perime : le villageois n'est plus disponible.")
+		end
+		return false, "stale_villager"
+	end
+	if type(working_villages.can_manage_villager) ~= "function" then
+		if notify ~= false then
+			send_player_message(player_or_name, "La gestion de ce villageois est indisponible.")
+		end
+		return false, "access_unavailable"
+	end
+	local allowed, reason = working_villages.can_manage_villager(villager, player_or_name)
+	if not allowed and notify ~= false then
+		local message = "Vous ne pouvez pas modifier ce villageois."
+		if reason == "self_employed_private" then
+			message = "Ce villageois autonome n'est pas ouvert a la gestion publique."
+		elseif reason == "commanding_sceptre_required" then
+			message = "Un sceptre de commande est necessaire pour gerer ce villageois autonome."
+		end
+		send_player_message(player_or_name, message)
+	end
+	return allowed == true, reason
+end
+
+local function show_form_error(player_name, _, message)
+	local form = "formspec_version[4]size[8,3]"
+		.. working_villages.voxelibre_compat.get_gui_bg()
+		.. working_villages.voxelibre_compat.get_gui_bg_img()
+		.. working_villages.voxelibre_compat.get_gui_slots()
+		.. "label[0.5,0.8;" .. minetest.formspec_escape(message) .. "]"
+		.. "button_exit[3,1.8;2,0.8;close;Fermer]"
+	minetest.show_formspec(player_name, "working_villages:form_error", form)
+end
 
 function forms.go_back(villager,player_name)
-	if not villager or not villager.inventory_name then
+	local inv_name = get_inventory_name(villager)
+	if not inv_name or not forms.is_live_villager(villager, inv_name) then
 		return
 	end
-	if not forms.last_pages[villager.inventory_name] then
+	if not forms.last_pages[inv_name] then
 		return
 	end
-	local last_page = forms.last_pages[villager.inventory_name].last
+	local last_page = forms.last_pages[inv_name].last
+	if type(last_page) ~= "string" or last_page == "" then
+		return
+	end
 	forms.show_formspec(villager, last_page, player_name)
 end
 
@@ -26,6 +139,7 @@ function forms.register_page(name, def)
 	end
 	assert(type(def.constructor)=="function")
 	if def.receiver then assert(type(def.receiver)=="function") end
+	if def.requires_manage ~= nil then assert(type(def.requires_manage)=="boolean") end
 	if def.link_to then
 		assert(type(def.link_to)=="table")
 	else
@@ -47,46 +161,78 @@ function forms.put_link(source_page, target_page, description)
 end
 
 function forms.show_formspec(villager, formname, playername)
+	local player_name = get_player_name(playername)
+	if not player_name then
+		return false
+	end
+	if type(formname) ~= "string" or formname == "" then
+		show_form_error(player_name, "working_villages:form", "Erreur : formulaire introuvable.")
+		return false
+	end
 	local page = registered_forms[formname]
 	if page == nil then
 		log.warning("page %s not registered", formname)
 		page = registered_forms["working_villages:talking_menu"]
+		if page == nil then
+			show_form_error(player_name, formname, "Erreur : formulaire introuvable.")
+			return false
+		end
 	end
-	if not villager or not villager.inventory_name then
-		local form = "size[8,3]" ..
-			working_villages.voxelibre_compat.get_gui_bg() ..
-			working_villages.voxelibre_compat.get_gui_bg_img() ..
-			working_villages.voxelibre_compat.get_gui_slots() ..
-			"label[0.5,0.8;Erreur: villageois introuvable]"
-		minetest.show_formspec(playername, formname.."_invalid", form)
-		return
+	local inv_name = get_inventory_name(villager)
+	if not inv_name or not forms.is_live_villager(villager, inv_name) then
+		show_form_error(player_name, formname, "Erreur : villageois introuvable ou formulaire perime.")
+		return false
 	end
-	minetest.show_formspec(playername, formname.."_"..villager.inventory_name, page:constructor(villager, playername))
-	forms.villagers[villager.inventory_name] = villager
+	if page.requires_manage and not forms.require_manage(villager, player_name, false) then
+		show_form_error(player_name, formname, "Acces refuse : vous ne pouvez pas modifier ce villageois.")
+		return false
+	end
+	minetest.show_formspec(player_name, formname.."_"..inv_name, page:constructor(villager, player_name))
+	forms.villagers[inv_name] = villager
 
-	if forms.last_pages[villager.inventory_name] == nil then
-		forms.last_pages[villager.inventory_name] = {}
+	if forms.last_pages[inv_name] == nil then
+		forms.last_pages[inv_name] = {}
 	end
-	local last_page_store = forms.last_pages[villager.inventory_name]
+	local last_page_store = forms.last_pages[inv_name]
 	if last_page_store.current == nil then
 		last_page_store.last = formname
 	else
 		last_page_store.last = last_page_store.current
 	end
 	last_page_store.current = formname
+	return true
 end
 
 --receive fields when villager was rightclicked
 
 minetest.register_on_player_receive_fields(
 	function(player, formname, fields)
-		for n,p in pairs(registered_forms) do
-			if string.find(formname, n.."_")==1 then
-				if p.receiver then
-					local inv_name = string.sub(formname, string.len(n.."_")+1)
-					p:receiver(forms.get_villager(inv_name),player,fields)
-				end
+		if type(formname) ~= "string" or type(fields) ~= "table" or not get_player_name(player) then
+			return
+		end
+		local matched_name, page, inv_name
+		for name, candidate in pairs(registered_forms) do
+			local prefix = name .. "_"
+			if formname:sub(1, #prefix) == prefix and
+				(not matched_name or #name > #matched_name) then
+				matched_name = name
+				page = candidate
+				inv_name = formname:sub(#prefix + 1)
 			end
+		end
+		if not page or not inv_name or inv_name == "" then
+			return
+		end
+		local villager = forms.get_villager(inv_name)
+		if not villager then
+			send_player_message(player, "Ce formulaire est perime : le villageois n'est plus disponible.")
+			return
+		end
+		if page.requires_manage and not forms.require_manage(villager, player, true) then
+			return
+		end
+		if page.receiver then
+			page:receiver(villager, player, fields)
 		end
 	end
 )
@@ -117,12 +263,17 @@ function forms.form_base(width,height,villager)
 	if villager and villager.nametag and villager.nametag~="" then
 		villager_name = villager.nametag.." - "
 	end
+	local title = minetest.formspec_escape(villager_name..jobname)
 
-	return "size["..width..","..height.."]"
+	return "formspec_version[4]size["..width..","..height.."]"
 		.. working_villages.voxelibre_compat.get_gui_bg()
 		.. working_villages.voxelibre_compat.get_gui_bg_img()
 		.. working_villages.voxelibre_compat.get_gui_slots()
-		.. "label[0,0;"..villager_name..jobname.."]"
+		.. "style_type[label;textcolor="..THEME.text.."]"
+		.. "style[villager_header;font=mono;bold=true;textcolor="..THEME.text.."]"
+		.. "box[0,0;"..width..","..HEADER_HEIGHT..";"..THEME.header.."]"
+		.. "box[0,"..HEADER_HEIGHT..";"..width..","..(height-HEADER_HEIGHT)..";"..THEME.panel.."]"
+		.. "label[0.4,0.3;"..title.."]"
 end
 
 function forms.register_menu_page(pageid, title)
@@ -137,26 +288,79 @@ function forms.register_menu_page(pageid, title)
 			local form = forms.form_base(8,formbottom,villager)
 			local text = self.variables.title
 			--TODO: random text from list
-			form = form .. "label["..(4-(#text/10))..",1;"..text.."]"
-			local y = 1
-			for description, page_to in pairs(self.link_to) do
-				y = y + 1
-				form = form .. "button[0.5,"..y..";7,1;to_page-"..page_to..";"..minetest.formspec_escape(description).."]"
-				if y >= formbottom-1 then
-					log.warning("too many linked pages")
-					--TODO: scroll down button
-					break
-				end
+			local content_y = HEADER_HEIGHT + 0.2
+			form = form
+				.. "style_type[button;bgcolor=#2c323f;textcolor="..THEME.text..";bordercolor="..THEME.accent..";border=true]"
+				.. "style_type[label;font=normal;textcolor="..THEME.text.."]"
+				.. "label[0.5,"..content_y..";"..minetest.formspec_escape(text).."]"
+
+			local entries = {}
+			for description in pairs(self.link_to) do
+				table.insert(entries, description)
 			end
-			form = form .. "button_exit[3.5,"..(formbottom-1)..";1,1;exit;fermer]"
+			table.sort(entries)
+			local list = {}
+			for _, desc in ipairs(entries) do
+				table.insert(list, minetest.formspec_escape(desc))
+			end
+			local list_str = table.concat(list, ",")
+			local list_height = math.max(2, formbottom - 3.2)
+			local selected = 1
+			if villager and villager.inventory_name then
+				forms.menu_selection[villager.inventory_name] =
+					forms.menu_selection[villager.inventory_name] or {}
+				selected = forms.menu_selection[villager.inventory_name][pageid] or 1
+			end
+			if #list == 0 then
+				selected = 0
+			end
+			form = form
+				.. "textlist[0.5,"..(content_y+0.6)..";7,"..list_height..";menu_list;"..list_str..";"..selected..";]"
+				.. "button[0.5,"..(formbottom-0.9)..";2.5,0.8;menu_open;ouvrir]"
+				.. "button_exit[5.8,"..(formbottom-0.9)..";2.0,0.8;exit;fermer]"
 			return form
 		end,
 		receiver = function(_, villager, sender, fields) --self, villager, sender, fields
 			local sender_name = sender:get_player_name()
-			local button = next(fields)
-			if button:find("to_page-")==1 then
-				local page_to = button:sub(9)
-				forms.show_formspec(villager, page_to, sender_name)
+			if not villager then
+				return
+			end
+			if fields.menu_list then
+				local idx = tonumber(fields.menu_list:match(":(%d+)$") or fields.menu_list)
+				if idx then
+					forms.menu_selection[villager.inventory_name] =
+						forms.menu_selection[villager.inventory_name] or {}
+					forms.menu_selection[villager.inventory_name][pageid] = idx
+				end
+				if fields.menu_list:sub(1,4) == "DCL:" then
+					local entries = {}
+					for description in pairs(registered_forms[pageid].link_to) do
+						table.insert(entries, description)
+					end
+					table.sort(entries)
+					local desc = entries[idx]
+					local page_to = desc and registered_forms[pageid].link_to[desc]
+					if page_to then
+						forms.show_formspec(villager, page_to, sender_name)
+					end
+					return
+				end
+			end
+			if fields.menu_open then
+				local entries = {}
+				for description in pairs(registered_forms[pageid].link_to) do
+					table.insert(entries, description)
+				end
+				table.sort(entries)
+				local sel = 1
+				if forms.menu_selection[villager.inventory_name] then
+					sel = forms.menu_selection[villager.inventory_name][pageid] or 1
+				end
+				local desc = entries[sel]
+				local page_to = desc and registered_forms[pageid].link_to[desc]
+				if page_to then
+					forms.show_formspec(villager, page_to, sender_name)
+				end
 			end
 		end,
 	})
@@ -234,6 +438,7 @@ function forms.register_text_page(pageid,text_constructor)
 end
 
 forms.register_page("working_villages:job_change",{
+	requires_manage = true,
 	constructor = function(_, villager) --self, villager, playername
 		local villager_name = "Villageois"
 		if villager.nametag and villager.nametag~="" then
@@ -276,6 +481,9 @@ local function floor_pos(pos)
 	return pos
 end
 local function load_pos(pos, villager, nodes)
+	if type(pos) ~= "string" then
+		return nil
+	end
 	if (pos=="near") then
 		pos = minetest.find_node_near(villager.object:get_pos(), 5, nodes, true) or nil
 	elseif (pos~="") then
@@ -325,17 +533,24 @@ local function set_villager_home(sender_name, villager, marker_pos)
 		return
 	end
 
-	villager:set_home(marker_pos)
-	minetest.chat_send_player(sender_name, "Marqueur de maison defini.")
-	if minetest.get_meta(marker_pos):get_string("valid") == "false" then
-		minetest.chat_send_player(sender_name, "Marqueur non configure, "..
-			"clic droit pour le configurer.")
+	local ok, reason = villager:set_home(marker_pos)
+	if not ok then
+		local messages = {
+			invalid_home = "Ce marqueur n'est pas encore configure comme maison valide.",
+			invalid_home_nodes = "Le lit, la porte ou l'acces de cette maison n'est plus valide.",
+			wrong_owner = "Cette maison appartient a un autre village.",
+			occupied = "Cette maison et son lit sont deja attribues.",
+		}
+		minetest.chat_send_player(sender_name, messages[reason] or "Impossible d'attribuer cette maison.")
+		return
 	end
+	minetest.chat_send_player(sender_name, "Maison et lit attribues.")
 end
 
 local change_index = 0
 
 forms.register_page("working_villages:data_change",{
+	requires_manage = true,
 	constructor = function(_, villager, player_name) --self, villager, playername
 		-- villager data
 		local data = villager.pos_data
@@ -437,6 +652,20 @@ forms.register_page("working_villages:data_change",{
 	receiver = function(_, villager, sender, fields)
 		local sender_name = sender:get_player_name()
 		if fields.set_data then
+			local required_fields = {
+				"marker_pos", "home_pos", "bed_pos", "chest_pos", "food_pos",
+				"tools_pos", "storage_pos", "job_pos", "villager_name", "village_name",
+			}
+			for _, field_name in ipairs(required_fields) do
+				if type(fields[field_name]) ~= "string" then
+					minetest.chat_send_player(sender_name, "Formulaire perime ou incomplet ; aucune modification appliquee.")
+					return
+				end
+			end
+			if type(villager.pos_data) ~= "table" then
+				minetest.chat_send_player(sender_name, "Donnees du villageois indisponibles ; aucune modification appliquee.")
+				return
+			end
 			local data = {}
 			local marker_pos = load_pos(fields.marker_pos, villager, "working_villages:building_marker")
 			--data.home_pos = load_pos(fields.home_pos, villager, "group:door")
@@ -485,6 +714,7 @@ forms.register_page("working_villages:data_change",{
 })
 
 forms.register_page("working_villages:inv_gui", {
+	requires_manage = true,
 	constructor = function(_, villager) --self, villager, playername
 		-- Header information
 		local villager_name = "Villageois"
@@ -503,45 +733,59 @@ forms.register_page("working_villages:inv_gui", {
 		if villager.village_name and villager.village_name ~= "" then
 			village_info = " - Village: " .. villager.village_name
 		end
+
+		local strategy_line = ""
+		if working_villages.get_owner_village_control and working_villages.get_village_status then
+			local control = working_villages.get_owner_village_control(villager.owner_name)
+			local status = working_villages.get_village_status(villager, 50)
+			local stage = status and (status.bootstrap_stage or working_villages.get_village_bootstrap_stage(status)) or "build"
+			strategy_line = "Stratégie: " .. working_villages.describe_village_focus(control.focus)
+				.. " | Phase: " .. working_villages.describe_bootstrap_stage(stage)
+		end
 		
-		return "size[9,10]"
+		return "size[9,11.2]"
 			.. working_villages.voxelibre_compat.get_gui_bg()
 			.. working_villages.voxelibre_compat.get_gui_bg_img()
 			.. working_villages.voxelibre_compat.get_gui_slots()
 			-- Header section
 			.. "label[0.2,0.2;" .. minetest.formspec_escape("=== " .. villager_name .. " ===") .. "]"
 			.. "label[0.2,0.6;" .. minetest.formspec_escape("Métier: " .. jobname .. village_info) .. "]"
+			.. "label[0.2,1.0;" .. minetest.formspec_escape(strategy_line) .. "]"
 			-- Main inventory section
-			.. "label[0.2,1.2;Inventaire du villageois:]"
-			.. "list[detached:"..villager.inventory_name..";main;0.2,1.5;4,4;]"
-			-- Wield item section
-			.. "label[4.5,1.2;Outil équipé:]"
-			.. "list[detached:"..villager.inventory_name..";wield_item;4.5,1.5;1,1;]"
+			.. "label[0.2,1.5;Inventaire du villageois:]"
+			.. "list[detached:"..villager.inventory_name..";main;0.2,1.8;4,4;]"
+			-- Wield/offhand section
+			.. "label[4.5,1.5;Outil:]"
+			.. "list[detached:"..villager.inventory_name..";wield_item;4.5,1.8;1,1;]"
+			.. "label[5.4,1.5;Bouclier:]"
+			.. "list[detached:"..villager.inventory_name..";offhand;5.4,1.8;1,1;]"
 			-- Armor section with cleaner layout
-			.. "label[6.2,1.2;Équipement:]"
-			.. "label[6.2,1.6;Casque:]"
-			.. "list[detached:"..villager.inventory_name..";head;7,1.5;1,1;]"
-			.. "label[6.2,2.6;Plastron:]"
-			.. "list[detached:"..villager.inventory_name..";torso;7,2.5;1,1;]"
-			.. "label[6.2,3.6;Jambières:]"
-			.. "list[detached:"..villager.inventory_name..";legs;7,3.5;1,1;]"
-			.. "label[6.2,4.6;Bottes:]"
-			.. "list[detached:"..villager.inventory_name..";feet;7,4.5;1,1;]"
+			.. "label[6.4,1.5;Équipement:]"
+			.. "label[6.4,1.9;Casque:]"
+			.. "list[detached:"..villager.inventory_name..";head;7,1.8;1,1;]"
+			.. "label[6.4,2.9;Plastron:]"
+			.. "list[detached:"..villager.inventory_name..";torso;7,2.8;1,1;]"
+			.. "label[6.4,3.9;Jambières:]"
+			.. "list[detached:"..villager.inventory_name..";legs;7,3.8;1,1;]"
+			.. "label[6.4,4.9;Bottes:]"
+			.. "list[detached:"..villager.inventory_name..";feet;7,4.8;1,1;]"
+			.. "button[4.5,5.8;2,0.8;job;Changer métier]"
+			.. "button[6.7,5.8;2,0.8;village;Tableau]"
+			.. "button[4.5,6.7;2,0.8;data;Paramètres]"
+			.. "button[6.2,6.7;2.5,0.8;smart_village;Mode IA]"
 			-- Player inventory
-			.. "label[0.2,5.7;Votre inventaire:]"
-			.. "list[current_player;main;0.2,6;8,1;]"
-			.. "list[current_player;main;0.2,7.2;8,3;8]"
+			.. "label[0.2,7.4;Votre inventaire:]"
+			.. "list[current_player;main;0.2,7.7;8,1;]"
+			.. "list[current_player;main;0.2,8.9;8,3;8]"
 			-- Listring for item transfer
 			.. "listring[detached:"..villager.inventory_name..";main]"
+			.. "listring[detached:"..villager.inventory_name..";offhand]"
 			.. "listring[detached:"..villager.inventory_name..";head]"
 			.. "listring[detached:"..villager.inventory_name..";torso]"
 			.. "listring[detached:"..villager.inventory_name..";legs]"
 			.. "listring[detached:"..villager.inventory_name..";feet]"
 			.. "listring[current_player;main]"
-			-- Action buttons at the bottom
-			.. "button[4.5,2.8;2,0.8;job;Changer métier]"
-			.. "button[4.5,3.8;2,0.8;data;Paramètres]"
-			.. "button_exit[4.5,4.8;2,0.8;ok;Fermer]"
+			.. "button_exit[6.5,10.5;2,0.8;ok;Fermer]"
 	end,
 	receiver = function(_, villager, sender, fields)
 		local sender_name = sender:get_player_name()
@@ -549,8 +793,34 @@ forms.register_page("working_villages:inv_gui", {
 			forms.show_formspec(villager, "working_villages:job_change", sender_name)
 			return
 		end
+		if fields.village then
+				forms.show_formspec(villager, "working_villages:village_dashboard", sender_name)
+			return
+		end
 		if fields.data then
 			forms.show_formspec(villager, "working_villages:data_change", sender_name)
+			return
+		end
+		if fields.smart_village then
+			if not working_villages.activate_village_coordination then
+				minetest.chat_send_player(sender_name, "Coordination intelligente indisponible.")
+				return
+			end
+			local result = working_villages.activate_village_coordination(villager)
+			if not result then
+				minetest.chat_send_player(sender_name, "Impossible d'activer la coordination intelligente.")
+				return
+			end
+			minetest.chat_send_player(
+				sender_name,
+				("Coordination intelligente activée: priorité %s, phase %s, %d villageois relancés.")
+					:format(
+						working_villages.describe_village_focus(result.control.focus),
+						result.stage_label or working_villages.describe_bootstrap_stage(result.stage),
+						result.nudged or 0
+					)
+			)
+			forms.show_formspec(villager, "working_villages:inv_gui", sender_name)
 			return
 		end
 	end,

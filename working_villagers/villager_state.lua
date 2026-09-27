@@ -16,6 +16,14 @@ function working_villages.villager:set_pause(state)
     self.object:set_velocity{x = 0, y = 0, z = 0}
     --perhaps check what animation we are in
     self:set_animation(working_villages.animation_frames.STAND)
+  else
+    if self.job_data then
+      self.job_data.pause_reason = nil
+    end
+    -- refresh attachments after une pause (évite l’équipement invisible)
+    if self.refresh_equipment then
+      self:refresh_equipment()
+    end
   end
 end
 
@@ -54,5 +62,50 @@ end
 ]]--
 function working_villages.villager:set_state_info(text)
   assert(type(text) == "string","state info must be a string")
+  if self.state_info == text then
+    return
+  end
   self.state_info = text
+
+  local control = self.get_village_control and self:get_village_control() or nil
+  local notify_level = (control and control.notify_level) or "important"
+  if notify_level == "silent" then
+    return
+  end
+
+  -- Send a short status update to a player so actions are visible.
+  local now = minetest.get_gametime()
+  self.job_data = self.job_data or {}
+  local last_time = self.job_data.last_state_chat_time or 0
+  local min_interval = notify_level == "detailed" and 12 or 20
+  if now - last_time < min_interval then
+    return
+  end
+
+  local msg = self.nametag and self.nametag ~= "" and (self.nametag .. ": " .. text) or text
+  if notify_level == "detailed" and self.owner_name and self.owner_name ~= "" then
+    minetest.chat_send_player(self.owner_name, msg)
+    self.job_data.last_state_chat_time = now
+    return
+  end
+
+  local pos = self.object and self.object:get_pos() or nil
+  if pos then
+    local players = minetest.get_connected_players()
+    local nearest
+    local best = 9999
+    for _, player in ipairs(players) do
+      local ppos = player:get_pos()
+      local dist = vector.distance(pos, ppos)
+      if dist < best then
+        best = dist
+        nearest = player
+      end
+    end
+    if nearest and best <= 20 then
+      minetest.chat_send_player(nearest:get_player_name(), msg)
+      self.job_data.last_state_chat_time = now
+      return
+    end
+  end
 end

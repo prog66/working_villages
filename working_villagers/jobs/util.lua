@@ -71,6 +71,36 @@ function func.find_adjacent_clear(pos)
 
 end
 
+-- Return a reachable standing position beside an interactable node.  The
+-- legacy find_adjacent_clear() checks the air above the node before its four
+-- horizontal neighbours.  That is useful for placement, but it makes workers
+-- try to stand on top of a furnace when the furnace is stacked on another
+-- utility node.  Prefer cardinal neighbours, project each one down to its
+-- supporting ground, and choose the closest valid position to the worker.
+function func.find_interaction_pos(pos, origin)
+	if not pos then return false end
+	pos = vector.round(pos)
+	origin = origin and vector.new(origin) or pos
+	local candidates = {}
+	for _, offset in ipairs({
+		{x = 1, y = 0, z = 0},
+		{x = -1, y = 0, z = 0},
+		{x = 0, y = 0, z = 1},
+		{x = 0, y = 0, z = -1},
+	}) do
+		local ground = func.find_ground_below(vector.add(pos, offset))
+		if ground and func.clear_pos(ground) then
+			candidates[#candidates + 1] = ground
+		end
+	end
+	table.sort(candidates, function(left, right)
+		return vector.distance(origin, left) < vector.distance(origin, right)
+	end)
+	if candidates[1] then return candidates[1] end
+	local fallback = func.find_adjacent_clear(pos)
+	return fallback and func.find_ground_below(fallback) or false
+end
+
 local find_adjacent_clear = func.find_adjacent_clear
 
 -- search in an expanding box around pos in the XZ plane
@@ -178,9 +208,31 @@ local owner_griefing = minetest.settings:get(
     "working_villages_owner_protection")
 local owner_griefing_lc = owner_griefing and string.lower(owner_griefing)
 
+local function own_village_claim_allows(owner, pos)
+	if not owner or owner == "" or not working_villages.get_village_claims_at
+			or not working_villages.village_claims_allow_name then
+		return false
+	end
+	local owns_claim = false
+	for _, claim in ipairs(working_villages.get_village_claims_at(pos)) do
+		if claim.owner_name == owner then
+			owns_claim = true
+			break
+		end
+	end
+	return owns_claim and working_villages.village_claims_allow_name(pos, owner) == true
+end
+
 if not owner_griefing or owner_griefing_lc == "false" then
     -- Villagers may not grief in protected areas.
-    func.is_protected_owner = function(_, pos) -- (owner, pos)
+	-- Their own working_villages claim is an authority boundary, not a wall
+	-- against the villagers it belongs to.
+    func.is_protected_owner = function(owner, pos)
+		if own_village_claim_allows(owner, pos) then
+			-- Bypass only the mod's own claim for its villagers. Existing
+			-- protection mods still receive the conservative anonymous actor.
+			return working_villages.is_externally_protected(pos, "")
+		end
         return minetest.is_protected(pos, "")
     end
 
@@ -234,6 +286,62 @@ end end end -- else else else
 
 function func.is_protected(self, pos)
     return func.is_protected_owner(self.owner_name, pos)
+end
+
+function func.is_furnace(pos)
+	if not pos then
+		return false
+	end
+	local node = minetest.get_node_or_nil(pos)
+	if not node then
+		return false
+	end
+	local compat = working_villages.voxelibre_compat
+	return compat and compat.is_furnace and compat.is_furnace(node.name) or false
+end
+
+function func.find_nearby_furnace(self, pos, searching_range, reservation_scope)
+	return search_surrounding(pos, function(candidate)
+		if not func.is_furnace(candidate) then
+			return false
+		end
+		if self and func.is_protected(self, candidate) then
+			return false
+		end
+		if reservation_scope and self and self.is_position_reserved
+				and self:is_position_reserved(reservation_scope, candidate) then
+			return false
+		end
+		return true
+	end, searching_range)
+end
+
+function func.is_crafting_table(pos)
+	if not pos then
+		return false
+	end
+	local node = minetest.get_node_or_nil(pos)
+	if not node then
+		return false
+	end
+	local compat = working_villages.voxelibre_compat
+	return compat and compat.is_crafting_table and compat.is_crafting_table(node.name) or false
+end
+
+function func.find_nearby_crafting_table(self, pos, searching_range, reservation_scope)
+	return search_surrounding(pos, function(candidate)
+		if not func.is_crafting_table(candidate) then
+			return false
+		end
+		if self and func.is_protected(self, candidate) then
+			return false
+		end
+		if reservation_scope and self and self.is_position_reserved
+				and self:is_position_reserved(reservation_scope, candidate) then
+			return false
+		end
+		return true
+	end, searching_range)
 end
 
 -- chest manipulation support functions

@@ -44,3 +44,14 @@ for _,name in pairs(list_of_bed_bottom) do
 	end
 end
 
+-- Normalize only explicitly verified edible Minetest Game items.  VoxeLibre
+-- already supplies the generic `food` group consumed by the jobs and needs.
+for _, name in ipairs(compat.get_food_items()) do
+	local item_def = minetest.registered_items[name]
+	if item_def then
+		local groups = table.copy(item_def.groups or {})
+		groups.food = math.max(1, tonumber(groups.food) or 0)
+		minetest.override_item(name, {groups = groups})
+	end
+end
+

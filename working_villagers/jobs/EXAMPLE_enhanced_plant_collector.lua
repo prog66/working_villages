@@ -158,21 +158,21 @@ working_villages.register_job("working_villages:job_plant_collector_enhanced", {
             search_range = config.searching_range,
             no_target_message = "Je cherche des plantes a recolter.",
             working_message = "J'ai trouve des plantes a recolter.",
-            action_func = function(self, target_pos)
+            action_func = function(worker, target_pos)
               -- Collect the plant
               local node = minetest.get_node(target_pos)
-              minetest.node_dig(target_pos, node, self.object)
+              minetest.node_dig(target_pos, node, worker.object)
               
               -- Remember this location as productive
               ai_behavior.memory.remember_location(
-                self,
+                worker,
                 "plant_locations",
                 target_pos,
                 {plant_type = node.name}
               )
               
               -- Small experience gain
-              job_patterns.experience.award(self, 1)
+              job_patterns.experience.award(worker, 1)
             end,
           })
           

@@ -11,6 +11,13 @@
 
 local func = working_villages.require("jobs/util")
 local ai_behavior = working_villages.ai_behavior
+local compat = working_villages.voxelibre_compat
+local safe_common_items = {
+	[compat.get_item("default:wood")] = true,
+	[compat.get_item("default:stick")] = true,
+	[compat.get_item("default:dirt")] = true,
+	[compat.get_item("default:stone")] = true,
+}
 
 -- Job name constant for reference
 local LEARNER_JOB_NAME = "working_villages:job_apprenant"
@@ -128,7 +135,8 @@ local function do_exploration(self)
 		
 		-- Remember explored location
 		ai_behavior.memory.remember_location(self, "explored", destination, {
-			time = os.clock()
+			observed_at = tonumber(minetest.get_gametime()) or 0,
+			observed_at_clock = "gametime_v1",
 		})
 		
 		-- Occasionally say something while exploring
@@ -185,7 +193,7 @@ local function do_experimentation(self)
 	self:count_timer("learner:experiment")
 	
 	local interval = get_experiment_interval()
-	if self:timer_exceeded("learner:experiment", interval) then
+	if self:seconds_exceeded("learner:experiment", interval) then
 		local my_pos = self.object:get_pos()
 		
 		-- Try to pick up nearby items (learning to gather)
@@ -199,12 +207,9 @@ local function do_experimentation(self)
 				if minetest.get_item_group(item_name, "food") > 0 then return true end
 				if minetest.get_item_group(item_name, "flora") > 0 then return true end
 				if minetest.get_item_group(item_name, "sapling") > 0 then return true end
-				-- Only accept specific default items to avoid collecting precious/special items
-				if item_name == "default:wood" then return true end
-				if item_name == "default:stick" then return true end
-				if item_name == "default:dirt" then return true end
-				if item_name == "default:stone" then return true end
-				if item_name:match("^default:.*_leaves$") then return true end
+				-- Keep the allowlist cross-game and group-based where possible.
+				if safe_common_items[item_name] then return true end
+				if minetest.get_item_group(item_name, "leaves") > 0 then return true end
 				return false
 			end
 			
