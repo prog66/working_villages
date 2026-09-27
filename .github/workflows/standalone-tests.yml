@@ -44,6 +44,7 @@ jobs:
           lua5.1 working_villagers/tests/blacksmith_builder_safety_spec.lua working_villagers
           lua5.1 working_villagers/tests/survival_spec.lua working_villagers
           lua5.1 working_villagers/tests/village_registry_spec.lua working_villagers
+          lua5.1 working_villagers/tests/villager_state_spec.lua working_villagers
 
       - name: Record engine-test boundary
         if: always()

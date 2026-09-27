@@ -18,6 +18,16 @@ function working_villages.villager:set_pause(state)
     self:set_animation(working_villages.animation_frames.STAND)
   else
     if self.job_data then
+      -- A job that exhausted its retries pauses itself with reason "error"
+      -- and job_coroutines.resume() then refuses to run it again forever,
+      -- even after this pause is lifted (manually via the sceptre, or
+      -- automatically by the generic 200-tick auto-resume timer since
+      -- "error" is not "manual"). Clearing job_error_state here is what
+      -- actually gives the job a fresh attempt instead of leaving the
+      -- villager looking active while permanently stuck.
+      if self.job_data.pause_reason == "error" then
+        self.job_data.job_error_state = nil
+      end
       self.job_data.pause_reason = nil
     end
     -- refresh attachments after une pause (évite l’équipement invisible)

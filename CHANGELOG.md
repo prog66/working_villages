@@ -62,6 +62,20 @@ fil des itérations suivantes de la même revue.
   documenté en commentaire dans le fichier ; dans `mcl_farming`, les stades
   de croissance sont numérotés mais la culture mûre finale prend le nom
   sans suffixe. Aucune action nécessaire.
+- **Villageois "bloque" apres reprise reste corrige** : quand le metier d'un
+  villageois echouait 3 fois de suite, il etait mis en pause avec la raison
+  "error" et le joueur (ou le minuteur automatique de reprise a 200 ticks)
+  pouvait lever cette pause, mais le compteur d'echecs interne
+  (`job_data.job_error_state.exhausted`) n'etait jamais efface : le
+  villageois semblait actif (non pause, anime normalement) mais son metier
+  ne s'executait plus jamais, sans aucun message d'erreur repete pour
+  l'expliquer. La seule echappatoire etait de changer son metier puis de le
+  remettre. `villager_state.lua:set_pause(false)` efface maintenant l'etat
+  d'erreur du metier quand la pause levee avait pour raison "error".
+- Nouveau test `tests/villager_state_spec.lua` couvrant `set_pause` (y
+  compris la correction ci-dessus) et le repli "detaillees" -> joueur le
+  plus proche de `set_state_info` corrige plus haut ; ajoute au workflow
+  CI `standalone-tests.yml`.
 
 ### Revue en cours
 
