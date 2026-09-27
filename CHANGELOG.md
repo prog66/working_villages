@@ -48,6 +48,20 @@ fil des itérations suivantes de la même revue.
   connecté avant d'utiliser ce chemin dédié.
 - Correction d'un test (`village_registry_spec.lua`) qui passait un
   booléen comme message d'erreur au lieu d'un texte descriptif.
+- CI : `ore_smelting_spec.lua` (comme `compat_spec.lua`) nécessite un vrai
+  moteur Luanti et n'était pas documenté comme exclu du job Lua autonome ;
+  le résumé du workflow le mentionne maintenant explicitement.
+- Nettoyage de code mort/pièges trouvés par la revue : variable locale
+  `voxelibre_compat` jamais utilisée dans `util.lua` ; `compat/vl.lua`
+  masquait la fonction globale `pairs` avec une variable locale du même nom
+  dans `build_bed_pairs` (aucun bug actuel, mais un piège pour un futur
+  ajout de boucle dans cette fonction).
+- Vérifié : le changement de clé de maturité des cultures VoxeLibre dans
+  `farming_compat.lua` (`mcl_farming:wheat_8` -> `mcl_farming:wheat` sans
+  suffixe) signalé comme suspect par la revue est intentionnel et déjà
+  documenté en commentaire dans le fichier ; dans `mcl_farming`, les stades
+  de croissance sont numérotés mais la culture mûre finale prend le nom
+  sans suffixe. Aucune action nécessaire.
 
 ### Revue en cours
 

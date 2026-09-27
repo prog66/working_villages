@@ -49,6 +49,6 @@ jobs:
         if: always()
         run: |
           echo '### Test scope' >> "$GITHUB_STEP_SUMMARY"
-          echo '- The standalone job does not run `compat_spec.lua` by itself.' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Compatibility mappings and `test_harness/` require a real isolated Luanti world with the target game installed.' >> "$GITHUB_STEP_SUMMARY"
+          echo '- The standalone job does not run `compat_spec.lua` or `ore_smelting_spec.lua` by itself.' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Both require a real isolated Luanti world with the target game installed (real ItemStack/minetest.registered_items/minetest.get_craft_result), not the fake globals this job provides.' >> "$GITHUB_STEP_SUMMARY"
           echo '- Manual gameplay is outside this CI job.' >> "$GITHUB_STEP_SUMMARY"

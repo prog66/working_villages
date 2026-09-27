@@ -1,5 +1,4 @@
 local wv_util = {}
-local voxelibre_compat = working_villages.voxelibre_compat
 
 local debug_checks = working_villages.setting_enabled("debug_checks",true)
 

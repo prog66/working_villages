@@ -76,17 +76,17 @@ function compat.get_bed_items()
 end
 
 local function build_bed_pairs()
-	local pairs = {}
+	local result = {}
 	local beds = compat.get_bed_items()
 	for idx, top in ipairs(beds.top) do
 		local bottom = beds.bottom[idx] or beds.bottom[1]
-		pairs[top] = {part = "top", top = top, bottom = bottom}
+		result[top] = {part = "top", top = top, bottom = bottom}
 	end
 	for idx, bottom in ipairs(beds.bottom) do
 		local top = beds.top[idx] or beds.top[1]
-		pairs[bottom] = {part = "bottom", top = top, bottom = bottom}
+		result[bottom] = {part = "bottom", top = top, bottom = bottom}
 	end
-	return pairs
+	return result
 end
 
 local bed_pairs = build_bed_pairs()
