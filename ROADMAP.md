@@ -228,7 +228,7 @@ working_villages.memory = {
 ```
 
 *Statut : implémenté (module `working_villagers/memory.lua`, sérialisation dans `api.lua`, nettoyage périodique dans `on_step`).*
-*Ajout : HUD permanent (besoins + apprentissages) et workflow d'autorisations pour expérimentations/édition de plans.*
+*Ajout : HUD permanent (besoins + apprentissages) et workflow d'autorisations pour expérimentations/édition de plans. Corrigé le 27/09/2026 (alpha.8) : les barres de besoins étaient invisibles depuis leur introduction (texture transparente colorisée) ; le HUD montre désormais des barres colorées lisibles, le nom/métier du villageois suivi et un résumé de village en secours.*
 
 ### Livrables Phase 1
 - [x] Module de gestion des besoins

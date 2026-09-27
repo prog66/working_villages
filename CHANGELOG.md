@@ -1,5 +1,69 @@
 # Changelog
 
+## 0.13.0-alpha.8 - 2026-09-27
+
+Alpha de revue de code et de lisibilité HUD, lancée en continu (boucle de
+travail) suite à un audit complet du dépôt. Cette entrée sera complétée au
+fil des itérations suivantes de la même revue.
+
+### Corrections de securite/vie privee
+
+- **Fuite de position corrigee** : la page "Tableau du village" (accessible
+  en clic-droit sur N'IMPORTE QUEL villageois, y compris ceux d'un village
+  qui n'est pas le vôtre) affichait les coordonnées exactes du coffre
+  commun, du poste de travail et de la maison du villageois sélectionné,
+  sans aucune vérification de propriétaire. N'importe quel joueur pouvait
+  donc repérer précisément où piller un village adverse. Les coordonnées ne
+  sont désormais montrées qu'aux joueurs ayant les droits de gestion sur ce
+  village (propriétaire ou allié avec droits) ; le reste du tableau
+  (population, métiers, ressources agrégées) reste visible en lecture seule
+  comme prévu par le design existant. Trouvé et corrigé le 27 septembre 2026
+  suite à une revue de code automatisée sur l'ensemble du diff depuis
+  `8eb12c2`.
+
+### Corrections
+
+- **HUD persistant enfin visible** : les barres de besoins (faim, énergie,
+  outils, matériaux) et l'icône de statut du HUD étaient construites en
+  colorisant `blank.png`, la texture transparente conventionnelle des deux
+  jeux supportés — coloriser une texture transparente reste transparent.
+  Le HUD affichait donc uniquement du texte, sans aucune barre visible,
+  depuis son introduction. Le HUD utilise maintenant la texture opaque du
+  mod (`working_villages_pixel.png`, déjà présente dans le dépôt mais
+  jamais utilisée) et ajoute : un fond semi-transparent derrière le bloc
+  pour la lisibilité, une couleur dédiée par barre de besoin, le nom et le
+  métier du villageois suivi, et un résumé du village (population par
+  métier) quand aucun villageois du joueur n'est à proximité.
+- Le combat de secours (`villager:atack`) forçait au moins 1 point de
+  dégâts via `set_hp` quand `punch()` laissait les PV inchangés ; ce
+  mécanisme de repli (nécessaire pour certains mobs VoxeLibre dont
+  `punch()` seul ne suffit pas) ne vérifie plus jamais une cible joueur
+  avant de forcer ses PV. Aucun appelant actuel ne visait un joueur
+  (`is_enemy()` les exclut déjà), donc ce changement est une protection
+  défensive plutôt qu'une correction de comportement observé.
+- Le niveau de notification "detaillees" perdait silencieusement tous les
+  messages d'état d'un villageois quand son propriétaire était hors ligne,
+  au lieu de les rediriger vers le joueur connecté le plus proche comme les
+  autres niveaux ; il vérifie maintenant que le propriétaire est bien
+  connecté avant d'utiliser ce chemin dédié.
+- Correction d'un test (`village_registry_spec.lua`) qui passait un
+  booléen comme message d'erreur au lieu d'un texte descriptif.
+
+### Revue en cours
+
+Une revue de code automatisée à 10 agents a été lancée sur l'intégralité du
+diff depuis `8eb12c2` (documentation, harnais de test, code du mod). Au-delà
+des corrections ci-dessus, elle a remonté une dizaine d'autres pistes
+(plausibles, non toutes confirmées) qui seront traitées dans les prochaines
+itérations : score d'armure incohérent entre pièce équipée et candidate
+dans `equip_best_armor`, réinitialisation du dépassement d'échecs d'un job
+non nettoyée par une reprise manuelle au sceptre, `on_start` d'un job
+ré-exécuté à chaque tick faute de yield dans la plupart des `jobfunc`,
+scans de protection redondants dans `inventory_access.lua`, et duplication
+de `parse_schematic_content`/`get_bounds` entre `building.lua`,
+`blueprints.lua` et `construction_planner.lua`. Voir l'historique de session
+pour le detail complet par fichier.
+
 ## 0.13.0-alpha.7 - 2026-09-27
 
 Alpha de cohérence agricole et de construction pour serveur public.

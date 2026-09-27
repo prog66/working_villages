@@ -76,7 +76,7 @@ local alice, created = villages.ensure("alice", {
 	center = {x = 12, y = 7, z = -4},
 	radius = 40,
 })
-assert_true(alice, created)
+assert_true(alice, "ensure must return the village record")
 assert_equal(created, true, "first ensure must create a village")
 assert_equal(alice.schema_version, villages.SCHEMA_VERSION)
 assert_equal(alice.id, villages.id_for_owner("alice"), "owner ID must be deterministic")

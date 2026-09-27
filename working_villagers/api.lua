@@ -4302,7 +4302,13 @@ function working_villages.villager:atack(target)
   local before_hp = target:get_hp()
   target:punch(self.object, 1.0, {full_punch_interval = 1.0, damage_groups = {fleshy = damage}}, dir)
   local after_hp = target:get_hp()
-  if before_hp and after_hp and after_hp == before_hp then
+  -- Some mob implementations leave HP unchanged on punch() (knockback-only
+  -- reaction, internal cooldown); force it so guard/hunt combat still lands.
+  -- Never force a player's HP this way: punch() already applies whatever the
+  -- server's damage/PvP rules allow, and every current caller only ever
+  -- passes hostile mobs or animals (is_enemy() excludes players), so this is
+  -- a safety rail against a future caller accidentally targeting a player.
+  if before_hp and after_hp and after_hp == before_hp and not target:is_player() then
     local fallback = math.max(1, damage)
     target:set_hp(math.max(0, before_hp - fallback))
   end

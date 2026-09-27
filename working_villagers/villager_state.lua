@@ -83,7 +83,11 @@ function working_villages.villager:set_state_info(text)
   end
 
   local msg = self.nametag and self.nametag ~= "" and (self.nametag .. ": " .. text) or text
-  if notify_level == "detailed" and self.owner_name and self.owner_name ~= "" then
+  -- Only take the owner-only path if the owner is actually online: chat_send_player
+  -- silently drops the message otherwise, which made "detailed" less reliable than
+  -- the nearest-player fallback used by every other notify level.
+  if notify_level == "detailed" and self.owner_name and self.owner_name ~= ""
+      and minetest.get_player_by_name(self.owner_name) then
     minetest.chat_send_player(self.owner_name, msg)
     self.job_data.last_state_chat_time = now
     return

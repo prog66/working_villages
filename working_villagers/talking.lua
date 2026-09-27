@@ -370,7 +370,7 @@ local function format_position_line(label, pos)
 	return label .. ": " .. minetest.pos_to_string(vector.round(pos), 0)
 end
 
-local function build_villager_detail_text(villager)
+local function build_villager_detail_text(villager, reveal_positions)
 	if not villager then
 		return "Aucun villageois charge pour ce village."
 	end
@@ -397,22 +397,27 @@ local function build_villager_detail_text(villager)
 		table.insert(lines, "Demandes en attente: " .. pending_permissions)
 	end
 
-	local pos_data = villager.pos_data or {}
-	local job_pos_line = format_position_line("Poste", pos_data.job_pos)
-	if job_pos_line then
-		table.insert(lines, job_pos_line)
-	end
-	local storage_line = format_position_line("Coffre", pos_data.storage_pos)
-	if storage_line then
-		table.insert(lines, storage_line)
-	end
+	-- Exact chest/home coordinates are only shown to owners/managers: any
+	-- viewer could otherwise right-click a stranger's wandering villager and
+	-- read the precise location of that village's chest and houses.
+	if reveal_positions then
+		local pos_data = villager.pos_data or {}
+		local job_pos_line = format_position_line("Poste", pos_data.job_pos)
+		if job_pos_line then
+			table.insert(lines, job_pos_line)
+		end
+		local storage_line = format_position_line("Coffre", pos_data.storage_pos)
+		if storage_line then
+			table.insert(lines, storage_line)
+		end
 
-	if villager.has_home and villager.get_home and villager:has_home() then
-		local home = villager:get_home()
-		local home_pos = home and home.get_pos and home:get_pos() or nil
-		local home_line = format_position_line("Maison", home_pos)
-		if home_line then
-			table.insert(lines, home_line)
+		if villager.has_home and villager.get_home and villager:has_home() then
+			local home = villager:get_home()
+			local home_pos = home and home.get_pos and home:get_pos() or nil
+			local home_line = format_position_line("Maison", home_pos)
+			if home_line then
+				table.insert(lines, home_line)
+			end
 		end
 	end
 
@@ -472,7 +477,7 @@ forms.register_page("working_villages:village_dashboard", {
 		local active_tasks = count_active_village_tasks(villager.owner_name)
 		local mode = working_villages.gameplay_mode or "survival"
 		local selected_name = selected_villager and get_villager_label(selected_villager) or "Aucun villageois selectionne"
-		local selected_details = build_villager_detail_text(selected_villager)
+		local selected_details = build_villager_detail_text(selected_villager, can_manage)
 
 		local form = forms.form_base(12, 10.4, villager)
 		form = form
