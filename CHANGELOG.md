@@ -2,6 +2,20 @@
 
 ## 0.13.0-alpha.9 - 2026-09-27 (en cours)
 
+### Page de garde a affichage double corrigee
+
+`working_villages:guard_check` (une page de secours qui redirige vers la
+config garde ou explique que ce villageois n'est pas garde) appelait
+`forms.show_formspec` sur `guard_config` depuis son propre constructeur
+puis retournait une chaine vide : le client recevait donc un vrai
+formulaire de configuration garde, immediatement suivi d'un deuxieme
+formulaire vide sous un autre nom, effacant le premier. Cette page n'est
+plus reliee depuis le menu normal (le lien direct pointe deja vers
+`guard_config`), donc non observable en jeu actuellement, mais corrigee
+par prudence : `guard_config_constructor` a ete extrait en fonction
+nommee, que `guard_check` appelle desormais directement pour recuperer le
+vrai contenu du formulaire au lieu de declencher un second affichage.
+
 ### Menu perime = impasse silencieuse
 
 Quand `forms.show_formspec` recevait un nom de formulaire non enregistre,

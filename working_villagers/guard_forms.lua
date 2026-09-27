@@ -37,10 +37,9 @@ local function get_inv_name(villager)
 	return inv_name
 end
 
--- Main guard configuration form
-forms.register_page("working_villages:guard_config", {
-	requires_manage = true,
-	constructor = function(_, villager, player_name)
+-- Named so guard_check below can delegate to it directly (return its
+-- result) instead of triggering a second, nested top-level formspec show.
+local function guard_config_constructor(_, villager, player_name)
 		local inv_name = get_inv_name(villager)
 		if not inv_name then
 			return forms.form_base(8, 8, villager) ..
@@ -135,8 +134,11 @@ forms.register_page("working_villages:guard_config", {
 		formspec = formspec .. "button_exit[5.9,8;2.6,1;close;Fermer]"
 		
 		return formspec
-	end,
-	
+end
+
+forms.register_page("working_villages:guard_config", {
+	requires_manage = true,
+	constructor = guard_config_constructor,
 	receiver = function(_, villager, player, fields)
 		local inv_name = get_inv_name(villager)
 		if not inv_name then
@@ -296,9 +298,13 @@ forms.register_page("working_villages:guard_check", {
 	requires_manage = true,
 	constructor = function(_, villager, player_name)
 		if is_guard(villager) then
-			-- If it's a guard, redirect to guard config
-			forms.show_formspec(villager, "working_villages:guard_config", player_name)
-			return "" -- Return empty string since we're redirecting
+			-- Return guard_config's own formspec directly instead of calling
+			-- forms.show_formspec here: that would fully display guard_config
+			-- (a real top-level minetest.show_formspec call) and THEN this
+			-- constructor's own return value would be shown right after it
+			-- under a different formspec name, blanking/replacing the screen
+			-- guard_config just displayed.
+			return guard_config_constructor(_, villager, player_name)
 		else
 			-- Not a guard, show message
 			return forms.form_base(8, 5, villager) ..
