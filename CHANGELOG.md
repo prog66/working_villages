@@ -2,6 +2,25 @@
 
 ## 0.13.0-alpha.9 - 2026-09-27 (en cours)
 
+### API_REFERENCE.md complete pour les nouveaux modules
+
+Meme lacune que pour ARCHITECTURE.md : aucune fonction de `needs.lua`,
+`inventory_access.lua`, `crafting.lua`, `communication.lua`,
+`collaborative_tasks.lua` ou `access.lua` n'etait documentee. Ajout d'une
+section ciblee sur les fonctions les plus utiles a un auteur de nouveau
+metier, avec verification de chaque signature/comportement dans le code
+source avant redaction plutot que par supposition. Deux erreurs ont ete
+trouvees et corrigees pendant cette verification, avant tout commit :
+- `needs.get_low` a ete d'abord documentee a tort comme triee par
+  priorite avec un champ `executable` ; elle retourne en realite une
+  liste non triee de `{name, level, value}`.
+- `crafting.ensure_item`'s `opts.max_depth` a ete d'abord documente comme
+  un reglage effectif, avant de verifier que `ensure_any_item` (le point
+  d'entree utilise par `blacksmith.lua`) ne transmet jamais ce reglage a
+  `ensure_item` : l'option est en realite un no-op silencieux la ou elle
+  est utilisee aujourd'hui. Note ajoutee directement dans la
+  documentation plutot que laissee de cote.
+
 ### ARCHITECTURE.md remis a niveau
 
 Ce document decrivait encore l'etat du mod d'avant l'alpha.1 : aucun des

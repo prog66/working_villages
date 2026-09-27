@@ -10,7 +10,8 @@ Ce document fournit une référence complète de l'API du mod working_villages p
 4. [Système de blueprints](#système-de-blueprints)
 5. [Patterns de jobs](#patterns-de-jobs)
 6. [Système de comportement IA](#système-de-comportement-ia)
-7. [Compatibilité VoxeLibre](#compatibilité-voxelibre)
+7. [Nouveaux modules depuis alpha 1](#nouveaux-modules-depuis-alpha-1)
+8. [Compatibilité VoxeLibre](#compatibilité-voxelibre)
 
 ## Enregistrement de villageois
 
@@ -645,6 +646,148 @@ Sélectionne la meilleure tâche parmi une liste.
 ```
 
 **Retour:** `table` - Meilleure tâche ou `nil`
+
+## Nouveaux modules depuis alpha 1
+
+Modules introduits après la rédaction initiale de ce document. Voir
+ARCHITECTURE.md pour une vue d'ensemble de chacun et AUDIT_STATUS.md pour
+leur niveau de preuve (code / test autonome / test moteur / test manuel) ;
+cette section ne documente que les fonctions qu'un auteur de nouveau
+métier appelle le plus couramment, pas l'intégralité de chaque module.
+
+### Besoins (`working_villages.needs`)
+
+#### needs.get(self, name)
+Lit la jauge d'un besoin.
+
+**Paramètres:**
+- `self` (villager)
+- `name` (string): `"hunger"`, `"energy"`, `"tools"` ou `"materials"`
+
+**Retour:** `number` - Valeur entre 0 et 100 (100 si non initialisé)
+
+#### needs.set(self, name, value) / needs.adjust(self, name, delta)
+Fixe ou ajuste une jauge (bornée automatiquement entre 0 et 100).
+
+#### needs.get_low(self)
+**Retour:** `table` - Liste (non triée) des besoins sous leur seuil bas ou
+critique parmi ceux marqués exploitables par la config (`cfg.decision ~=
+false`). Chaque entrée : `{name, level, value}` avec `level` valant
+`"low"` ou `"critical"`.
+
+### Accès aux inventaires de nœuds (`working_villages.inventory_access`)
+
+Utilisé par la quasi-totalité des métiers pour parler à un coffre, un four
+ou un établi pour le compte d'un villageois. Toutes ces fonctions
+vérifient la protection avant d'agir et échouent fermé (refusent) en cas
+d'erreur plutôt que de laisser passer.
+
+#### inventory_access.put_stack(self, pos, listname, stack, preferred_index)
+Dépose `stack` dans la liste `listname` du nœud à `pos`.
+
+**Retour:** `remaining (ItemStack), moved (number)` - `remaining` est ce
+qui n'a **pas** pu être déposé (jamais perdu, à conserver par l'appelant) ;
+`moved` est la quantité réellement déposée.
+
+#### inventory_access.take_stack(self, pos, listname, index, maximum)
+Retire jusqu'à `maximum` objets de l'emplacement `index`.
+
+**Retour:** `taken (ItemStack), taken_count (number)`
+
+#### inventory_access.take_to_inventory / put_from_inventory
+Variantes qui transfèrent directement vers/depuis une autre `InvRef`
+(typiquement `self:get_inventory()`) sans repasser par l'inventaire de
+l'appelant.
+
+**Exemple:**
+```lua
+local inventory_access = working_villages.require("inventory_access")
+local taken, moved = inventory_access.take_stack(self, chest_pos, "main", 1, 10)
+if moved > 0 then
+    self:get_inventory():add_item("main", taken)
+end
+```
+
+### Artisanat partagé (`working_villages.crafting`)
+
+#### crafting.ensure_item(self, itemname, count, opts, ctx)
+S'assure que le villageois possède `count` exemplaires de `itemname` dans
+son inventaire principal, en le fabriquant récursivement (sous-recettes,
+résolution de groupes, établi si nécessaire) si besoin. Échec atomique :
+si la fabrication échoue en cours de route, les ressources déjà entamées
+sont restaurées plutôt que perdues (sauf avec `opts.use_shared_storage`,
+qui étend la transaction au coffre commun).
+
+**Paramètres notables de `opts`:**
+- `use_shared_storage` (boolean): autorise à puiser dans le coffre commun
+- `fail_cooldown` (number, secondes): délai avant de retenter après un
+  échec (défaut 15s)
+- `force` (boolean): ignore le cooldown d'échec
+- `rollback_local_failure` (boolean, défaut `true`): restaure
+  l'inventaire principal si la fabrication échoue en cours de route ;
+  désactivé automatiquement quand `use_shared_storage` est vrai, car la
+  transaction dépasse alors l'inventaire local
+
+Le 5e paramètre `ctx` (optionnel, distinct de `opts`) contrôle la
+récursion : `ctx.max_depth` limite la profondeur de sous-recettes
+(défaut 4). Note verifiee en ecrivant cette section : passer `max_depth`
+**dans `opts`** (comme le fait un appel existant dans `blacksmith.lua`)
+n'a aucun effet, `ensure_any_item` ne transmet jamais de `ctx` a
+`ensure_item` ; seul un vrai 5e argument `ctx` fonctionne.
+
+**Retour:** `success (boolean), result (table)` - `result` détaille les
+objets manquants si `success` est `false`.
+
+#### crafting.ensure_any_item(self, candidates, count, opts)
+Comme `ensure_item`, mais essaie chaque nom de `candidates` dans l'ordre
+et s'arrête au premier qui aboutit (utilisé pour les paliers d'outils
+bois/pierre/fer par exemple). Ne prend pas de `ctx` : chaque candidat
+repart avec une profondeur de recursion fraiche.
+
+### Communication et tâches collaboratives
+
+#### communication.send_message(from, to, message_type, data) / communication.broadcast(from, targets, message_type, data)
+Envoie un message à un villageois précis ou à une liste de cibles.
+`message_type` est une chaîne libre (`"help_needed"`, `"resource_found"`,
+`"danger_alert"`, ...) ; les messages reçus s'accumulent dans la boîte de
+réception du destinataire jusqu'à `communication.consume_messages(self)`.
+
+#### communication.find_nearby_villagers(pos, radius, filter_job, owner_name)
+**Retour:** `table` - Villageois chargés dans `radius`, filtrés par métier
+et/ou propriétaire si précisés.
+
+#### tasks.start_task(name, initiator, data) (`working_villages.collaborative_tasks`)
+Démarre une tâche collaborative persistante enregistrée via
+`tasks.register_task`. Tâches déjà fournies par le mod :
+`resource_delivery`, `food_support`, `mining_tool_supply`,
+`danger_response`, `large_building`.
+
+**Retour:** `task_id (string) ou nil, reason (string)`
+
+#### tasks.update(task_id, updates) / tasks.complete(task_id, result) / tasks.fail(task_id, reason)
+Font progresser, terminent ou annulent une tâche existante. Les tâches ont
+un TTL et sont nettoyées automatiquement (`tasks.cleanup`).
+
+### Contrôle d'accès (`working_villages.access`)
+
+#### access.can_manage_villager(villager, player_or_name)
+Vérifie si un joueur peut gérer (donner des ordres à, ouvrir l'inventaire
+de) un villageois : vrai pour le propriétaire, un allié explicite, ou un
+administrateur avec `protection_bypass` ; faux pour un visiteur, sauf mode
+village public explicitement activé.
+
+**Retour:** `allowed (boolean), reason (string ou nil)` - `reason` vaut
+par exemple `"not_owner"`, `"self_employed_private"` ou
+`"commanding_sceptre_required"`, utilisable pour un message d'erreur
+adapté (voir `commanding_sceptre.lua` pour un exemple d'utilisation).
+
+Toute nouvelle page de formulaire qui expose une action sensible (gestion
+d'inventaire, accès à un coffre, changement de métier, ...) doit déclarer
+`requires_manage = true` lors de `forms.register_page` : c'est le seul
+garde-fou qui empêche un joueur quelconque d'agir sur un villageois qui
+n'est pas le sien. Deux failles de cette nature ont été trouvées et
+corrigées en alpha.8/alpha.9 (voir CHANGELOG.md) sur des pages qui
+avaient omis ce champ.
 
 ## Compatibilité VoxeLibre
 
