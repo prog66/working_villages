@@ -1,0 +1,54 @@
+name: Lua standalone tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  standalone-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Lua 5.1
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes lua5.1
+          lua5.1 -v
+
+      - name: Run pure and fake-Luanti regression tests
+        run: |
+          lua5.1 working_villagers/tests/startup_spec.lua working_villagers
+          lua5.1 working_villagers/tests/needs_spec.lua working_villagers
+          lua5.1 working_villagers/tests/population_spec.lua working_villagers
+          lua5.1 working_villagers/tests/access_spec.lua working_villagers
+          lua5.1 working_villagers/tests/forms_access_spec.lua working_villagers
+          lua5.1 working_villagers/tests/collaborative_tasks_spec.lua working_villagers
+          lua5.1 working_villagers/tests/crafting_spec.lua working_villagers
+          lua5.1 working_villagers/tests/timekeeping_spec.lua working_villagers
+          lua5.1 working_villagers/tests/job_coroutines_spec.lua working_villagers
+          lua5.1 working_villagers/tests/chest_cadence_spec.lua working_villagers
+          lua5.1 working_villagers/tests/tool_fallback_spec.lua working_villagers
+          lua5.1 working_villagers/tests/farmer_mature_priority_spec.lua working_villagers
+          lua5.1 working_villagers/tests/crop_planner_spec.lua working_villagers
+          lua5.1 working_villagers/tests/construction_planner_spec.lua working_villagers
+          lua5.1 working_villagers/tests/miner_wood_bootstrap_spec.lua working_villagers
+          lua5.1 working_villagers/tests/autonomous_bootstrap_wait_spec.lua working_villagers
+          lua5.1 working_villagers/tests/resource_delivery_spec.lua working_villagers
+          lua5.1 working_villagers/tests/blacksmith_builder_safety_spec.lua working_villagers
+          lua5.1 working_villagers/tests/survival_spec.lua working_villagers
+          lua5.1 working_villagers/tests/village_registry_spec.lua working_villagers
+
+      - name: Record engine-test boundary
+        if: always()
+        run: |
+          echo '### Test scope' >> "$GITHUB_STEP_SUMMARY"
+          echo '- The standalone job does not run `compat_spec.lua` by itself.' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Compatibility mappings and `test_harness/` require a real isolated Luanti world with the target game installed.' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Manual gameplay is outside this CI job.' >> "$GITHUB_STEP_SUMMARY"

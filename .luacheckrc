@@ -2,7 +2,8 @@ max_line_length = 240
 
 ignore = {
 	--setting a read-only field of a global variable
-	--"122",
+	-- Runtime harnesses deliberately wrap and restore selected engine callbacks.
+	"122",
 	--unused globals
 	--"131",
 	--setting and acessing undefined fields of global variables
@@ -31,6 +32,7 @@ read_globals = {
 	"default", "doors",
 	-- mods - VoxeLibre
 	"mcl_core", "mcl_doors", "mcl_beds", "mcl_chests", "mcl_farming", "mcl_torches", "mcl_sounds",
+	"mcl_autogroup", "mcl_experience", "mcl_mobs", "mcl_player", "mcl_skins",
 	-- special minetest functions
 	"table.copy",
 }

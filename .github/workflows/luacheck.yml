@@ -1,15 +1,29 @@
-name: luacheck
+name: Lua lint
 
-on: [push]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  lint:
+  luacheck:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v2.0.0
-        with:
-          submodules: recursive
-      - name: run luacheck
-        uses: Roang-zero1/factorio-mod-luacheck@master
-        with:
-          LUACHECKRC_URL: https://raw.githubusercontent.com/${{github.repository}}/${{github.sha}}/.luacheckrc
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Lua 5.1 and Luacheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes lua5.1 luarocks
+          sudo luarocks --lua-version=5.1 install luacheck
+          luacheck --version
+
+      - name: Lint repository Lua sources
+        run: |
+          git ls-files -z '*.lua' ':(exclude)working_villagers/modutil/**' \
+            | xargs -0 --no-run-if-empty luacheck --config .luacheckrc
