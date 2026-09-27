@@ -8,25 +8,123 @@ Le mod `working_villages` est un système complexe qui permet aux villageois de 
 
 ```
 working_villages/
-├── working_villagers/          # Module principal
-│   ├── jobs/                   # Définitions des métiers
-│   ├── modutil/                # Sous-module d'utilitaires
-│   ├── schems/                 # Schémas de structures
-│   └── textures/               # Textures du mod
-└── building_sign/              # Module des marqueurs de construction
+└── working_villagers/          # Module principal (seul mod du dépôt)
+    ├── jobs/                   # Définitions des métiers
+    ├── compat/                 # Couche de compatibilité unifiée (compat/vl.lua)
+    ├── tests/                  # Suites de tests autonomes (lua5.1, sans moteur)
+    ├── modutil/                # Ancien sous-module Git, non requis à l'exécution
+    ├── schems/                 # Schémas de structures (.we)
+    └── textures/               # Textures du mod
 ```
+
+Note : ce dépôt contenait aussi un mod séparé `building_sign/` (marqueurs de
+construction/panneaux) ; il a été retiré, sa fonctionnalité étant reprise
+par `building.lua`. `modutil/` reste présent comme métadonnée Git
+historique mais `loader.lua` charge le mod sans dépendance d'exécution à
+ce sous-module (voir README.MD, section "Submodules").
 
 ## Composants principaux
 
 ### 1. Système de base (Core System)
 
+#### loader.lua
+Chargeur local minimal (`working_villages.require(name)`) : résout et
+exécute chaque fichier du mod au plus une fois, sans dépendance
+d'exécution au sous-module `modutil`. Détecte les cycles de dépendance et
+rejette les chemins invalides.
+
+#### log.lua
+Journalisation structurée (`log.error`, `log.warning`, ...) utilisée par
+la plupart des modules récents à la place d'appels `minetest.log` bruts.
+
 #### init.lua
-Point d'entrée du mod. Charge tous les modules dans le bon ordre :
-1. Compatibilité (VoxeLibre/minetest_game)
-2. Groupes et formes
-3. Systèmes de gestion (storage, buildings, blueprints)
-4. API de base
-5. Métiers des villageois
+Point d'entrée du mod. Charge tous les modules dans le bon ordre via
+`working_villages.require` :
+1. `loader.lua` + `log.lua`
+2. `village_registry.lua`
+3. Compatibilité (VoxeLibre/minetest_game), besoins/mémoire/décision/permissions
+4. Formulaires, logement, stockage, population, plans de construction
+5. API de base des villageois + artisanat + enregistrement des villageois
+6. Métiers spécialisés puis métier autonome
+7. `spawn.lua`
+
+#### needs.lua, ai_decision.lua, memory.lua
+Trois modules de la Phase 1 de la feuille de route :
+- `needs.lua` : jauges faim/énergie/outils/matériaux par villageois,
+  décroissance dans `on_step`, et politique pure de choix/rotation des
+  métiers spécialistes (garde, forgeron, cuisinier) selon l'état du
+  village.
+- `ai_decision.lua` : évalue les besoins et pose un indice d'action
+  prioritaire (non bloquant) sur le villageois.
+- `memory.lua` : mémoire persistante (emplacements de ressources, chemins
+  fréquents, zones dangereuses), sérialisée via `api.lua` et nettoyée
+  périodiquement.
+
+#### village_registry.lua, population.lua
+- `village_registry.lua` : identité persistante de village (propriétaire,
+  centre, rayon), pensée comme index central à terme ; contrats testés
+  dans `tests/village_registry_spec.lua`.
+- `population.lua` : registre léger des villageois vivants par village
+  (comptage, snapshot, checkpoint/reprise après redémarrage).
+
+#### access.lua, permissions.lua
+- `access.lua` : contrôle d'accès central (propriétaire, allié explicite,
+  visiteur refusé, village public via sceptre, administrateur) utilisé par
+  les formulaires, l'inventaire et les actions sensibles.
+- `permissions.lua` : file de demandes d'autorisation (ex : sauvegarde
+  d'un plan expérimental) avec auto-acceptation temporisée configurable.
+
+#### communication.lua, collaborative_tasks.lua
+- `communication.lua` : messages inter-villageois (`help_needed`,
+  `resource_found`, `danger_alert`, ...).
+- `collaborative_tasks.lua` : tâches persistantes à plusieurs
+  participants (`resource_delivery`, `food_support`,
+  `mining_tool_supply`, `danger_response`, `large_building`), avec TTL,
+  états terminaux et nettoyage automatique.
+
+#### survival.lua
+Survie orientée serveur public : PV doublés par défaut, dégâts calculés
+avant le mécanisme fatal du moteur, réduction d'armure/bouclier,
+protection temporaire après spawn/rechargement, régénération lente sans
+danger, dégâts joueurs limités au propriétaire par défaut
+(configurable), seuil de fuite à mi-vie.
+
+#### crafting.lua, economy_recipes.lua
+- `crafting.lua` : moteur de craft partagé (recettes enregistrées,
+  sous-recettes, résolution de groupes d'items, comptabilité atomique du
+  coffre commun).
+- `economy_recipes.lua` : recettes agricoles directes (botte de paille,
+  lit, pain plat) enregistrées selon le profil de jeu détecté.
+
+#### hud.lua
+HUD persistant par joueur : besoins et métier du villageois suivi le plus
+proche, ou résumé du village (population par métier) à défaut. Voir
+`README.MD` (section Quick start) pour la description côté joueur.
+
+#### inventory_access.lua
+Couche d'accès aux inventaires de nœuds (coffres, fours, établis) pour le
+compte d'un villageois : vérifie la protection avant chaque opération,
+échoue fermé en cas d'erreur, et fournit `put_stack`/`take_stack`/
+`put_from_inventory`/`take_to_inventory`/`can_access` utilisés par la
+plupart des métiers.
+
+#### construction_planner.lua, crop_planner.lua, blueprint_experiments.lua
+- `construction_planner.lua` : validation déterministe d'un terrain de
+  chantier (emprise complète, sol, liquides, protections, obstacles,
+  accès), calcul de boîte englobante (`get_bounds`), préparation des
+  cellules d'air à dégager.
+- `crop_planner.lua` : plan de culture persistant (modes `uniform`,
+  `rows`, `available`), indépendant de l'ordre de ramassage des piles.
+- `blueprint_experiments.lua` : propositions d'expérimentation sur un
+  plan appris (ex. remplacement de matériaux), soumises à autorisation
+  via `permissions.lua`.
+
+#### timers.lua, work_fallback.lua
+- `timers.lua` : timers basés sur le temps moteur (indépendants du FPS
+  serveur) utilisés par les coroutines de métiers.
+- `work_fallback.lua` : comportement d'attente/repli partagé quand un
+  métier ne peut pas progresser immédiatement (ramassage à proximité,
+  patrouille visible plutôt qu'immobilité).
 
 #### api.lua
 Définit l'API principale pour les villageois :
@@ -43,12 +141,19 @@ Définit l'API principale pour les villageois :
 
 ### 2. Système de compatibilité
 
-#### voxelibre_compat.lua
+#### voxelibre_compat.lua et compat/vl.lua
 Couche d'abstraction pour supporter à la fois minetest_game et VoxeLibre :
 - Détection automatique de l'environnement de jeu
 - Mapping des noms d'items (default:* ↔ mcl_core:*)
 - Mapping des portes (doors:* ↔ mcl_doors:*)
-- Mapping des coffres, torches, lits, etc.
+- Mapping des coffres, fours, torches, lits, outils, armures, boucliers, etc.
+
+`compat/vl.lua` centralise les mappings et est chargé après
+`voxelibre_compat.lua` (qu'il `require`) ; en cas de définition présente
+dans les deux fichiers, celle de `compat/vl.lua` gagne toujours. Des
+fallbacks directs `default:*`/`mcl_*` subsistent malgré tout dans quelques
+métiers (garde, mineur, bûcheron) ; la centralisation complète reste un
+chantier ouvert (voir ROADMAP.md).
 
 #### farming_compat.lua
 Abstraction spécifique pour les systèmes agricoles :
@@ -106,17 +211,26 @@ working_villages.register_job("working_villages:job_NAME", {
 })
 ```
 
-**Métiers disponibles** :
+**Métiers disponibles** (14, tous chargés depuis `init.lua`) :
+- **autonomous** : bootstrap du village, collecte polyvalente, exploration
 - **builder** : Construction de bâtiments
 - **farmer** : Agriculture (récolte et replantation)
 - **woodcutter** : Coupe d'arbres et replantation
 - **blacksmith** : Travail du métal et réparation d'outils
 - **miner** : Minage de pierre et minerais
+- **cook** : Cuisine via un vrai four, comptabilité du coffre commun
+- **trader** : Tient le poste de troc (fenêtre à distance sur le coffre
+  commun via son menu de discussion) ; ne récolte ni ne construit rien
 - **plant_collector** : Collection de plantes
 - **guard** : Protection du village
+- **learner/apprenant** : Mode apprentissage pour un villageois sans métier
 - **follow_player** : Suivi d'un joueur
 - **torcher** : Placement de torches
-- **snowclearer** : Nettoyage de la neige
+- **snowclearer** : Nettoyage de la neige (métier de test)
+
+Le groupe initial de spawn (5 PNJ) est fixe : woodcutter, farmer,
+autonomous, miner, builder. Voir JOBS.md pour le détail par métier et
+AUDIT_STATUS.md pour le niveau de preuve de chacun.
 
 ### 6. Système de blueprints
 
@@ -165,11 +279,11 @@ Gestion des marqueurs de construction et des bâtiments :
 - `buildings.find_beds(nodedata)` : Trouver les lits dans un bâtiment
 - Gestion des portes et des lits
 
-#### building_sign.lua
-Interface pour les marqueurs de construction :
-- Création de marqueurs
-- Formspecs pour la configuration
-- Gestion de l'état de construction
+> Note : `working_villagers/building_sign.lua` (deux lignes, distinct du
+> mod `building_sign/` retiré) reste dans le dépôt mais n'est chargé par
+> aucun `require` de `init.lua` ; il appelle un global `building_sign`
+> jamais défini et erreurait s'il était exécuté. Code mort à supprimer,
+> pas une fonctionnalité active.
 
 ### 8. Système d'interface
 
@@ -192,6 +306,12 @@ Persistance des données :
 - Sauvegarde automatique toutes les 5 minutes
 - Données par villageois
 - Données globales du mod
+
+Ce mécanisme historique reste utilisé en parallèle des stockages plus
+récents et spécialisés (`village_registry.lua`, `population.lua`,
+`collaborative_tasks.lua`, coffre partagé) plutôt que remplacé par eux ;
+`village_registry.lua` est pensé comme futur index central mais n'est pas
+encore la source unique de vérité.
 
 ### 10. Utilitaires
 
@@ -303,19 +423,35 @@ Cela garantit que les villageois ne peuvent pas modifier des zones protégées p
 3. **Pathfinder** : Optimisations possibles pour les grandes distances
 4. **TODOs** : Plusieurs TODOs à traiter (voir grep "TODO" dans le code)
 
-### Améliorations futures
+### Déjà implémenté depuis la version initiale de ce document
 
-1. **IA collaborative** : Villageois travaillant ensemble
-2. **Planification de village** : Construction coordonnée
-3. **Économie** : Échange entre villageois
-4. **Spécialisation** : Arbres de compétences par métier
-5. **Communication** : Messages entre villageois
-6. **Besoins** : Système de faim, repos, bonheur
+Cette liste était à l'origine une liste de souhaits ; les points suivants
+ont depuis un module dédié (code présent, niveau de preuve variable —
+voir AUDIT_STATUS.md) :
+- **Besoins** : `needs.lua` (faim, énergie, outils, matériaux)
+- **Communication** : `communication.lua` (messages inter-villageois)
+- **IA collaborative** : `collaborative_tasks.lua` (tâches à plusieurs
+  participants)
+- **Mémoire/apprentissage** : `memory.lua`, métier `learner`
+- **Début d'économie** : `crafting.lua`, `economy_recipes.lua`, coffre
+  commun partagé, métier `trader` ; pas encore de monnaie ni d'échanges
+  entre villageois eux-mêmes
+
+### Améliorations futures restantes
+
+1. **Planification de village dédiée** : un module isolé de planification
+   (actuellement des heuristiques dans le builder autonome)
+2. **Économie complète** : monnaie, échanges villageois ↔ villageois
+3. **Spécialisation** : arbres de compétences par métier
+4. **Structure sociale explicite** : hiérarchie chef/maîtres/apprentis
+5. **Niveaux de village** : croissance hameau → village → ville
 
 ## Dépendances
 
 ### Obligatoires
-- `modutil` (ou sous-module portable inclus)
+Aucune. `loader.lua` charge le mod sans dépendance d'exécution à
+`modutil` ; le seul prérequis est l'un des deux jeux supportés
+(minetest_game ou VoxeLibre), détecté automatiquement.
 
 ### Optionnelles (minetest_game)
 - `default` : Blocs de base
@@ -333,11 +469,31 @@ Cela garantit que les villageois ne peuvent pas modifier des zones protégées p
 
 ## Tests et validation
 
+### Tests automatisés existants
+
+- `working_villagers/tests/` : 23 spécifications autonomes (`*_spec.lua`)
+  qui tournent sous `lua5.1` avec un environnement `minetest`/`working_villages`
+  simulé, sans moteur réel. Lancement individuel :
+  `lua5.1 working_villagers/tests/needs_spec.lua working_villagers`.
+- `.github/workflows/standalone-tests.yml` : exécute ces specs en CI
+  (à l'exclusion de `compat_spec.lua` et `ore_smelting_spec.lua`, qui ont
+  besoin d'un vrai moteur).
+- `.github/workflows/luacheck.yml` : lint statique.
+- `test_harness/` : mondes Luanti jetables et mods de test pour des
+  scénarios moteur réels (spawn, four, portes, livraison physique, etc.),
+  décrits dans `test_harness/README.md`.
+
+Voir AUDIT_STATUS.md pour la matrice complète preuve-par-fonctionnalité
+(code / test autonome / test moteur / test manuel) et pour ce qui n'a
+**pas** encore de preuve d'exécution du tout.
+
 ### Tests manuels recommandés
 - Tester chaque métier dans les deux environnements
 - Vérifier la compatibilité des blueprints
 - Tester les interactions coffre/inventaire
 - Vérifier le pathfinding dans différents terrains
+
+Protocole détaillé dans `VALIDATION_CHECKLIST.md`.
 
 ### Linting
 Le projet utilise `luacheck` pour la vérification du code :

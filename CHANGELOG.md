@@ -2,6 +2,20 @@
 
 ## 0.13.0-alpha.9 - 2026-09-27 (en cours)
 
+### ARCHITECTURE.md remis a niveau
+
+Ce document decrivait encore l'etat du mod d'avant l'alpha.1 : aucun des
+modules ajoutes depuis (needs, memoire, decision, permissions, access,
+village_registry, population, communication, collaborative_tasks,
+survival, hud, crafting, economy_recipes, construction_planner,
+crop_planner, blueprint_experiments, compat/vl, loader, log, timers,
+work_fallback, inventory_access) n'y etait mentionne, la liste des
+metiers en oubliait quatre (cook, autonomous, learner, trader), et il
+affirmait a tort que `modutil` restait une dependance obligatoire. Mis a
+jour pour refleter l'etat reel du code, avec renvoi vers AUDIT_STATUS.md
+pour le niveau de preuve de chaque partie plutot que de dupliquer cette
+information ici.
+
 ### Page de garde a affichage double corrigee
 
 `working_villages:guard_check` (une page de secours qui redirige vers la
