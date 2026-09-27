@@ -2,6 +2,21 @@
 
 ## 0.13.0-alpha.9 - 2026-09-27 (en cours)
 
+### Forgeron bloque par un four encombre
+
+Si un objet non-minerai se trouvait dans l'emplacement source d'un four
+(depose par un joueur, ou laisse par un autre metier), le forgeron
+retentait indefiniment ce meme four : `use_furnace_inventory` refusait de
+l'utiliser mais `find_nearby_furnace` continuait a le proposer comme "four
+existant" a chaque tick, sans jamais chercher d'alternative ni envisager
+d'en construire un autre. Corrige en reutilisant le mecanisme deja existant
+`working_villages.failed_pos_record`/`failed_pos_test` (le meme qui evite
+deja de retenter un site de chantier invalide) : un four juge inutilisable
+est ignore pendant quelques minutes par `find_nearby_furnace`, utilise par
+le forgeron, le cuisinier, le mineur et l'autonome. Note : `cook.lua` a une
+forme de code differente pour le meme scenario (il ne bloque pas de la
+meme facon) et n'a pas ete touche ici ; a revisiter separement si besoin.
+
 ### Nouveau metier : marchand
 
 `working_villages:job_trader` mane un poste de troc. Contrairement aux

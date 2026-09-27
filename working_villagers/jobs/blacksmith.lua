@@ -737,6 +737,15 @@ local function use_furnace_inventory(self, furnace_pos)
 	end
 
 	if not src:is_empty() and not get_ore_smelt_result(src) then
+		-- Something that isn't smeltable ore is sitting in this furnace (a
+		-- player put it there, or another job used it for something else).
+		-- Mark it briefly unusable so find_nearby_furnace looks elsewhere or
+		-- builds a new furnace instead of the blacksmith retrying this exact
+		-- jammed one forever.
+		if working_villages.failed_pos_record then
+			working_villages.failed_pos_record(furnace_pos)
+		end
+		self:set_state_info("Ce four contient autre chose que du minerai ; je cherche un autre four.")
 		return false
 	end
 

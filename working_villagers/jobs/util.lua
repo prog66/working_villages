@@ -312,6 +312,13 @@ function func.find_nearby_furnace(self, pos, searching_range, reservation_scope)
 				and self:is_position_reserved(reservation_scope, candidate) then
 			return false
 		end
+		-- A furnace someone just marked failed (e.g. the blacksmith found
+		-- non-smeltable junk in its src slot) is skipped for a few minutes so
+		-- callers look for/build an alternative instead of retrying the same
+		-- unusable furnace forever.
+		if working_villages.failed_pos_test and working_villages.failed_pos_test(candidate) then
+			return false
+		end
 		return true
 	end, searching_range)
 end
