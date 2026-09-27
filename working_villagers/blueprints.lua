@@ -4,21 +4,9 @@
 local blueprints = {}
 local construction_planner = working_villages.construction_planner
 
-local function parse_schematic_content(content)
-	local data = minetest.deserialize(content)
-	if data then
-		return data
-	end
-	local chunk, err = loadstring(content)
-	if not chunk then
-		return nil, err
-	end
-	local ok, result = pcall(chunk)
-	if ok and type(result) == "table" then
-		return result
-	end
-	return nil, err
-end
+-- building.lua (loaded before this file) defines and exposes the real
+-- implementation; reuse it instead of keeping a second copy in sync by hand.
+local parse_schematic_content = working_villages.parse_schematic_content
 
 local function load_nodes_from_schematic(filename)
 	local nodes = {}

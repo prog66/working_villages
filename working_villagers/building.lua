@@ -5,6 +5,9 @@ local village_registry = working_villages.village_registry
 local sync_home_registry
 local home_bed_occupant
 
+-- Exposed on working_villages so blueprints.lua (loaded after this file)
+-- reuses the exact same parser instead of keeping its own byte-identical
+-- copy that a future fix could update in only one place.
 local function parse_schematic_content(content)
 	local data = minetest.deserialize(content)
 	if data then
@@ -20,6 +23,7 @@ local function parse_schematic_content(content)
 	end
 	return nil, err
 end
+working_villages.parse_schematic_content = parse_schematic_content
 
 local function out_of_limit(pos)
 	if (pos.x>30927 or pos.x<-30912

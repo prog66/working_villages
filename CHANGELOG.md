@@ -2,6 +2,22 @@
 
 ## 0.13.0-alpha.9 - 2026-09-27 (en cours)
 
+### Deduplication de helpers de construction
+
+`parse_schematic_content` (parseur de fichier .we) etait definie a
+l'identique dans `building.lua` et `blueprints.lua` ; `get_bounds` (calcul
+de boite englobante) etait definie deux fois avec la meme logique dans
+`construction_planner.lua` et `blueprint_construction.lua`, avec une
+difference mineure (l'une retournait de vrais vecteurs via `vector.new`,
+l'autre de simples tables `{x,y,z}`). Dans les deux cas, seule la copie la
+plus ancienne (celle chargee en premier par `init.lua`) est conservee ; les
+fichiers charges apres la reutilisent au lieu d'en garder une copie a
+maintenir manuellement en double. Verifie que le seul site d'appel de
+`get_bounds` dans `blueprint_construction.lua` n'utilise que
+`vector.add`/`vector.subtract`/`minetest.find_nodes_in_area`, qui
+acceptent une simple table `{x,y,z}` sans avoir besoin de la metatable
+vecteur.
+
 ### Forgeron bloque par un four encombre
 
 Si un objet non-minerai se trouvait dans l'emplacement source d'un four

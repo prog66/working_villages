@@ -87,27 +87,13 @@ local function build_farm_plot_nodes()
 	return nodes
 end
 
-local function get_bounds(nodedata)
-	local minp
-	local maxp
-	for _, entry in ipairs(nodedata or {}) do
-		if entry.pos then
-			local p = entry.pos
-			if not minp then
-				minp = vector.new(p)
-				maxp = vector.new(p)
-			else
-				minp.x = math.min(minp.x, p.x)
-				minp.y = math.min(minp.y, p.y)
-				minp.z = math.min(minp.z, p.z)
-				maxp.x = math.max(maxp.x, p.x)
-				maxp.y = math.max(maxp.y, p.y)
-				maxp.z = math.max(maxp.z, p.z)
-			end
-		end
-	end
-	return minp, maxp
-end
+-- construction_planner.lua (loaded before this file, unconditionally) has
+-- the exact same min/max-over-entries logic; reuse it instead of keeping a
+-- second copy in sync by hand. Its result is a plain {x,y,z} table rather
+-- than a vector.new() one, which is fine here: the only call site below
+-- feeds it straight into vector.add/vector.subtract/find_nodes_in_area,
+-- none of which need the vector metatable, only the x/y/z fields.
+local get_bounds = construction_planner.get_bounds
 
 local function area_has_building_marker(minp, maxp, padding)
 	if not minp or not maxp then
