@@ -1691,6 +1691,14 @@ function working_villages.is_externally_protected(pos, name)
   return protected and true or false
 end
 
+-- This block (village claims: ownership, allies-via-claim, protection-chain
+-- wiring) is wrapped in do/end purely to satisfy Lua's 200-local-per-chunk
+-- limit on this file's top level: every name declared inside is verified
+-- (by exhaustive grep across the whole file) to be referenced only within
+-- this same span, so closing the block here frees those slots for reuse by
+-- everything declared later without changing a single call site's syntax.
+do
+
 local function player_has_commanding_sceptre_by_name(player_name)
   if not player_name or player_name == "" then
     return false
@@ -2163,6 +2171,8 @@ minetest.register_on_mods_loaded(function()
     return false
   end
 end)
+
+end -- closes the village-claims do-block opened above player_has_commanding_sceptre_by_name
 
 get_shared_storage_chests = function(base_pos)
   if not is_chest_pos(base_pos) then
@@ -6412,6 +6422,17 @@ local forms = working_villages.require("forms")
 -- immediate restore; otherwise collision geometry must be intersected for
 -- several consecutive callbacks.  A clear underground cavity is therefore a
 -- valid safe pose and never sends a miner back to the surface.
+-- Forward-declared so it survives the do/end block below: everything else in
+-- that block (constants + 11 sibling helpers) is verified by grep to be used
+-- nowhere past line 6693, but handle_embedded_body itself is called much
+-- later from the villager on_step chain and must stay in scope.
+local handle_embedded_body
+
+-- Wrapped for the same 200-top-level-local reason as the village-claims
+-- block above: closing this do/end frees these slots for reuse by
+-- everything declared afterward, with no call-site changes needed.
+do
+
 local EMBEDDED_BODY_CALLBACK_LIMIT = 3
 local EMBEDDED_SAFE_CACHE_MAX_DISTANCE = 16
 local EMBEDDED_SAFE_SEARCH_RADIUS = 4
@@ -6602,7 +6623,7 @@ local function find_nearby_safe_standing_pose(self, current)
 end
 
 -- Returns true while normal AI work must be suspended for this callback.
-local function handle_embedded_body(self)
+function handle_embedded_body(self)
   if not self.object or type(self.object.get_pos) ~= "function" then
     return false
   end
@@ -6681,6 +6702,8 @@ local function handle_embedded_body(self)
       minetest.pos_to_string(pos, 2), minetest.pos_to_string(destination, 2)))
   return true
 end
+
+end -- closes the embedded-body-recovery do-block opened above finite_number
 
 -- working_villages.register_villager registers a definition of a new villager.
 function working_villages.register_villager(product_name, def)

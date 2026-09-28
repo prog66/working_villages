@@ -1,6 +1,61 @@
 # Changelog
 
-## 0.13.0-alpha.9 - 2026-09-27 (en cours)
+## 0.13.0-alpha.9 - 2026-09-27 (suite) - le mod ne chargeait plus du tout
+
+### CRITIQUE : api.lua depassait la limite Lua de 200 variables locales
+
+Decouvert le 28/09/2026 en deployant reellement ce depot sur un serveur
+Luanti/VoxeLibre distant (la premiere fois cette session qu'un vrai
+interpreteur Lua etait disponible) : le serveur refusait de demarrer,
+en boucle de crash, avec
+`ERROR[Main]: ...api.lua:6153: main function has more than 200 local
+variables`. C'est une limite dure du langage Lua (`LUAI_MAXVARS = 200`,
+identique en LuaJIT) sur le nombre de variables locales simultanement
+actives dans une seule fonction ; le fichier entier `api.lua` est compile
+comme une seule "fonction principale", donc chaque `local` et
+`local function` declare au niveau superieur du fichier partage ce meme
+budget de 200.
+
+Ce bug est probablement latent depuis un moment : rien dans cette session
+ni dans les sessions precedentes n'avait jamais eu acces a un vrai
+interpreteur Lua ou moteur Luanti pour le detecter. Avec `api.lua` a 8018
+lignes et des dizaines de fonctionnalites accumulees depuis alpha.1, le
+fichier a fini par depasser la limite sans qu'aucun test autonome (qui
+simule l'environnement Minetest mais ne recompile jamais le fichier via un
+vrai interpreteur) ne puisse jamais l'attraper.
+
+**Deroulement de l'incident** : le deploiement a ete tente avec confirmation
+prealable de l'utilisateur, a echoue au demarrage, le serveur live a ete
+restaure a la version precedente (alpha.6) en quelques minutes le temps du
+diagnostic, sans perte de donnees de monde constatee (les checkpoints des
+villageois ont ete restaures normalement au redemarrage).
+
+**Correctif** : deux groupes de fonctions internes verifies par recherche
+exhaustive (`grep`) comme n'etant references nulle part en dehors de leur
+propre region du fichier ont ete enveloppes dans des blocs `do ... end` :
+- le sous-systeme de "claims" de village (19 fonctions, lignes ~1694-2165) ;
+- le sous-systeme de recuperation d'encastrement (12 fonctions + 5
+  constantes, lignes ~6425-6706), avec `handle_embedded_body`
+  pre-declaree a l'exterieur du bloc car c'est la seule fonction du groupe
+  encore appelee bien plus loin dans le fichier (ligne ~7560).
+
+Fermer un bloc `do...end` libere les emplacements de variables locales
+qu'il contenait pour reutilisation par la suite du fichier, sans changer
+la syntaxe d'aucun site d'appel existant.
+
+**Verification, en l'absence d'interpreteur Lua local ou d'autorisation
+d'en installer un sur le serveur distant** : un script Python autonome a
+ete ecrit pour simuler precisement le calcul du compilateur Lua (suivi de
+profondeur de bloc/fonction, variables de controle cachees des boucles
+`for`, etc.), puis calibre sur le fichier original en confirmant qu'il
+detecte bien un pic de **201** variables **exactement a la ligne 6153** —
+correspondant exactement au message d'erreur reel du serveur. Sur le
+fichier corrige, ce meme script mesure un pic de **182**, soit une marge
+de 18 sous la limite. Ce script reste une simulation statique, pas une
+execution reelle du fichier corrige ; ce niveau de preuve exact est note
+ici honnetement plutot que presente comme une correction testee de bout
+en bout. Une nouvelle tentative de deploiement sur le meme serveur reste
+necessaire pour obtenir une vraie preuve moteur de ce correctif.
 
 ### API_REFERENCE.md complete pour les nouveaux modules
 
