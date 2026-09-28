@@ -3,7 +3,7 @@
 This mod adds Villagers performing work.
 The plan is to make villagers build up their own villages.
 
-Current local release: **0.13.0-alpha.7**. It is an auditable development
+Current local release: **0.13.0-alpha.9**. It is an auditable development
 package, not a stable or ContentDB release. See [DEPLOYMENT.md](DEPLOYMENT.md)
 for the verified archive/install workflow and [AUDIT_STATUS.md](AUDIT_STATUS.md)
 for the remaining gameplay gates.
@@ -61,15 +61,6 @@ move faster. Everything below this point gets progressively more detailed
 and more focused on exactly what is and isn't proven to work yet — see
 [AUDIT_STATUS.md](AUDIT_STATUS.md) if you want the unvarnished state of
 testing before relying on this on a real server.
-
-## Planned Features
-* villages
-  * built up by the villagers
-* villagers
-  * trading and building up an economy
-  * working / doing their jobs
-* jobs
-  * miner, farmer, woodcutter and many more
 
 ## Features represented in the current code
 
@@ -134,6 +125,14 @@ so recipe coverage is still incomplete.
   * Blueprint interiors now contain explicit air-clearing steps; harmless vegetation is removed physically before walls are placed, while solid or liquid obstructions pause the site
   * The builder that opens a site reserves it immediately, and workers already at their job/crop target skip pointless path searches
   * Site validation has a node-work budget so large blueprints cannot multiply an unbounded terrain scan in one decision
+* **Privacy fix, real HUD, and a new job (alpha.8)**
+  * The village dashboard no longer reveals a village's exact chest/home/job coordinates to players who don't manage it; any player could previously read that from any villager
+  * The persistent per-player HUD (needs + tracked villager) was rendering nothing but text since its introduction (a transparent placeholder texture was being colorized, which stays transparent); bars are now actually visible, with a village summary shown when no owned villager is nearby
+  * New **trader** job: mans a trading post whose talk-menu page opens a read/write window onto the real shared chest via Minetest's own list widgets, gated to owner/allies
+* **Fixed a mod-breaking Lua limit, and a context-sensitive talk menu (alpha.9)**
+  * `api.lua` had grown past Lua's hard 200-local-variables-per-function limit; the mod could no longer load at all under a real interpreter. Found by an actual deployment attempt and fixed by scoping two internal subsystems into `do...end` blocks
+  * The villager talk menu now hides options that don't apply to the villager you're talking to (a blacksmith-only order screen no longer shows up when talking to a farmer, and so on) instead of showing all options to everyone
+  * See [CHANGELOG.md](CHANGELOG.md) for the full list of alpha.8/alpha.9 fixes
 * **Targeted P0 autonomy evidence (alpha.5)**
   * A physical supplier-to-requester delivery moved real cargo between two villagers, with exact conservation and restart recovery in both supported games
   * A real farmer acquired a natural seed, tilled soil and sowed it in both profiles; the complete mature-crop harvest/replant/deposit loop remains open
@@ -190,6 +189,7 @@ for blueprint system see [BLUEPRINTS.md](BLUEPRINTS.md)
 
 The documentation set currently includes:
 
+- **[CHANGELOG.md](CHANGELOG.md)** - What changed in each alpha, including bugs found and fixed
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed system architecture and component overview
 - **[API_REFERENCE.md](API_REFERENCE.md)** - Maintained public API reference for developers
 - **[ROADMAP.md](ROADMAP.md)** - Future features and development roadmap
@@ -204,26 +204,25 @@ The documentation set currently includes:
 
 ## For Developers
 
-The mod now includes advanced systems for easier development:
-
-### 🤖 AI Behavior System (`ai_behavior.lua`)
+### AI Behavior System (`ai_behavior.lua`)
 - Task priority system for intelligent decision-making
 - State machine for villager states
 - Memory system for learning and remembering locations
-- See the [enhanced plant-collector example](working_villagers/jobs/EXAMPLE_enhanced_plant_collector.lua) for usage; it is not loaded by default
 
-### 🔧 Job Patterns (`job_patterns.lua`)
-- Reusable patterns for common job tasks
-- Chest interaction helpers
-- Search and act patterns
-- Tool management utilities
-- Reduces code duplication
+### Job Patterns (`job_patterns.lua`)
+- Reusable helpers for common job tasks (chest interaction, search-and-act,
+  tool management) meant to reduce duplication across job files
+- Loaded, but not currently used by any shipped job; the only place it is
+  actually exercised today is the example below. Adopting it in existing
+  jobs is open work (see ROADMAP.md)
 
-### 📖 Getting Started
+### Getting Started
 1. Read [ARCHITECTURE.md](ARCHITECTURE.md) to understand the system
 2. Check [API_REFERENCE.md](API_REFERENCE.md) for available functions
 3. Look at [CONTRIBUTING.md](CONTRIBUTING.md) for coding standards
-4. See the [enhanced plant-collector example](working_villagers/jobs/EXAMPLE_enhanced_plant_collector.lua); it is not loaded by default
+4. See the [enhanced plant-collector example](working_villagers/jobs/EXAMPLE_enhanced_plant_collector.lua)
+   for how `ai_behavior.lua` and `job_patterns.lua` are meant to be used
+   together; it is not loaded by default
 5. Review [ROADMAP.md](ROADMAP.md) for planned features
 
 ## Game compatibility
@@ -331,7 +330,7 @@ git pull --recurse-submodules
 ```
 
 ## License
-* working_villages by theFox6 is avalible under the MIT License
+* working_villages by theFox6 is available under the MIT License
 
 Exceptions to the above:
 * villager skin textures from the Homedecor mod: CC-by-SA 3.0 or higher
