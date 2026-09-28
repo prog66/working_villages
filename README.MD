@@ -3,6 +3,12 @@
 This mod adds Villagers performing work.
 The plan is to make villagers build up their own villages.
 
+This is a fork ([prog66/working_villages](https://github.com/prog66/working_villages))
+of the original [theFox6/working_villages](https://github.com/theFox6/working_villages)
+mod; see [cloning](#cloning) below and License at the bottom for
+attribution. All alpha.1+ work described in this document lives on this
+fork.
+
 Current local release: **0.13.0-alpha.9**. It is an auditable development
 package, not a stable or ContentDB release. See [DEPLOYMENT.md](DEPLOYMENT.md)
 for the verified archive/install workflow and [AUDIT_STATUS.md](AUDIT_STATUS.md)
@@ -313,9 +319,12 @@ required before describing either profile as fully compatible.
 
 ## cloning
 
-An ordinary clone contains all files required by the current runtime:
+This repository is a fork of [theFox6/working_villages](https://github.com/theFox6/working_villages),
+the original mod this one is built on (see License below for attribution).
+All alpha work described in this document happens on this fork; clone it
+directly rather than the upstream original:
 ```
-git clone https://github.com/theFox6/working_villages.git
+git clone https://github.com/prog66/working_villages.git
 ```
 
 Contributors who specifically need the repository's historical submodule
