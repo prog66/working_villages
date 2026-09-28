@@ -170,7 +170,6 @@ for _, page_name in ipairs({
 	"working_villages:build_blueprints",
 	"working_villages:permissions_menu",
 	"working_villages:guard_config",
-	"working_villages:guard_check",
 }) do
 	assert(registered[page_name].requires_manage, page_name .. " must require management access")
 end

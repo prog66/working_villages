@@ -94,7 +94,8 @@ forms.register_page("working_villages:blacksmith_orders", {
 })
 
 forms.put_link("working_villages:talking_menu", "working_villages:blacksmith_orders",
-	"Commander un outil/arme")
+	"Commander un outil/arme",
+	function(villager) return villager_has_job(villager, BLACKSMITH_JOB_NAME) end)
 
 -- Add learning mode specific dialogue
 forms.register_text_page("working_villages:learning_status",
@@ -113,7 +114,8 @@ forms.register_text_page("working_villages:learning_status",
 	end)
 
 forms.put_link("working_villages:talking_menu", "working_villages:learning_status",
-	"Que penses-tu de l'apprentissage ?")
+	"Que penses-tu de l'apprentissage ?",
+	function(villager) return villager_has_job(villager, LEARNER_JOB_NAME) end)
 
 -- Add encouragement option for learners
 forms.register_text_page("working_villages:encouragement",
@@ -126,7 +128,8 @@ forms.register_text_page("working_villages:encouragement",
 	end)
 
 forms.put_link("working_villages:talking_menu", "working_villages:encouragement",
-	"Continue d'apprendre, c'est bien !")
+	"Continue d'apprendre, c'est bien !",
+	function(villager) return villager_has_job(villager, LEARNER_JOB_NAME) end)
 
 local focus_button_actions = {
 	focus_balanced = "balanced",

@@ -1,5 +1,49 @@
 # Changelog
 
+## 0.13.0-alpha.9 - 2026-09-28 (suite) - menus contextuels
+
+### Menus du villageois nettoyes
+
+Le menu de discussion (clic droit a mains nues sur un villageois) affichait
+12 options identiques a plat, dans le meme ordre, quel que soit le metier
+du villageois parle : "Commander un outil/arme" apparaissait meme en
+parlant a un fermier, "Que penses-tu de l'apprentissage ?" et son option
+d'encouragement apparaissaient pour un mineur, "Configurer le garde"
+apparaissait pour un cuisinier. Ces trois pages géraient deja gracieusement
+le cas "mauvais metier" (message d'erreur a la place du vrai contenu),
+prouvant qu'elles n'etaient pertinentes que dans un cas precis tout en
+etant montrees systematiquement.
+
+- **Menu contextuel** : `forms.put_link` accepte desormais un parametre
+  optionnel `visible_fn(villager) -> boolean` ; une entree dont la
+  fonction renvoie faux n'apparait tout simplement plus dans la liste
+  pour ce villageois-la. Applique a "Commander un outil/arme" (forgeron
+  uniquement), "Que penses-tu de l'apprentissage ?" et son encouragement
+  (apprenti uniquement), "Configurer le garde" (garde uniquement). Les
+  options pertinentes pour tout villageois (metier actuel, etat, plans,
+  autorisations, tableau/rapport/ordres du village, poste de troc) restent
+  visibles partout.
+- **Page morte supprimee** : `working_villages:guard_check`, une page de
+  redirection conditionnelle vers `guard_config` (corrigee en alpha.9 pour
+  un bug d'affichage double, mais deja notee a l'epoque comme inaccessible
+  depuis le menu normal), n'a plus aucune raison d'exister maintenant que
+  le lien "Configurer le garde" ne s'affiche que pour un vrai garde.
+  Supprimee, avec la reference correspondante retiree de
+  `tests/forms_access_spec.lua`.
+- **Deduplication interne** : la construction de la liste filtree/triee
+  d'options (auparavant recopiee a l'identique a 3 endroits dans
+  `forms.lua`) est maintenant une seule fonction partagee
+  (`visible_menu_entries`), evitant que les trois copies divergent un jour
+  entre elles.
+- **Verifie, pas de doublon reel** : `village_dashboard`, `village_report`
+  et `village_orders` semblaient a premiere vue redondants (tous les trois
+  parlent du village), mais en comparant leur contenu exact, chacun a un
+  role distinct sans chevauchement reel : dashboard = etat vivant + gestion
+  d'un villageois selectionne, report = detail chiffre des ressources et
+  effectifs par metier (absent du dashboard), orders = reglages de
+  priorite/notification/prochain chantier (absents des deux autres). Rien
+  retire ici : une suppression aurait perdu des informations reelles.
+
 ## 0.13.0-alpha.9 - 2026-09-27 (suite) - le mod ne chargeait plus du tout
 
 ### CRITIQUE : api.lua depassait la limite Lua de 200 variables locales

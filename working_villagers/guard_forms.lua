@@ -37,8 +37,8 @@ local function get_inv_name(villager)
 	return inv_name
 end
 
--- Named so guard_check below can delegate to it directly (return its
--- result) instead of triggering a second, nested top-level formspec show.
+-- Named (rather than anonymous inline) purely so it reads clearly as its
+-- own page constructor below.
 local function guard_config_constructor(_, villager, player_name)
 		local inv_name = get_inv_name(villager)
 		if not inv_name then
@@ -292,37 +292,10 @@ forms.register_page("working_villages:guard_config", {
 	end,
 })
 
--- Add a conditional link to guard configuration
--- Create a wrapper page that checks if the villager is a guard
-forms.register_page("working_villages:guard_check", {
-	requires_manage = true,
-	constructor = function(_, villager, player_name)
-		if is_guard(villager) then
-			-- Return guard_config's own formspec directly instead of calling
-			-- forms.show_formspec here: that would fully display guard_config
-			-- (a real top-level minetest.show_formspec call) and THEN this
-			-- constructor's own return value would be shown right after it
-			-- under a different formspec name, blanking/replacing the screen
-			-- guard_config just displayed.
-			return guard_config_constructor(_, villager, player_name)
-		else
-			-- Not a guard, show message
-			return forms.form_base(8, 5, villager) ..
-				"label[0.5,1;Ce villageois n'est pas un garde.]" ..
-				"label[0.5,1.7;Cette option est seulement disponible pour les gardes.]" ..
-				"button[3,3.5;2,1;back;Retour]"
-		end
-	end,
-	receiver = function(_, villager, player, fields)
-		if fields.back then
-			forms.go_back(villager, player:get_player_name())
-		end
-	end,
-})
-
--- Add link from talking menu to guard configuration
--- This link will be shown for all villagers, but will redirect properly
+-- Only shown when talking to an actual guard: no reason to clutter every
+-- other villager's menu with a page whose whole content is "not a guard".
 forms.put_link("working_villages:talking_menu", "working_villages:guard_config",
-	"Configurer le garde")
+	"Configurer le garde",
+	is_guard)
 
 return true

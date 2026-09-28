@@ -289,9 +289,16 @@ Gestion des marqueurs de construction et des bâtiments :
 
 #### forms.lua
 Système de formulaires pour l'interface utilisateur :
-- Formulaires enregistrables
-- Gestion des callbacks
-- Navigation entre formulaires
+- Formulaires enregistrables (`forms.register_page`)
+- Gestion des callbacks (`receiver`), avec contrôle d'accès `requires_manage`
+- Navigation entre formulaires, y compris un menu générique
+  (`forms.register_menu_page`) utilisé par le menu de discussion
+- Entrées de menu conditionnelles : `forms.put_link(source, target,
+  description, visible_fn)` accepte un `visible_fn(villager)` optionnel ;
+  une entrée masquée pour ce villageois n'apparaît simplement pas dans la
+  liste (ex. "Configurer le garde" n'apparaît que pour un garde). Ajouté en
+  alpha.9 pour éviter d'afficher des options sans rapport avec le métier
+  du villageois parlé.
 
 #### commanding_sceptre.lua
 Outil de commande des villageois :

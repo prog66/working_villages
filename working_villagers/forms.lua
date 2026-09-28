@@ -152,12 +152,38 @@ function forms.register_page(name, def)
 	registered_forms[name] = def
 end
 
-function forms.put_link(source_page, target_page, description)
+--[[
+  Adds a menu entry from one register_menu_page to another.
+
+  @param visible_fn function|nil - Optional (villager) -> boolean. When
+    given, the entry is left out of the menu entirely for a villager it
+    returns false for (e.g. a blacksmith-only order screen has no reason
+    to appear in a farmer's menu). Omit for entries relevant to any
+    villager.
+]]--
+function forms.put_link(source_page, target_page, description, visible_fn)
 	assert(type(source_page)=="string")
 	assert(type(target_page)=="string")
 	assert(type(description)=="string")
+	assert(visible_fn == nil or type(visible_fn) == "function")
 
-	registered_forms[source_page].link_to[description] = target_page
+	registered_forms[source_page].link_to[description] = {target = target_page, visible = visible_fn}
+end
+
+-- Sorted, villager-filtered [{description, target}] for a register_menu_page.
+-- Shared by the constructor and both receiver branches below so the same
+-- filtering logic (and therefore the same displayed list) is never
+-- duplicated three times and drifting out of sync with each other.
+local function visible_menu_entries(pageid, villager)
+	local page = registered_forms[pageid]
+	local entries = {}
+	for description, link in pairs(page.link_to) do
+		if not link.visible or link.visible(villager) then
+			table.insert(entries, {description = description, target = link.target})
+		end
+	end
+	table.sort(entries, function(a, b) return a.description < b.description end)
+	return entries
 end
 
 function forms.show_formspec(villager, formname, playername)
@@ -284,7 +310,6 @@ function forms.form_base(width,height,villager)
 end
 
 function forms.register_menu_page(pageid, title)
-	--TODO: conditional disabling buttons
 	forms.register_page(pageid, {
 		variables = {
 			form_bottom = 9,
@@ -294,21 +319,16 @@ function forms.register_menu_page(pageid, title)
 			local formbottom = self.variables.form_bottom
 			local form = forms.form_base(8,formbottom,villager)
 			local text = self.variables.title
-			--TODO: random text from list
 			local content_y = HEADER_HEIGHT + 0.2
 			form = form
 				.. "style_type[button;bgcolor=#2c323f;textcolor="..THEME.text..";bordercolor="..THEME.accent..";border=true]"
 				.. "style_type[label;font=normal;textcolor="..THEME.text.."]"
 				.. "label[0.5,"..content_y..";"..minetest.formspec_escape(text).."]"
 
-			local entries = {}
-			for description in pairs(self.link_to) do
-				table.insert(entries, description)
-			end
-			table.sort(entries)
+			local entries = visible_menu_entries(pageid, villager)
 			local list = {}
-			for _, desc in ipairs(entries) do
-				table.insert(list, minetest.formspec_escape(desc))
+			for _, entry in ipairs(entries) do
+				table.insert(list, minetest.formspec_escape(entry.description))
 			end
 			local list_str = table.concat(list, ",")
 			local list_height = math.max(2, formbottom - 3.2)
@@ -340,33 +360,23 @@ function forms.register_menu_page(pageid, title)
 					forms.menu_selection[villager.inventory_name][pageid] = idx
 				end
 				if fields.menu_list:sub(1,4) == "DCL:" then
-					local entries = {}
-					for description in pairs(registered_forms[pageid].link_to) do
-						table.insert(entries, description)
-					end
-					table.sort(entries)
-					local desc = entries[idx]
-					local page_to = desc and registered_forms[pageid].link_to[desc]
-					if page_to then
-						forms.show_formspec(villager, page_to, sender_name)
+					local entries = visible_menu_entries(pageid, villager)
+					local entry = entries[idx]
+					if entry then
+						forms.show_formspec(villager, entry.target, sender_name)
 					end
 					return
 				end
 			end
 			if fields.menu_open then
-				local entries = {}
-				for description in pairs(registered_forms[pageid].link_to) do
-					table.insert(entries, description)
-				end
-				table.sort(entries)
+				local entries = visible_menu_entries(pageid, villager)
 				local sel = 1
 				if forms.menu_selection[villager.inventory_name] then
 					sel = forms.menu_selection[villager.inventory_name][pageid] or 1
 				end
-				local desc = entries[sel]
-				local page_to = desc and registered_forms[pageid].link_to[desc]
-				if page_to then
-					forms.show_formspec(villager, page_to, sender_name)
+				local entry = entries[sel]
+				if entry then
+					forms.show_formspec(villager, entry.target, sender_name)
 				end
 			end
 		end,
