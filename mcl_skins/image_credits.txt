@@ -1,0 +1,22 @@
+# Image Credits
+
+## Textures
+
+All textures in this mod are available under the following licenses:
+
+### Default Textures
+- blank.png - Public Domain / CC0
+- mcl_skins_base_*.png - CC BY-SA 3.0 or MIT
+- mcl_skins_eye_*.png - CC BY-SA 3.0 or MIT
+- mcl_skins_mouth_*.png - CC BY-SA 3.0 or MIT
+- mcl_skins_hair_*.png - CC BY-SA 3.0 or MIT
+- mcl_skins_top_*.png - CC BY-SA 3.0 or MIT
+- mcl_skins_bottom_*.png - CC BY-SA 3.0 or MIT
+- mcl_skins_footwear_*.png - CC BY-SA 3.0 or MIT
+- mcl_skins_headwear_*.png - CC BY-SA 3.0 or MIT
+
+All mask textures (*_mask.png) are derivatives of their base textures and use the same license.
+
+## Contributing Textures
+
+If you contribute textures to this mod, please add appropriate attribution here and ensure they are compatible with the CC BY-SA 3.0 or MIT licenses.

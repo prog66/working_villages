@@ -1,0 +1,11 @@
+# Enable or disable the /skin command
+mcl_skins_enable_command (Enable /skin command) bool true
+
+# Enable or disable automatic skin saving
+mcl_skins_auto_save (Auto-save player skins) bool true
+
+# Default skin for new players
+mcl_skins_default_template (Default template for new players) enum template1 template1,template2
+
+# Enable skin preview in formspec
+mcl_skins_show_preview (Show skin preview) bool true
